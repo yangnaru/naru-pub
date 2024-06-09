@@ -80,7 +80,11 @@ export default function SignUpPage() {
             <FormItem>
               <FormLabel>아이디</FormLabel>
               <FormControl>
-                <Input placeholder={usernamePlaceholder} {...field} />
+                <Input
+                  placeholder={usernamePlaceholder}
+                  autoCapitalize="none"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 로그인과 홈페이지 도메인에 사용될 아이디입니다. ({domain})

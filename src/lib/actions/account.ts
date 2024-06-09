@@ -36,7 +36,7 @@ export async function signUp(login_name: string, password: string) {
   const user = await db
     .insertInto("users")
     .values({
-      login_name,
+      login_name: login_name.toLowerCase(),
       password_hash,
     })
     .returningAll()
