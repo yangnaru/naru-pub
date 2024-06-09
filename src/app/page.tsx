@@ -8,7 +8,7 @@ export default function Home() {
         <h2 className="font-bold">설명서</h2>
         <p className="break-keep">사용자당 1GB의 저장 용량이 제공됩니다.</p>
         <p className="break-keep">
-          크기가 큰 음악이나 영상은 되도록 SoundCloud나 YouTube로 게시하고,
+          크기가 큰 음악이나 영상은 되도록 SoundCloud나 YouTube로 게시해 주세요.
         </p>
         <p className="break-keep">
           트래픽을 과도하게 유발하는 행위는 자제해 주세요.
