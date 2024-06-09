@@ -66,8 +66,6 @@ export default function SignUpPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const res = await signUp(values.username, values.password);
-
-    console.log({ res });
   }
 
   return (
