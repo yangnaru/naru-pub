@@ -49,7 +49,11 @@ export default async function RootLayout({
                     <a href="/account">계정</a>
                   </li>
                   <li>
-                    <a href={homepageUrl} className="text-blue-500">
+                    <a
+                      href={homepageUrl}
+                      target="_blank"
+                      className="text-blue-500"
+                    >
                       {homepageUrl}
                     </a>
                   </li>
