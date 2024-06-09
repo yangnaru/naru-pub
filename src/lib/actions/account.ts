@@ -8,6 +8,7 @@ import { hash, verify } from "@node-rs/argon2";
 import { redirect } from "next/navigation";
 import { getUserHomeDirectory } from "../server-utils";
 import path from "path";
+import { DEFAULT_INDEX_HTML } from "../const";
 
 async function prepareUserHomeDirectory(userName: string) {
   // Create user directory if it does not exist
@@ -23,7 +24,7 @@ async function prepareUserHomeDirectory(userName: string) {
     "index.html"
   );
   if (!fs.existsSync(indexHtml)) {
-    fs.writeFileSync(indexHtml, "안녕, 세상?");
+    fs.writeFileSync(indexHtml, DEFAULT_INDEX_HTML);
   }
 }
 

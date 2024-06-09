@@ -33,3 +33,16 @@ export const EDITABLE_FILE_EXTENSIONS = [
   "txt",
   "js",
 ];
+
+export const DEFAULT_INDEX_HTML = `<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>나루</title>
+  </head>
+  <body>
+    <h1>안녕, 세상?</h1>
+  </body>
+</html>
+`;
