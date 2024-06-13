@@ -143,11 +143,19 @@ export async function setDiscoverable(discoverable: boolean) {
     return false;
   }
 
-  await db
-    .updateTable("users")
-    .set("discoverable", discoverable)
-    .where("id", "=", user.id)
-    .execute();
+  await db.transaction().execute(async (trx) => {
+    await trx
+      .updateTable("users")
+      .set("discoverable", discoverable)
+      .where("id", "=", user.id)
+      .execute();
+
+    await trx
+      .updateTable("users")
+      .set("site_updated_at", new Date())
+      .where("id", "=", user.id)
+      .execute();
+  });
 
   return true;
 }
