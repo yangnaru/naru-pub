@@ -39,7 +39,7 @@ export default async function Home() {
       </div>
       {recentlyUpdatedUsers.length > 0 && (
         <div className="flex flex-col gap-4">
-          <h2 className="font-bold">최근 업데이트된 사이트</h2>
+          <h2 className="font-bold">최근 업데이트된</h2>
           <ol className="flex flex-row flex-wrap gap-2">
             {recentlyUpdatedUsers.map((user) => {
               const homepageUrl = getHomepageUrl(user.login_name);
