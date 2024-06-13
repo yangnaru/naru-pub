@@ -3,18 +3,56 @@
 import fs from "fs";
 import path from "path";
 import { validateRequest } from "../auth";
-import { EDITABLE_FILE_EXTENSIONS } from "../const";
+import { ALLOWED_FILE_EXTENSIONS, EDITABLE_FILE_EXTENSIONS } from "../const";
 import { revalidatePath } from "next/cache";
+
+function assertNoPathTraversal(filename: string) {
+  if (filename.includes("..")) {
+    throw new Error("잘못된 경로입니다.");
+  }
+}
+
+function assertAllowedFilename(filename: string) {
+  const extension = filename.split(".").pop();
+  if (!extension) {
+    throw new Error("확장자를 입력해주세요.");
+  }
+
+  if (!ALLOWED_FILE_EXTENSIONS.includes(extension)) {
+    throw new Error(
+      `지원하지 않는 파일 형식입니다. ${ALLOWED_FILE_EXTENSIONS.join(
+        ", "
+      )} 파일만 생성할 수 있습니다.`
+    );
+  }
+}
+
+function assertEditableFilename(filename: string) {
+  const extension = filename.split(".").pop();
+  if (!extension) {
+    throw new Error("확장자를 입력해주세요.");
+  }
+
+  if (!EDITABLE_FILE_EXTENSIONS.includes(extension)) {
+    throw new Error(
+      `지원하지 않는 파일 형식입니다. ${EDITABLE_FILE_EXTENSIONS.join(
+        ", "
+      )} 파일만 생성할 수 있습니다.`
+    );
+  }
+}
 
 export async function saveFile(filename: string, contents: string) {
   const { user } = await validateRequest();
-
   if (!user) {
     return { success: false, message: "로그인이 필요합니다." };
   }
 
-  if (filename.includes("..")) {
-    return { success: false, message: "잘못된 파일 이름입니다." };
+  try {
+    assertNoPathTraversal(filename);
+    assertEditableFilename(filename);
+  } catch (e: any) {
+    return { success: false, message: e.message };
   }
 
   try {
@@ -37,13 +75,14 @@ export async function saveFile(filename: string, contents: string) {
 
 export async function deleteFile(filename: string) {
   const { user } = await validateRequest();
-
   if (!user) {
     return { success: false, message: "로그인이 필요합니다." };
   }
 
-  if (filename.includes("..")) {
-    return { success: false, message: "잘못된 파일 이름입니다." };
+  try {
+    assertNoPathTraversal(filename);
+  } catch (e: any) {
+    return { success: false, message: e.message };
   }
 
   try {
@@ -60,12 +99,56 @@ export async function deleteFile(filename: string) {
     };
   }
 
-  return true;
+  revalidatePath("/files", "layout");
+
+  return {
+    success: true,
+    message: "파일이 삭제되었습니다.",
+  };
+}
+
+export async function renameFile(filename: string, newFilename: string) {
+  const { user } = await validateRequest();
+  if (!user) {
+    return { success: false, message: "로그인이 필요합니다." };
+  }
+
+  try {
+    assertNoPathTraversal(filename);
+    assertNoPathTraversal(newFilename);
+
+    const stats = fs.statSync(
+      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename)
+    );
+    if (!stats.isDirectory()) {
+      try {
+        assertAllowedFilename(newFilename);
+      } catch (e: any) {
+        return { success: false, message: e.message };
+      }
+    }
+
+    fs.renameSync(
+      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename),
+      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, newFilename)
+    );
+  } catch (e) {
+    return {
+      success: false,
+      message: "파일 이름 변경에 실패했습니다.",
+    };
+  }
+
+  revalidatePath("/files", "layout");
+
+  return {
+    success: true,
+    message: "파일 이름이 변경되었습니다.",
+  };
 }
 
 export async function uploadFile(prevState: any, formData: FormData) {
   const { user } = await validateRequest();
-
   if (!user) {
     return { message: "로그인이 필요합니다." };
   }
@@ -73,20 +156,19 @@ export async function uploadFile(prevState: any, formData: FormData) {
   const file = formData.get("file") as File;
   const directory = formData.get("directory") as string;
 
-  if (directory.includes("..")) {
-    return { success: false, message: "잘못된 경로입니다." };
-  }
-
-  if (file.name.includes("..")) {
-    return { success: false, message: "잘못된 파일 이름입니다." };
-  }
-
   if (file.size === 0) {
     return { message: "빈 파일은 업로드할 수 없습니다." };
   }
 
   if (file.size > 1024 * 1024 * 10) {
     return { message: "10MB 이하의 파일만 업로드할 수 있습니다." };
+  }
+
+  try {
+    assertNoPathTraversal(directory);
+    assertAllowedFilename(file.name);
+  } catch (e: any) {
+    return { success: false, message: e.message };
   }
 
   const data = await file.arrayBuffer();
@@ -114,14 +196,14 @@ export async function uploadFile(prevState: any, formData: FormData) {
 
 export async function createDirectory(directory: string) {
   const { user } = await validateRequest();
-
   if (!user) {
     return { success: false, message: "로그인이 필요합니다." };
   }
 
-  // Check for path traversal in directory
-  if (directory.includes("..")) {
-    return { success: false, message: "잘못된 파일 이름입니다." };
+  try {
+    assertNoPathTraversal(directory);
+  } catch (e: any) {
+    return { success: false, message: e.message };
   }
 
   try {
@@ -134,6 +216,8 @@ export async function createDirectory(directory: string) {
       message: "파일 생성에 실패했습니다.",
     };
   }
+
+  revalidatePath("/files", "layout");
 
   return {
     success: true,
@@ -148,22 +232,27 @@ export async function createFile(directory: string, filename: string) {
     return { success: false, message: "로그인이 필요합니다." };
   }
 
-  // Check for path traversal in filename
-  if (filename.includes("..")) {
-    return { success: false, message: "잘못된 파일 이름입니다." };
+  try {
+    assertNoPathTraversal(directory);
+    assertNoPathTraversal(filename);
+    assertEditableFilename(filename);
+  } catch (e: any) {
+    return { success: false, message: e.message };
   }
 
-  const extension = filename.split(".").pop();
-  if (!extension) {
-    return { success: false, message: "확장자를 입력해주세요." };
-  }
-
-  if (!EDITABLE_FILE_EXTENSIONS.includes(extension)) {
+  if (
+    fs.existsSync(
+      path.join(
+        process.env.USER_HOME_DIRECTORY!,
+        user.loginName,
+        directory,
+        filename
+      )
+    )
+  ) {
     return {
       success: false,
-      message: `지원하지 않는 파일 형식입니다. ${EDITABLE_FILE_EXTENSIONS.join(
-        ", "
-      )} 파일만 생성할 수 있습니다.`,
+      message: "이미 존재하는 파일입니다.",
     };
   }
 
@@ -183,6 +272,8 @@ export async function createFile(directory: string, filename: string) {
       message: "파일 생성에 실패했습니다.",
     };
   }
+
+  revalidatePath("/files", "layout");
 
   return {
     success: true,
