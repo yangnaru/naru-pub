@@ -47,7 +47,7 @@ const formSchema = z
     path: ["passwordConfirm"],
   });
 
-const usernamePlaceholder = "naru";
+const usernamePlaceholder = "example";
 
 export default function SignUpPage() {
   const form = useForm<z.infer<typeof formSchema>>({
