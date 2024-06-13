@@ -14,6 +14,7 @@ export interface Sessions {
 
 export interface Users {
   created_at: Generated<Timestamp>;
+  discoverable: Generated<boolean>;
   email: string | null;
   id: Generated<number>;
   login_name: string;

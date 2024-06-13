@@ -1,6 +1,17 @@
+import { db } from "@/lib/database";
+import { getHomepageUrl } from "@/lib/utils";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default async function Home() {
+  const recentlyUpdatedUsers = await db
+    .selectFrom("users")
+    .selectAll()
+    .where("discoverable", "=", true)
+    .orderBy("site_updated_at", "desc")
+    .limit(100)
+    .execute();
+
   return (
     <div className="flex flex-col gap-16">
       <p>당신의 공간이 되는, 나루.</p>
@@ -26,6 +37,26 @@ export default function Home() {
         </p>
         <p className="break-keep">그럼, 즐거운 하루 되세요!</p>
       </div>
+      {recentlyUpdatedUsers.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <h2 className="font-bold">최근 업데이트된 사이트</h2>
+          <ol className="flex flex-row flex-wrap gap-2">
+            {recentlyUpdatedUsers.map((user) => {
+              const homepageUrl = getHomepageUrl(user.login_name);
+
+              return (
+                <li key={user.id}>
+                  <Button variant="outline" asChild>
+                    <Link href={homepageUrl} target="_blank">
+                      {user.login_name}
+                    </Link>
+                  </Button>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }

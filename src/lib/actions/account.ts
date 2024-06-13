@@ -136,3 +136,18 @@ export async function deleteAccount() {
 
   return redirect("/");
 }
+
+export async function setDiscoverable(discoverable: boolean) {
+  const { user } = await validateRequest();
+  if (!user) {
+    return false;
+  }
+
+  await db
+    .updateTable("users")
+    .set("discoverable", discoverable)
+    .where("id", "=", user.id)
+    .execute();
+
+  return true;
+}

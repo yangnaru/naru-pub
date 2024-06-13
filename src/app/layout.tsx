@@ -4,6 +4,8 @@ import "./globals.css";
 import Link from "next/link";
 import { validateRequest } from "@/lib/auth";
 import Image from "next/image";
+import { Toaster } from "@/components/ui/toaster";
+import { getHomepageUrl } from "@/lib/utils";
 
 const inter = IBM_Plex_Sans_KR({
   subsets: ["latin"],
@@ -21,11 +23,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const { user } = await validateRequest();
-
-  const homepageUrl =
-    process.env.NODE_ENV === "production"
-      ? `https://${user?.loginName}.${process.env.NEXT_PUBLIC_DOMAIN}`
-      : `http://${user?.loginName}.${process.env.NEXT_PUBLIC_DOMAIN}`;
 
   return (
     <html lang="ko">
@@ -50,11 +47,11 @@ export default async function RootLayout({
                   </li>
                   <li>
                     <a
-                      href={homepageUrl}
+                      href={getHomepageUrl(user.loginName)}
                       target="_blank"
                       className="text-blue-500"
                     >
-                      {homepageUrl}
+                      {getHomepageUrl(user.loginName)}
                     </a>
                   </li>
                 </>
@@ -73,6 +70,7 @@ export default async function RootLayout({
 
           {children}
         </div>
+        <Toaster />
       </body>
     </html>
   );
