@@ -3,7 +3,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { less } from "@codemirror/lang-less";
 import { markdown } from "@codemirror/lang-markdown";
 
-export const LOGIN_NAME_REGEX = /^(?!.*--.{0,2}$)[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const LOGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 export const EDITABLE_FILE_EXTENSION_MAP: Record<string, any> = {
   html: html,
