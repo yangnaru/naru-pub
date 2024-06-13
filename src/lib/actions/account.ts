@@ -91,6 +91,55 @@ export async function login(login_name: string, password: string) {
   return true;
 }
 
+export async function changePassword(
+  originalPassword: string,
+  newPassword: string
+) {
+  const { user } = await validateRequest();
+  if (!user) {
+    return {
+      success: false,
+      message: "로그인이 필요합니다.",
+    };
+  }
+
+  const databaseUser = await db
+    .selectFrom("users")
+    .selectAll()
+    .where("id", "=", user.id)
+    .executeTakeFirst();
+  if (!databaseUser) {
+    return {
+      success: false,
+      message: "사용자가 존재하지 않습니다.",
+    };
+  }
+
+  const passwordVerified = await verify(
+    databaseUser.password_hash,
+    originalPassword
+  );
+  if (!passwordVerified) {
+    return {
+      success: false,
+      message: "기존 비밀번호가 일치하지 않습니다.",
+    };
+  }
+
+  const newPasswordHash = await hash(newPassword);
+
+  await db
+    .updateTable("users")
+    .set("password_hash", newPasswordHash)
+    .where("id", "=", user.id)
+    .execute();
+
+  return {
+    success: true,
+    message: "비밀번호가 변경되었습니다.",
+  };
+}
+
 export async function logout() {
   const { session } = await validateRequest();
   if (!session) {

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import LogoutButton from "./LogoutButton";
 import DeleteAccountButton from "./DeleteAccountButton";
 import { DiscoverabilityForm } from "./DiscoverabilityForm";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 export default async function AccountPage() {
   const { user } = await validateRequest();
@@ -23,6 +24,7 @@ export default async function AccountPage() {
       </div>
 
       <DiscoverabilityForm discoverable={user.discoverable} />
+      <ChangePasswordForm />
 
       <div className="flex flex-row gap-4">
         <LogoutButton />
