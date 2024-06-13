@@ -19,18 +19,18 @@ export const EDITABLE_FILE_EXTENSION_MAP: Record<string, any> = {
   js: javascript,
 };
 
-export const EDITABLE_FILE_EXTENSIONS = [
-  "html",
-  "htm",
-  "xml",
-  "xhtml",
-  "svg",
-  "md",
-  "markdown",
-  "mdx",
-  "css",
-  "txt",
-  "js",
+export const EDITABLE_FILE_EXTENSIONS = Object.keys(
+  EDITABLE_FILE_EXTENSION_MAP
+);
+
+export const ALLOWED_FILE_EXTENSIONS = [
+  ...EDITABLE_FILE_EXTENSIONS,
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "webp",
+  "ico",
 ];
 
 export const DEFAULT_INDEX_HTML = `<!DOCTYPE html>

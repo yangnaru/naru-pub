@@ -12,20 +12,17 @@ export function CreateDirectoryButton({
   return (
     <Button
       variant="outline"
-      onClick={() => {
+      onClick={async () => {
         const newDirectory = prompt("폴더 이름을 입력해주세요.");
 
         if (!newDirectory) {
           return;
         }
 
-        createDirectory(path.join(baseDirectory, newDirectory)).then((res) => {
-          if (res.success) {
-            location.reload();
-          } else {
-            alert(res.message);
-          }
-        });
+        const res = await createDirectory(
+          path.join(baseDirectory, newDirectory)
+        );
+        alert(res.message);
       }}
     >
       새 폴더

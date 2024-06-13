@@ -1,4 +1,4 @@
-import DirectoryListing from "@/components/DirectoryListing";
+import DirectoryListing from "@/components/browser/DirectoryListing";
 import { validateRequest } from "@/lib/auth";
 
 export default async function File() {

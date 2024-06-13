@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
-import DirectoryListing from "@/components/DirectoryListing";
-import DirectoryBreadcrumb from "@/components/DirectoryBreadcrumb";
+import DirectoryListing from "@/components/browser/DirectoryListing";
+import DirectoryBreadcrumb from "@/components/browser/DirectoryBreadcrumb";
 import Editor from "@/components/Editor";
 import { validateRequest } from "@/lib/auth";
 
@@ -16,7 +16,8 @@ export default async function EditPage({
     return <div>로그인이 필요합니다.</div>;
   }
 
-  const filename = params.paths.join("/");
+  const decodedPaths = params.paths.map((p) => decodeURIComponent(p));
+  const filename = decodedPaths.join("/");
   const actualFilename = path.join(
     process.env.USER_HOME_DIRECTORY!,
     user.loginName,
@@ -25,7 +26,7 @@ export default async function EditPage({
   const file = fs.statSync(actualFilename);
 
   if (file.isDirectory()) {
-    return <DirectoryListing paths={params.paths} />;
+    return <DirectoryListing paths={decodedPaths} />;
   }
 
   if (!fs.existsSync(actualFilename)) {
@@ -42,7 +43,7 @@ export default async function EditPage({
 
   return (
     <div className="flex flex-col gap-2">
-      <DirectoryBreadcrumb paths={params.paths} />
+      <DirectoryBreadcrumb paths={decodedPaths} />
       <Editor filename={filename} contents={contents} />
     </div>
   );

@@ -7,20 +7,15 @@ export function CreateFileButton({ baseDirectory }: { baseDirectory: string }) {
   return (
     <Button
       variant="outline"
-      onClick={() => {
+      onClick={async () => {
         const filename = prompt("파일 이름을 입력해주세요.");
 
         if (!filename) {
           return;
         }
 
-        createFile(baseDirectory, filename).then((res) => {
-          if (res.success) {
-            location.reload();
-          } else {
-            alert(res.message);
-          }
-        });
+        const res = await createFile(baseDirectory, filename);
+        alert(res.message);
       }}
     >
       새 파일

@@ -21,6 +21,7 @@ import { validateRequest } from "@/lib/auth";
 import { getUserHomeDirectory } from "@/lib/server-utils";
 import { EDITABLE_FILE_EXTENSIONS } from "@/lib/const";
 import { getPublicAssetUrl } from "@/lib/utils";
+import EditFilenameButton from "./EditFilenameButton";
 
 export default async function DirectoryListing({ paths }: { paths: string[] }) {
   const { user } = await validateRequest();
@@ -29,23 +30,24 @@ export default async function DirectoryListing({ paths }: { paths: string[] }) {
     return <div>로그인이 필요합니다.</div>;
   }
 
+  const decodedPaths = paths.map((p) => decodeURIComponent(p));
   const actualDirectory = path.join(
     await getUserHomeDirectory(user.loginName),
-    ...paths
+    ...decodedPaths
   );
   const files = await fs.readdir(actualDirectory, { withFileTypes: true });
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row justify-between">
-        <DirectoryBreadcrumb paths={paths} />
+        <DirectoryBreadcrumb paths={decodedPaths} />
 
         <div className="flex flex-row justify-between gap-2">
           <div className="flex flex-row gap-2">
-            <CreateFileButton baseDirectory={paths.join("/")} />
-            <CreateDirectoryButton baseDirectory={paths.join("/")} />
+            <CreateFileButton baseDirectory={decodedPaths.join("/")} />
+            <CreateDirectoryButton baseDirectory={decodedPaths.join("/")} />
           </div>
-          <UploadButton directory={paths.join("/")} />
+          <UploadButton directory={decodedPaths.join("/")} />
         </div>
       </div>
       <Table>
@@ -53,6 +55,7 @@ export default async function DirectoryListing({ paths }: { paths: string[] }) {
           <TableRow>
             <TableHead className="w-[100px]">종류</TableHead>
             <TableHead>파일(폴더) 이름</TableHead>
+            <TableHead className="text-right">이름 변경</TableHead>
             <TableHead className="text-right">삭제</TableHead>
           </TableRow>
         </TableHeader>
@@ -72,7 +75,7 @@ export default async function DirectoryListing({ paths }: { paths: string[] }) {
                 ) || file.isDirectory() ? (
                   <Link
                     href={`/files/edit/${path.join(
-                      paths.join("/"),
+                      decodedPaths.join("/"),
                       file.name
                     )}`}
                   >
@@ -82,7 +85,7 @@ export default async function DirectoryListing({ paths }: { paths: string[] }) {
                   <Link
                     href={getPublicAssetUrl(
                       user.loginName,
-                      path.join(paths.join("/"), file.name)
+                      path.join(decodedPaths.join("/"), file.name)
                     )}
                     target="_blank"
                   >
@@ -91,8 +94,13 @@ export default async function DirectoryListing({ paths }: { paths: string[] }) {
                 )}
               </TableCell>
               <TableCell className="text-right">
+                <EditFilenameButton
+                  filename={path.join(decodedPaths.join("/"), file.name)}
+                />
+              </TableCell>
+              <TableCell className="text-right">
                 <DeleteButton
-                  filename={path.join(paths.join("/"), file.name)}
+                  filename={path.join(decodedPaths.join("/"), file.name)}
                 />
               </TableCell>
             </TableRow>

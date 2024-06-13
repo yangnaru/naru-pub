@@ -12,11 +12,8 @@ export default function DeleteButton({ filename }: { filename: string }) {
           return;
         }
 
-        if (await deleteFile(filename)) {
-          alert("삭제되었습니다.");
-
-          location.reload();
-        }
+        const res = await deleteFile(filename);
+        alert(res.message);
       }}
     >
       삭제
