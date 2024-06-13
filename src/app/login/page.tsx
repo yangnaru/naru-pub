@@ -14,9 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { login, signUp } from "@/lib/actions/account";
+import { login } from "@/lib/actions/account";
 import { LOGIN_NAME_REGEX } from "@/lib/const";
-import { redirect } from "next/navigation";
 
 const formSchema = z.object({
   username: z
@@ -60,7 +59,10 @@ export default function LoginPage() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 max-w-fit"
+      >
         <FormField
           control={form.control}
           name="username"
