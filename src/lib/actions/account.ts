@@ -33,14 +33,26 @@ export async function signUp(login_name: string, password: string) {
 
   await prepareUserHomeDirectory(login_name);
 
-  const user = await db
-    .insertInto("users")
-    .values({
-      login_name: login_name.toLowerCase(),
-      password_hash,
-    })
-    .returningAll()
-    .execute();
+  let user;
+  try {
+    user = await db
+      .insertInto("users")
+      .values({
+        login_name: login_name.toLowerCase(),
+        password_hash,
+      })
+      .returningAll()
+      .execute();
+  } catch (e: any) {
+    if (e.message.includes("users_login_name_key")) {
+      return {
+        success: false,
+        message: "이미 사용 중인 아이디입니다.",
+      };
+    }
+
+    throw e;
+  }
 
   const session = await lucia.createSession(user[0].id, {});
   const sessionCookie = lucia.createSessionCookie(session.id);
@@ -51,7 +63,10 @@ export async function signUp(login_name: string, password: string) {
     sessionCookie.attributes
   );
 
-  redirect("/");
+  return {
+    success: true,
+    message: "가입이 완료되었습니다.",
+  };
 }
 
 export async function login(login_name: string, password: string) {

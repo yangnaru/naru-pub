@@ -66,6 +66,15 @@ export default function SignUpPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const res = await signUp(values.username, values.password);
+
+    if (!res.success) {
+      form.setError("username", {
+        type: "manual",
+        message: res.message,
+      });
+    } else {
+      window.location.href = "/";
+    }
   }
 
   return (
