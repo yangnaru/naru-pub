@@ -18,6 +18,7 @@ export interface Users {
   id: Generated<number>;
   login_name: string;
   password_hash: string;
+  site_updated_at: Timestamp | null;
 }
 
 export interface DB {

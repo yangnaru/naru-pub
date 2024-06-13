@@ -5,6 +5,8 @@ import path from "path";
 import { validateRequest } from "../auth";
 import { ALLOWED_FILE_EXTENSIONS, EDITABLE_FILE_EXTENSIONS } from "../const";
 import { revalidatePath } from "next/cache";
+import { db } from "../database";
+import { User } from "lucia";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -42,6 +44,16 @@ function assertEditableFilename(filename: string) {
   }
 }
 
+async function updateSiteUpdatedAt(user: User) {
+  return await db
+    .updateTable("users")
+    .set({
+      site_updated_at: new Date(),
+    })
+    .where("users.id", "=", user.id)
+    .execute();
+}
+
 export async function saveFile(filename: string, contents: string) {
   const { user } = await validateRequest();
   if (!user) {
@@ -67,6 +79,7 @@ export async function saveFile(filename: string, contents: string) {
     };
   }
 
+  await updateSiteUpdatedAt(user);
   return {
     success: true,
     message: "파일이 저장되었습니다.",
@@ -100,7 +113,7 @@ export async function deleteFile(filename: string) {
   }
 
   revalidatePath("/files", "layout");
-
+  await updateSiteUpdatedAt(user);
   return {
     success: true,
     message: "파일이 삭제되었습니다.",
@@ -140,7 +153,7 @@ export async function renameFile(filename: string, newFilename: string) {
   }
 
   revalidatePath("/files", "layout");
-
+  await updateSiteUpdatedAt(user);
   return {
     success: true,
     message: "파일 이름이 변경되었습니다.",
@@ -190,7 +203,7 @@ export async function uploadFile(prevState: any, formData: FormData) {
   }
 
   revalidatePath("/files", "layout");
-
+  await updateSiteUpdatedAt(user);
   return { success: true, message: "업로드되었습니다." };
 }
 
@@ -218,7 +231,7 @@ export async function createDirectory(directory: string) {
   }
 
   revalidatePath("/files", "layout");
-
+  await updateSiteUpdatedAt(user);
   return {
     success: true,
     message: "폴더가 생성되었습니다.",
@@ -274,7 +287,7 @@ export async function createFile(directory: string, filename: string) {
   }
 
   revalidatePath("/files", "layout");
-
+  await updateSiteUpdatedAt(user);
   return {
     success: true,
     message: "파일이 생성되었습니다.",
