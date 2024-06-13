@@ -59,7 +59,10 @@ export default function ChangePasswordForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 max-w-fit"
+      >
         <FormField
           control={form.control}
           name="originalPassword"
