@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { login } from "@/lib/actions/account";
 import { LOGIN_NAME_REGEX } from "@/lib/const";
+import { toast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
   username: z
@@ -50,10 +51,8 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const res = await login(values.username, values.password);
 
-    if (!res) {
+    if (!res.success) {
       toast({ title: "로그인에 실패했습니다." });
-    } else {
-      window.location.href = "/";
     }
   }
 
