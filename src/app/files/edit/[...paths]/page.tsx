@@ -23,11 +23,6 @@ export default async function EditPage({
     user.loginName,
     filename
   );
-  const file = fs.statSync(actualFilename);
-
-  if (file.isDirectory()) {
-    return <DirectoryListing paths={decodedPaths} />;
-  }
 
   if (!fs.existsSync(actualFilename)) {
     return (
@@ -37,6 +32,12 @@ export default async function EditPage({
         <h1>파일을 찾을 수 없습니다.</h1>
       </div>
     );
+  }
+
+  const file = fs.statSync(actualFilename);
+
+  if (file.isDirectory()) {
+    return <DirectoryListing paths={decodedPaths} />;
   }
 
   const contents = fs.readFileSync(actualFilename, "utf-8");
