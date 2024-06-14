@@ -83,13 +83,18 @@ export async function login(login_name: string, password: string) {
     .executeTakeFirst();
 
   if (!existingUser) {
-    return false;
+    return {
+      success: false,
+      message: "아이디 또는 비밀번호가 일치하지 않습니다.",
+    };
   }
 
   const passwordVerified = await verify(existingUser.password_hash, password);
-
   if (!passwordVerified) {
-    return false;
+    return {
+      success: false,
+      message: "아이디 또는 비밀번호가 일치하지 않습니다.",
+    };
   }
 
   await prepareUserHomeDirectory(login_name);
@@ -103,7 +108,7 @@ export async function login(login_name: string, password: string) {
     sessionCookie.attributes
   );
 
-  return true;
+  redirect("/");
 }
 
 export async function changePassword(

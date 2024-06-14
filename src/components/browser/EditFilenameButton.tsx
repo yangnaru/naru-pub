@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { renameFile } from "@/lib/actions/file";
+import { toast } from "../ui/use-toast";
 
 export default function DeleteButton({ filename }: { filename: string }) {
   return (
@@ -14,7 +15,10 @@ export default function DeleteButton({ filename }: { filename: string }) {
         }
 
         const res = await renameFile(filename, newFilename);
-        alert(res.message);
+        toast({
+          title: res.message,
+          description: `${filename} → ${newFilename}`,
+        });
       }}
     >
       이름 변경

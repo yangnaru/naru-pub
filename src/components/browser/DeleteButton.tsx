@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { deleteFile } from "@/lib/actions/file";
+import { toast } from "../ui/use-toast";
 
 export default function DeleteButton({ filename }: { filename: string }) {
   return (
@@ -13,7 +14,7 @@ export default function DeleteButton({ filename }: { filename: string }) {
         }
 
         const res = await deleteFile(filename);
-        alert(res.message);
+        toast({ title: res.message, description: filename });
       }}
     >
       삭제

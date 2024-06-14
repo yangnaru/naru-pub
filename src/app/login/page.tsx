@@ -51,7 +51,7 @@ export default function LoginPage() {
     const res = await login(values.username, values.password);
 
     if (!res) {
-      alert("로그인에 실패했습니다.");
+      toast({ title: "로그인에 실패했습니다." });
     } else {
       window.location.href = "/";
     }

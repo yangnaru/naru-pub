@@ -2,6 +2,7 @@
 
 import { createFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
+import { toast } from "../ui/use-toast";
 
 export function CreateFileButton({ baseDirectory }: { baseDirectory: string }) {
   return (
@@ -15,7 +16,7 @@ export function CreateFileButton({ baseDirectory }: { baseDirectory: string }) {
         }
 
         const res = await createFile(baseDirectory, filename);
-        alert(res.message);
+        toast({ title: res.message, description: filename });
       }}
     >
       새 파일

@@ -6,6 +6,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { saveFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
+import { toast } from "./ui/use-toast";
 
 export default function Editor({
   filename,
@@ -40,9 +41,10 @@ export default function Editor({
         value="저장"
         onClick={async () => {
           const res = await saveFile(filename, value);
-          if (res.success) {
-            alert(res.message);
-          }
+          toast({
+            title: res.message,
+            description: filename,
+          });
         }}
       >
         저장
