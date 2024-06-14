@@ -108,7 +108,10 @@ export async function login(login_name: string, password: string) {
     sessionCookie.attributes
   );
 
-  redirect("/");
+  return {
+    success: true,
+    message: "로그인되었습니다.",
+  };
 }
 
 export async function changePassword(
