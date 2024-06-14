@@ -14,7 +14,10 @@ export default function DeleteButton({ filename }: { filename: string }) {
           return;
         }
 
-        const res = await renameFile(filename, newFilename);
+        const originalPath = filename.split("/");
+        const newPath = `${originalPath.slice(0, -1).join("/")}/${newFilename}`;
+
+        const res = await renameFile(filename, newPath);
         toast({
           title: res.message,
           description: `${filename} → ${newFilename}`,
