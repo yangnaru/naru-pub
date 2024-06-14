@@ -98,6 +98,13 @@ export async function deleteFile(filename: string) {
     return { success: false, message: e.message };
   }
 
+  if (filename === "/index.html") {
+    return {
+      success: false,
+      message: "홈 페이지는 삭제할 수 없습니다.",
+    };
+  }
+
   try {
     fs.rmSync(
       path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename),
@@ -129,6 +136,13 @@ export async function renameFile(filename: string, newFilename: string) {
   try {
     assertNoPathTraversal(filename);
     assertNoPathTraversal(newFilename);
+
+    if (filename === "/index.html") {
+      return {
+        success: false,
+        message: "홈 페이지 이름은 변경할 수 없습니다.",
+      };
+    }
 
     const stats = fs.statSync(
       path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename)
