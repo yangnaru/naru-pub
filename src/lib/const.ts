@@ -23,8 +23,18 @@ export const EDITABLE_FILE_EXTENSIONS = Object.keys(
   EDITABLE_FILE_EXTENSION_MAP
 );
 
+export const AUDIO_FILE_EXTENSIONS = [
+  "ogg",
+  "wav",
+  "mp3",
+  "opus",
+  "mid",
+  "midi",
+];
+
 export const ALLOWED_FILE_EXTENSIONS = [
   ...EDITABLE_FILE_EXTENSIONS,
+  ...AUDIO_FILE_EXTENSIONS,
   "png",
   "jpg",
   "jpeg",
