@@ -7,6 +7,7 @@ import { ALLOWED_FILE_EXTENSIONS, EDITABLE_FILE_EXTENSIONS } from "../const";
 import { revalidatePath } from "next/cache";
 import { db } from "../database";
 import { User } from "lucia";
+import * as Sentry from "@sentry/nextjs";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -79,7 +80,12 @@ export async function saveFile(filename: string, contents: string) {
     };
   }
 
-  await updateSiteUpdatedAt(user);
+  try {
+    await updateSiteUpdatedAt(user);
+  } catch (e) {
+    Sentry.captureException(e);
+  }
+
   return {
     success: true,
     message: "파일이 저장되었습니다.",
