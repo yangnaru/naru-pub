@@ -232,9 +232,12 @@ export async function uploadFile(prevState: any, formData: FormData) {
     return { message: "파일을 선택해주세요." };
   }
 
-  await Promise.all(
-    files.map((file) => uploadSingleFile(user, directory, file))
-  );
+  for (const file of files) {
+    const result = await uploadSingleFile(user, directory, file);
+    if (!result.success) {
+      return result;
+    }
+  }
 
   return { success: true, message: "업로드되었습니다." };
 }
