@@ -13,7 +13,7 @@ export default function UploadButton({ directory }: { directory: string }) {
   return (
     <form action={formAction} className="flex flex-row gap-2">
       <Input type="hidden" name="directory" value={directory} />
-      <Input id="file" type="file" name="file" />
+      <Input id="file" type="file" name="file" multiple />
       <Button type="submit">업로드</Button>
       {state.message && <p>{state.message}</p>}
     </form>

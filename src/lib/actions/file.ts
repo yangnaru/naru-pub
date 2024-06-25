@@ -180,15 +180,7 @@ export async function renameFile(filename: string, newFilename: string) {
   };
 }
 
-export async function uploadFile(prevState: any, formData: FormData) {
-  const { user } = await validateRequest();
-  if (!user) {
-    return { message: "로그인이 필요합니다." };
-  }
-
-  const file = formData.get("file") as File;
-  const directory = formData.get("directory") as string;
-
+async function uploadSingleFile(user: User, directory: string, file: File) {
   if (file.size === 0) {
     return { message: "빈 파일은 업로드할 수 없습니다." };
   }
@@ -224,6 +216,26 @@ export async function uploadFile(prevState: any, formData: FormData) {
 
   revalidatePath("/files", "layout");
   await updateSiteUpdatedAt(user);
+  return { success: true, message: "업로드되었습니다." };
+}
+
+export async function uploadFile(prevState: any, formData: FormData) {
+  const { user } = await validateRequest();
+  if (!user) {
+    return { message: "로그인이 필요합니다." };
+  }
+
+  const directory = formData.get("directory") as string;
+  const files = formData.getAll("file") as File[];
+
+  if (!files.length) {
+    return { message: "파일을 선택해주세요." };
+  }
+
+  await Promise.all(
+    files.map((file) => uploadSingleFile(user, directory, file))
+  );
+
   return { success: true, message: "업로드되었습니다." };
 }
 
