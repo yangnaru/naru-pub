@@ -1,5 +1,6 @@
 import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
+import { json } from "@codemirror/lang-json";
 import { less } from "@codemirror/lang-less";
 import { markdown } from "@codemirror/lang-markdown";
 
@@ -17,6 +18,7 @@ export const EDITABLE_FILE_EXTENSION_MAP: Record<string, any> = {
   css: less,
   txt: null,
   js: javascript,
+  json: json,
 };
 
 export const EDITABLE_FILE_EXTENSIONS = Object.keys(
