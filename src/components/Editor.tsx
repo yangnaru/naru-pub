@@ -41,10 +41,17 @@ export default function Editor({
         value="저장"
         onClick={async () => {
           const res = await saveFile(filename, value);
-          toast({
-            title: res.message,
-            description: filename,
-          });
+          if (res.success) {
+            toast({
+              title: res.message,
+              description: filename,
+            });
+          } else {
+            toast({
+              title: "저장 실패",
+              description: res.message,
+            });
+          }
         }}
       >
         저장

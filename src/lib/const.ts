@@ -21,6 +21,38 @@ export const EDITABLE_FILE_EXTENSION_MAP: Record<string, any> = {
   json: json,
 };
 
+export const FILE_EXTENSION_MIMETYPE_MAP: Record<
+  | keyof typeof EDITABLE_FILE_EXTENSION_MAP
+  | (typeof AUDIO_FILE_EXTENSIONS)[number]
+  | (typeof IMAGE_FILE_EXTENSIONS)[number],
+  string
+> = {
+  html: "text/html",
+  htm: "text/html",
+  xml: "application/xml",
+  xhtml: "application/xhtml+xml",
+  svg: "image/svg+xml",
+  md: "text/markdown",
+  markdown: "text/markdown",
+  mdx: "text/markdown",
+  css: "text/css",
+  txt: "text/plain",
+  js: "application/javascript",
+  json: "application/json",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp",
+  ico: "image/x-icon",
+  ogg: "audio/ogg",
+  wav: "audio/wav",
+  mp3: "audio/mpeg",
+  opus: "audio/opus",
+  mid: "audio/midi",
+  midi: "audio/midi",
+};
+
 export const EDITABLE_FILE_EXTENSIONS = Object.keys(
   EDITABLE_FILE_EXTENSION_MAP
 );
@@ -34,15 +66,19 @@ export const AUDIO_FILE_EXTENSIONS = [
   "midi",
 ];
 
-export const ALLOWED_FILE_EXTENSIONS = [
-  ...EDITABLE_FILE_EXTENSIONS,
-  ...AUDIO_FILE_EXTENSIONS,
+export const IMAGE_FILE_EXTENSIONS = [
   "png",
   "jpg",
   "jpeg",
   "gif",
   "webp",
   "ico",
+];
+
+export const ALLOWED_FILE_EXTENSIONS = [
+  ...EDITABLE_FILE_EXTENSIONS,
+  ...AUDIO_FILE_EXTENSIONS,
+  ...IMAGE_FILE_EXTENSIONS,
 ];
 
 export const DEFAULT_INDEX_HTML = `<!DOCTYPE html>

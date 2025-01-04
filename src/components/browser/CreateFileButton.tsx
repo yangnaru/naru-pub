@@ -16,7 +16,10 @@ export function CreateFileButton({ baseDirectory }: { baseDirectory: string }) {
         }
 
         const res = await createFile(baseDirectory, filename);
-        toast({ title: res.message, description: filename });
+
+        if (res?.success) {
+          toast({ title: res.message, description: filename });
+        }
       }}
     >
       새 파일

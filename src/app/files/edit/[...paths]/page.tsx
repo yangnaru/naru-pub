@@ -1,9 +1,14 @@
 import path from "path";
-import fs from "fs";
 import DirectoryListing from "@/components/browser/DirectoryListing";
 import DirectoryBreadcrumb from "@/components/browser/DirectoryBreadcrumb";
 import Editor from "@/components/Editor";
 import { validateRequest } from "@/lib/auth";
+import {
+  GetObjectCommand,
+  HeadObjectCommand,
+  NotFound,
+} from "@aws-sdk/client-s3";
+import { getUserHomeDirectory, s3Client } from "@/lib/utils";
 
 export default async function EditPage({
   params,
@@ -18,34 +23,36 @@ export default async function EditPage({
 
   const decodedPaths = params.paths.map((p) => decodeURIComponent(p));
   const filename = decodedPaths.join("/");
-  const actualFilename = path.join(
-    process.env.USER_HOME_DIRECTORY!,
-    user.loginName,
-    filename
-  );
+  const actualFilename = path
+    .join(getUserHomeDirectory(user.loginName), ...decodedPaths)
+    .replaceAll("//", "/");
 
-  if (!fs.existsSync(actualFilename)) {
-    return (
-      <div>
-        <h1>{filename}</h1>
-
-        <h1>파일을 찾을 수 없습니다.</h1>
-      </div>
-    );
+  const headCommand = new HeadObjectCommand({
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: actualFilename,
+  });
+  try {
+    await s3Client.send(headCommand);
+  } catch (e) {
+    if (e instanceof NotFound) {
+      return <DirectoryListing paths={[...decodedPaths, "/"]} />;
+    }
+    throw e;
   }
 
-  const file = fs.statSync(actualFilename);
-
-  if (file.isDirectory()) {
-    return <DirectoryListing paths={decodedPaths} />;
-  }
-
-  const contents = fs.readFileSync(actualFilename, "utf-8");
+  const getCommand = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: actualFilename,
+  });
+  const get = await s3Client.send(getCommand);
 
   return (
     <div className="flex flex-col gap-2">
       <DirectoryBreadcrumb paths={decodedPaths} />
-      <Editor filename={filename} contents={contents} />
+      <Editor
+        filename={filename}
+        contents={(await get.Body?.transformToString()) || ""}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import fs from "fs/promises";
+import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 import Link from "next/link";
 import DeleteButton from "./DeleteButton";
 import UploadButton from "./UploadButton";
@@ -18,9 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { CreateFileButton } from "./CreateFileButton";
 import DirectoryBreadcrumb from "./DirectoryBreadcrumb";
 import { validateRequest } from "@/lib/auth";
-import { getUserHomeDirectory } from "@/lib/server-utils";
 import { EDITABLE_FILE_EXTENSIONS } from "@/lib/const";
-import { getPublicAssetUrl } from "@/lib/utils";
+import { getPublicAssetUrl, getUserHomeDirectory, s3Client } from "@/lib/utils";
 import EditFilenameButton from "./EditFilenameButton";
 
 export default async function DirectoryListing({ paths }: { paths: string[] }) {
@@ -31,11 +30,35 @@ export default async function DirectoryListing({ paths }: { paths: string[] }) {
   }
 
   const decodedPaths = paths.map((p) => decodeURIComponent(p));
-  const actualDirectory = path.join(
-    await getUserHomeDirectory(user.loginName),
+  const prefix = path.join(
+    getUserHomeDirectory(user.loginName),
     ...decodedPaths
   );
-  const files = await fs.readdir(actualDirectory, { withFileTypes: true });
+
+  // List objects in S3 with the given prefix
+  const command = new ListObjectsV2Command({
+    Bucket: process.env.S3_BUCKET_NAME,
+    Prefix: prefix,
+    Delimiter: "/",
+  });
+
+  const response = await s3Client.send(command);
+
+  // Convert S3 response to a format similar to fs.Dirent
+  const files = [
+    ...(response.CommonPrefixes?.map((prefix) => ({
+      name: path.basename(prefix.Prefix!),
+      isDirectory: () => true,
+    })) || []),
+    ...(response.Contents?.filter(
+      (content) =>
+        // Filter out the current directory
+        content.Key !== prefix
+    ).map((content) => ({
+      name: path.basename(content.Key!),
+      isDirectory: () => false,
+    })) || []),
+  ];
 
   return (
     <div className="flex flex-col gap-4">

@@ -6,25 +6,47 @@ import { lucia, validateRequest } from "../auth";
 import { db } from "../database";
 import { hash, verify } from "@node-rs/argon2";
 import { redirect } from "next/navigation";
-import { getUserHomeDirectory } from "../server-utils";
-import path from "path";
 import { DEFAULT_INDEX_HTML } from "../const";
+import {
+  PutObjectCommand,
+  HeadObjectCommand,
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
+import { getUserHomeDirectory, s3Client } from "../utils";
 
 async function prepareUserHomeDirectory(userName: string) {
-  // Create user directory if it does not exist
-  const userHomeDirectory = await getUserHomeDirectory(userName);
-  if (!fs.existsSync(userHomeDirectory)) {
-    fs.mkdirSync(userHomeDirectory);
-  }
+  const bucketName = process.env.S3_BUCKET_NAME!;
 
-  // if index.html does not exist, create it
-  const indexHtml = path.join(
-    process.env.USER_HOME_DIRECTORY!,
-    userName,
-    "index.html"
-  );
-  if (!fs.existsSync(indexHtml)) {
-    fs.writeFileSync(indexHtml, DEFAULT_INDEX_HTML);
+  // Check if index.html exists
+  try {
+    await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: bucketName,
+        Key: `${getUserHomeDirectory(userName)}/index.html`.replaceAll(
+          "//",
+          "/"
+        ),
+      })
+    );
+  } catch (error: any) {
+    // If file doesn't exist (404), create it
+    if (error.$metadata?.httpStatusCode === 404) {
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: `${getUserHomeDirectory(userName)}/index.html`.replaceAll(
+            "//",
+            "/"
+          ),
+          Body: DEFAULT_INDEX_HTML,
+          ContentType: "text/html",
+        })
+      );
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -96,8 +118,6 @@ export async function login(login_name: string, password: string) {
       message: "아이디 또는 비밀번호가 일치하지 않습니다.",
     };
   }
-
-  await prepareUserHomeDirectory(login_name);
 
   const session = await lucia.createSession(existingUser.id, {});
   const sessionCookie = lucia.createSessionCookie(session.id);
@@ -191,9 +211,25 @@ export async function deleteAccount() {
     };
   }
 
-  // Delete user directory
-  const userHomeDirectory = await getUserHomeDirectory(user.loginName);
-  fs.rmSync(userHomeDirectory, { recursive: true });
+  // List all objects with user's prefix
+  const listCommand = new ListObjectsV2Command({
+    Bucket: process.env.S3_BUCKET_NAME!,
+    Prefix: getUserHomeDirectory(user.loginName),
+  });
+
+  const objects = await s3Client.send(listCommand);
+
+  if (objects.Contents && objects.Contents.length > 0) {
+    // Delete all objects in batch
+    await s3Client.send(
+      new DeleteObjectsCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Delete: {
+          Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
+        },
+      })
+    );
+  }
 
   await db.deleteFrom("users").where("id", "=", user.id).execute();
 

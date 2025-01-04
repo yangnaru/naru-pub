@@ -1,13 +1,26 @@
 "use server";
 
-import fs from "fs";
-import path from "path";
+import {
+  PutObjectCommand,
+  DeleteObjectCommand,
+  CopyObjectCommand,
+  HeadObjectCommand,
+  NotFound,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+} from "@aws-sdk/client-s3";
 import { validateRequest } from "../auth";
-import { ALLOWED_FILE_EXTENSIONS, EDITABLE_FILE_EXTENSIONS } from "../const";
+import {
+  ALLOWED_FILE_EXTENSIONS,
+  DEFAULT_INDEX_HTML,
+  EDITABLE_FILE_EXTENSIONS,
+  FILE_EXTENSION_MIMETYPE_MAP,
+} from "../const";
 import { revalidatePath } from "next/cache";
 import { db } from "../database";
 import { User } from "lucia";
 import * as Sentry from "@sentry/nextjs";
+import { getUserHomeDirectory, s3Client } from "../utils";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -69,9 +82,13 @@ export async function saveFile(filename: string, contents: string) {
   }
 
   try {
-    fs.writeFileSync(
-      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename),
-      contents
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Key: `${getUserHomeDirectory(user.loginName)}/${filename}`,
+        Body: contents,
+        ContentType: FILE_EXTENSION_MIMETYPE_MAP[filename.split(".").pop()!],
+      })
     );
   } catch (e) {
     return {
@@ -111,13 +128,30 @@ export async function deleteFile(filename: string) {
     };
   }
 
+  const key = `${getUserHomeDirectory(user.loginName)}/${filename}`.replaceAll(
+    "//",
+    "/"
+  );
+
   try {
-    fs.rmSync(
-      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename),
-      {
-        recursive: true,
-      }
-    );
+    // List all objects with the prefix
+    const listCommand = new ListObjectsV2Command({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Prefix: key,
+    });
+    const objects = await s3Client.send(listCommand);
+
+    // Delete all objects with the prefix
+    if (objects.Contents && objects.Contents.length > 0) {
+      await s3Client.send(
+        new DeleteObjectsCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Delete: {
+            Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
+          },
+        })
+      );
+    }
   } catch (e) {
     return {
       success: false,
@@ -139,38 +173,34 @@ export async function renameFile(filename: string, newFilename: string) {
     return { success: false, message: "로그인이 필요합니다." };
   }
 
-  try {
-    assertNoPathTraversal(filename);
-    assertNoPathTraversal(newFilename);
+  assertNoPathTraversal(filename);
+  assertNoPathTraversal(newFilename);
 
-    if (filename === "/index.html") {
-      return {
-        success: false,
-        message: "홈 페이지 이름은 변경할 수 없습니다.",
-      };
-    }
-
-    const stats = fs.statSync(
-      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename)
-    );
-    if (!stats.isDirectory()) {
-      try {
-        assertAllowedFilename(newFilename);
-      } catch (e: any) {
-        return { success: false, message: e.message };
-      }
-    }
-
-    fs.renameSync(
-      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, filename),
-      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, newFilename)
-    );
-  } catch (e) {
+  if (filename === "/index.html") {
     return {
       success: false,
-      message: "파일 이름 변경에 실패했습니다.",
+      message: "홈 페이지 이름은 변경할 수 없습니다.",
     };
   }
+
+  // Copy the object to new location
+  await s3Client.send(
+    new CopyObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      CopySource: `${process.env.S3_BUCKET_NAME}/${getUserHomeDirectory(
+        user.loginName
+      )}/${filename}`,
+      Key: `${getUserHomeDirectory(user.loginName)}/${newFilename}`,
+    })
+  );
+
+  // Delete the old object
+  await s3Client.send(
+    new DeleteObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Key: `${getUserHomeDirectory(user.loginName)}/${filename}`,
+    })
+  );
 
   revalidatePath("/files", "layout");
   await updateSiteUpdatedAt(user);
@@ -197,15 +227,17 @@ async function uploadSingleFile(user: User, directory: string, file: File) {
   }
 
   const data = await file.arrayBuffer();
+  const key = `${getUserHomeDirectory(user.loginName)}/${directory}${
+    file.name
+  }`.replaceAll("//", "/");
   try {
-    fs.writeFileSync(
-      path.join(
-        process.env.USER_HOME_DIRECTORY!,
-        user.loginName,
-        directory,
-        file.name
-      ),
-      Buffer.from(data)
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Key: key,
+        Body: Buffer.from(data),
+        ContentType: FILE_EXTENSION_MIMETYPE_MAP[file.name.split(".").pop()!],
+      })
     );
   } catch (e) {
     return {
@@ -254,15 +286,34 @@ export async function createDirectory(directory: string) {
     return { success: false, message: e.message };
   }
 
+  const key = `${getUserHomeDirectory(
+    user.loginName
+  )}/${directory}/index.html`.replaceAll("//", "/");
   try {
-    fs.mkdirSync(
-      path.join(process.env.USER_HOME_DIRECTORY!, user.loginName, directory)
+    await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Key: key,
+      })
     );
   } catch (e) {
-    return {
-      success: false,
-      message: "파일 생성에 실패했습니다.",
-    };
+    if (e instanceof NotFound) {
+      try {
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: key,
+            Body: DEFAULT_INDEX_HTML,
+            ContentType: FILE_EXTENSION_MIMETYPE_MAP["html"],
+          })
+        );
+      } catch (e) {
+        return {
+          success: false,
+          message: "파일 생성에 실패했습니다.",
+        };
+      }
+    }
   }
 
   revalidatePath("/files", "layout");
@@ -288,43 +339,29 @@ export async function createFile(directory: string, filename: string) {
     return { success: false, message: e.message };
   }
 
-  if (
-    fs.existsSync(
-      path.join(
-        process.env.USER_HOME_DIRECTORY!,
-        user.loginName,
-        directory,
-        filename
-      )
-    )
-  ) {
-    return {
-      success: false,
-      message: "이미 존재하는 파일입니다.",
-    };
-  }
-
+  const key = `${getUserHomeDirectory(
+    user.loginName
+  )}/${directory}/${filename}`.replaceAll("//", "/");
   try {
-    fs.writeFileSync(
-      path.join(
-        process.env.USER_HOME_DIRECTORY!,
-        user.loginName,
-        directory,
-        filename
-      ),
-      ""
+    await s3Client.send(
+      new HeadObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Key: key,
+      })
     );
   } catch (e) {
+    if (e instanceof NotFound) {
+      revalidatePath("/files", "layout");
+      await updateSiteUpdatedAt(user);
+      return {
+        success: true,
+        message: "파일이 생성되었습니다.",
+      };
+    }
+
     return {
       success: false,
       message: "파일 생성에 실패했습니다.",
     };
   }
-
-  revalidatePath("/files", "layout");
-  await updateSiteUpdatedAt(user);
-  return {
-    success: true,
-    message: "파일이 생성되었습니다.",
-  };
 }
