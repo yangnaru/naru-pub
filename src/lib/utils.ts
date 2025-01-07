@@ -21,7 +21,7 @@ export function getHomepageUrl(username: string) {
 }
 
 export function getUserHomeDirectory(loginName: string) {
-  return `${process.env.USER_HOME_PREFIX!}${loginName}`;
+  return `${loginName}`;
 }
 
 export const s3Client = new S3Client({
