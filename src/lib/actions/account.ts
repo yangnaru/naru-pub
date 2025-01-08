@@ -1,6 +1,5 @@
 "use server";
 
-import fs from "fs";
 import { cookies } from "next/headers";
 import { lucia, validateRequest } from "../auth";
 import { db } from "../database";
@@ -10,7 +9,6 @@ import { DEFAULT_INDEX_HTML } from "../const";
 import {
   PutObjectCommand,
   HeadObjectCommand,
-  DeleteObjectCommand,
   DeleteObjectsCommand,
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
