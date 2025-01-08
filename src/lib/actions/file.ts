@@ -22,6 +22,36 @@ import { User } from "lucia";
 import * as Sentry from "@sentry/nextjs";
 import { getUserHomeDirectory, s3Client } from "../utils";
 
+async function invalidateCloudflareCacheSingleFile(
+  user: User,
+  filename: string
+) {
+  // Invalidate Cloudflare cache
+  // Purge Cached Content: POST /zones/{zone_id}/purge_cache
+  const zoneId = process.env.CLOUDFLARE_ZONE_ID!;
+  const userApiToken = process.env.CLOUDFLARE_USER_API_TOKEN!;
+  const url = `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${userApiToken}`,
+    },
+    body: JSON.stringify({
+      files: [
+        `${getUserHomeDirectory(user.loginName)}/${filename}`.replaceAll(
+          "//",
+          "/"
+        ),
+      ],
+    }),
+  });
+  if (!response.ok) {
+    Sentry.captureException(response);
+  }
+  return response.ok;
+}
+
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
     throw new Error("잘못된 경로입니다.");
@@ -103,6 +133,12 @@ export async function saveFile(filename: string, contents: string) {
     Sentry.captureException(e);
   }
 
+  try {
+    await invalidateCloudflareCacheSingleFile(user, filename);
+  } catch (e) {
+    Sentry.captureException(e);
+  }
+
   return {
     success: true,
     message: "파일이 저장되었습니다.",
@@ -152,7 +188,13 @@ export async function deleteFile(filename: string) {
         })
       );
     }
+
+    for (const obj of objects.Contents ?? []) {
+      await invalidateCloudflareCacheSingleFile(user, obj.Key!);
+    }
   } catch (e) {
+    Sentry.captureException(e);
+
     return {
       success: false,
       message: "파일 삭제에 실패했습니다.",
@@ -202,6 +244,9 @@ export async function renameFile(filename: string, newFilename: string) {
     })
   );
 
+  await invalidateCloudflareCacheSingleFile(user, filename);
+  await invalidateCloudflareCacheSingleFile(user, newFilename);
+
   revalidatePath("/files", "layout");
   await updateSiteUpdatedAt(user);
   return {
@@ -239,7 +284,11 @@ async function uploadSingleFile(user: User, directory: string, file: File) {
         ContentType: FILE_EXTENSION_MIMETYPE_MAP[file.name.split(".").pop()!],
       })
     );
+
+    await invalidateCloudflareCacheSingleFile(user, key);
   } catch (e) {
+    Sentry.captureException(e);
+
     return {
       success: false,
       message: "파일 업로드에 실패했습니다.",
@@ -271,6 +320,8 @@ export async function uploadFile(prevState: any, formData: FormData) {
     }
   }
 
+  revalidatePath("/files", "layout");
+  await updateSiteUpdatedAt(user);
   return { success: true, message: "업로드되었습니다." };
 }
 
