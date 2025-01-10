@@ -400,16 +400,40 @@ export async function createFile(directory: string, filename: string) {
         Key: key,
       })
     );
+
+    return {
+      success: false,
+      message: "이미 존재하는 파일입니다.",
+    };
   } catch (e) {
     if (e instanceof NotFound) {
-      revalidatePath("/files", "layout");
-      await updateSiteUpdatedAt(user);
-      return {
-        success: true,
-        message: "파일이 생성되었습니다.",
-      };
+      try {
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: key,
+            Body: "", // Create empty file
+            ContentType:
+              FILE_EXTENSION_MIMETYPE_MAP[filename.split(".").pop()!],
+          })
+        );
+
+        revalidatePath("/files", "layout");
+        await updateSiteUpdatedAt(user);
+        return {
+          success: true,
+          message: "파일이 생성되었습니다.",
+        };
+      } catch (e) {
+        Sentry.captureException(e);
+        return {
+          success: false,
+          message: "파일 생성에 실패했습니다.",
+        };
+      }
     }
 
+    Sentry.captureException(e);
     return {
       success: false,
       message: "파일 생성에 실패했습니다.",
