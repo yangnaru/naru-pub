@@ -390,9 +390,9 @@ export async function createFile(directory: string, filename: string) {
     return { success: false, message: e.message };
   }
 
-  const key = `${getUserHomeDirectory(
-    user.loginName
-  )}/${directory}/${filename}`.replaceAll("//", "/");
+  const key = `${getUserHomeDirectory(user.loginName)}/${directory}/${filename}`
+    .replaceAll("///", "/")
+    .replaceAll("//", "/");
   try {
     await s3Client.send(
       new HeadObjectCommand({
