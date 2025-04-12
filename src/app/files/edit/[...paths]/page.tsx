@@ -10,11 +10,12 @@ import {
 } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "@/lib/utils";
 
-export default async function EditPage({
-  params,
-}: {
-  params: { paths: string[] };
-}) {
+export default async function EditPage(
+  props: {
+    params: Promise<{ paths: string[] }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   if (!user) {

@@ -77,7 +77,7 @@ export async function signUp(login_name: string, password: string) {
   const session = await lucia.createSession(user[0].id, {});
   const sessionCookie = lucia.createSessionCookie(session.id);
 
-  cookies().set(
+  (await cookies()).set(
     sessionCookie.name,
     sessionCookie.value,
     sessionCookie.attributes
@@ -120,7 +120,7 @@ export async function login(login_name: string, password: string) {
   const session = await lucia.createSession(existingUser.id, {});
   const sessionCookie = lucia.createSessionCookie(session.id);
 
-  cookies().set(
+  (await cookies()).set(
     sessionCookie.name,
     sessionCookie.value,
     sessionCookie.attributes
@@ -192,7 +192,7 @@ export async function logout() {
   await lucia.invalidateSession(session.id);
 
   const sessionCookie = lucia.createBlankSessionCookie();
-  cookies().set(
+  (await cookies()).set(
     sessionCookie.name,
     sessionCookie.value,
     sessionCookie.attributes
@@ -234,7 +234,7 @@ export async function deleteAccount() {
   await lucia.invalidateSession(session.id);
 
   const sessionCookie = lucia.createBlankSessionCookie();
-  cookies().set(
+  (await cookies()).set(
     sessionCookie.name,
     sessionCookie.value,
     sessionCookie.attributes

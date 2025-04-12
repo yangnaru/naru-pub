@@ -1,14 +1,14 @@
+import { useActionState } from "react";
 "use client";
 
 import { uploadFile } from "@/lib/actions/file";
-import { useFormState } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const initialState = { message: "" };
 
 export default function UploadButton({ directory }: { directory: string }) {
-  const [state, formAction] = useFormState(uploadFile, initialState);
+  const [state, formAction] = useActionState(uploadFile, initialState);
 
   return (
     <form action={formAction} className="flex flex-row gap-2">
