@@ -35,33 +35,33 @@ export default async function RootLayout({
             </Link>
             <ul className="flex flex-row gap-2 py-5">
               <li>
-                <a href="/">소개</a>
+                <Link href="/">소개</Link>
               </li>
               {user ? (
                 <>
                   <li>
-                    <a href="/files">파일</a>
+                    <Link href="/files">파일</Link>
                   </li>
                   <li>
-                    <a href="/account">계정</a>
+                    <Link href="/account">계정</Link>
                   </li>
                   <li>
-                    <a
+                    <Link
                       href={getHomepageUrl(user.loginName)}
                       target="_blank"
                       className="text-blue-500"
                     >
                       {getHomepageUrl(user.loginName)}
-                    </a>
+                    </Link>
                   </li>
                 </>
               ) : (
                 <>
                   <li>
-                    <a href="/login">로그인</a>
+                    <Link href="/login">로그인</Link>
                   </li>
                   <li>
-                    <a href="/signup">회원가입</a>
+                    <Link href="/signup">회원가입</Link>
                   </li>
                 </>
               )}
