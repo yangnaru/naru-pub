@@ -2,7 +2,7 @@
 
 import { createFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
-import { toast } from "../ui/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 
 export function CreateFileButton({ baseDirectory }: { baseDirectory: string }) {
   return (

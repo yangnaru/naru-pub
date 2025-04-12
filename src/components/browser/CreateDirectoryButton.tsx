@@ -3,7 +3,7 @@
 import { createDirectory } from "@/lib/actions/file";
 import path from "path";
 import { Button } from "@/components/ui/button";
-import { toast } from "../ui/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 
 export function CreateDirectoryButton({
   baseDirectory,

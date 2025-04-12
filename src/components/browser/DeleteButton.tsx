@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { deleteFile } from "@/lib/actions/file";
-import { toast } from "../ui/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 
 export default function DeleteButton({ filename }: { filename: string }) {
   return (

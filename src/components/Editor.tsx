@@ -6,7 +6,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { saveFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
-import { toast } from "./ui/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 
 export default function Editor({
   filename,
