@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { login } from "@/lib/actions/account";
 import { LOGIN_NAME_REGEX } from "@/lib/const";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 
 const formSchema = z.object({
   username: z

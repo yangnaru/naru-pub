@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { changePassword } from "@/lib/actions/account";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 
 const formSchema = z
   .object({

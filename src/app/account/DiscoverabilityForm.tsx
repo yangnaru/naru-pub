@@ -15,7 +15,7 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 import { setDiscoverable } from "@/lib/actions/account";
 
 const FormSchema = z.object({
