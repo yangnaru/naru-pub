@@ -2,6 +2,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["@node-rs/argon2"],
+  experimental: {
+    bodySizeLimit: "10mb",
+  },
 };
 
 export default withSentryConfig(
