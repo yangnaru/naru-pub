@@ -20,6 +20,10 @@ export function getHomepageUrl(username: string) {
     : `http://${username}.${process.env.NEXT_PUBLIC_DOMAIN}`;
 }
 
+export function getRenderedSiteUrl(username: string) {
+  return `https://r2-screenshots.${process.env.NEXT_PUBLIC_DOMAIN}/${username}.png`;
+}
+
 export function getUserHomeDirectory(loginName: string) {
   return `${loginName}`;
 }

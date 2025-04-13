@@ -5,6 +5,9 @@ const nextConfig = {
   experimental: {
     bodySizeLimit: "10mb",
   },
+  images: {
+    remotePatterns: [new URL("https://r2-screenshots.naru.pub/*")],
+  },
 };
 
 export default withSentryConfig(

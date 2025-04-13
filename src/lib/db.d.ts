@@ -19,6 +19,7 @@ export interface Users {
   id: Generated<number>;
   login_name: string;
   password_hash: string;
+  site_rendered_at: Timestamp | null;
   site_updated_at: Timestamp | null;
 }
 

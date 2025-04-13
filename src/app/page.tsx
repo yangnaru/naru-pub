@@ -1,15 +1,17 @@
 import { db } from "@/lib/database";
-import { getHomepageUrl } from "@/lib/utils";
+import { getHomepageUrl, getRenderedSiteUrl } from "@/lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default async function Home() {
-  const recentlyUpdatedUsers = await db
+  const recentlyRenderedUsers = await db
     .selectFrom("users")
     .selectAll()
     .where("discoverable", "=", true)
     .orderBy("site_updated_at", "desc")
-    .limit(100)
+    .where("site_rendered_at", "is not", null)
+    .limit(99)
     .execute();
 
   return (
@@ -37,15 +39,24 @@ export default async function Home() {
         </p>
         <p className="break-keep">그럼, 즐거운 하루 되세요!</p>
       </div>
-      {recentlyUpdatedUsers.length > 0 && (
+
+      {recentlyRenderedUsers.length > 0 && (
         <div className="flex flex-col gap-4">
           <h2 className="font-bold">최근 업데이트된</h2>
           <ol className="flex flex-row flex-wrap gap-2">
-            {recentlyUpdatedUsers.map((user) => {
+            {recentlyRenderedUsers.map((user) => {
               const homepageUrl = getHomepageUrl(user.login_name);
 
               return (
-                <li key={user.id}>
+                <li key={user.id} className="flex flex-col gap-2">
+                  <Link href={homepageUrl} target="_blank">
+                    <Image
+                      src={getRenderedSiteUrl(user.login_name)}
+                      alt="screenshot"
+                      width={320}
+                      height={240}
+                    />
+                  </Link>
                   <Button variant="outline" asChild>
                     <Link href={homepageUrl} target="_blank">
                       {user.login_name}
