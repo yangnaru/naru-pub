@@ -3,6 +3,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig = {
   serverExternalPackages: ["@node-rs/argon2"],
   experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
     bodySizeLimit: "10mb",
   },
   images: {
