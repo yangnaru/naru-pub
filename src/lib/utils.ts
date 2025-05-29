@@ -30,8 +30,8 @@ export function getUserHomeDirectory(loginName: string) {
 
 export const s3Client = new S3Client({
   region: "auto",
-  endpoint: process.env.R2_ACCOUNT_ID
-    ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+  endpoint: process.env.CLOUDFLARE_ACCOUNT_ID
+    ? `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`
     : undefined,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,

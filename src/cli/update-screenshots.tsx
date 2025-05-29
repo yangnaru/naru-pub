@@ -1,4 +1,4 @@
-import { db } from "@/lib/database";
+import { db } from "@/lib/db";
 import { getHomepageUrl, s3Client } from "@/lib/utils";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { chromium } from "playwright";

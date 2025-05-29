@@ -1,8 +1,14 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { lucia, validateRequest } from "../auth";
-import { db } from "../database";
+import {
+  createSession,
+  deleteSessionTokenCookie,
+  generateSessionToken,
+  getCurrentSession,
+  invalidateSession,
+  setSessionTokenCookie,
+} from "../auth";
+import { db } from "../db";
 import { hash, verify } from "@node-rs/argon2";
 import { redirect } from "next/navigation";
 import { DEFAULT_INDEX_HTML } from "../const";
@@ -13,6 +19,8 @@ import {
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "../utils";
+import { users } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 
 async function prepareUserHomeDirectory(userName: string) {
   const bucketName = process.env.S3_BUCKET_NAME!;
@@ -48,40 +56,32 @@ async function prepareUserHomeDirectory(userName: string) {
   }
 }
 
-export async function signUp(login_name: string, password: string) {
-  const password_hash = await hash(password);
+export async function signUp(loginName: string, password: string) {
+  const passwordHash = await hash(password);
 
-  await prepareUserHomeDirectory(login_name);
+  await prepareUserHomeDirectory(loginName);
 
   let user;
   try {
     user = await db
-      .insertInto("users")
+      .insert(users)
       .values({
-        login_name: login_name.toLowerCase(),
-        password_hash,
+        loginName: loginName.toLowerCase(),
+        passwordHash: passwordHash,
+        createdAt: Date.now(),
       })
-      .returningAll()
-      .execute();
+      .returning();
   } catch (e: any) {
-    if (e.message.includes("users_login_name_key")) {
-      return {
-        success: false,
-        message: "이미 사용 중인 아이디입니다.",
-      };
-    }
-
-    throw e;
+    return {
+      success: false,
+      message: "이미 사용 중인 아이디입니다.",
+    };
   }
 
-  const session = await lucia.createSession(user[0].id, {});
-  const sessionCookie = lucia.createSessionCookie(session.id);
+  const sessionToken = generateSessionToken();
+  const sessionCookie = await createSession(sessionToken, user[0].id);
 
-  (await cookies()).set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
+  await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expiresAt));
 
   return {
     success: true,
@@ -89,18 +89,18 @@ export async function signUp(login_name: string, password: string) {
   };
 }
 
-export async function login(login_name: string, password: string) {
-  const { user } = await validateRequest();
+export async function login(loginName: string, password: string) {
+  const { user } = await getCurrentSession();
 
   if (user) {
     return redirect("/");
   }
 
   const existingUser = await db
-    .selectFrom("users")
-    .selectAll()
-    .where("login_name", "=", login_name)
-    .executeTakeFirst();
+    .select()
+    .from(users)
+    .where(eq(users.loginName, loginName.toLowerCase()))
+    .then((rows) => rows[0]);
 
   if (!existingUser) {
     return {
@@ -109,7 +109,7 @@ export async function login(login_name: string, password: string) {
     };
   }
 
-  const passwordVerified = await verify(existingUser.password_hash, password);
+  const passwordVerified = await verify(existingUser.passwordHash, password);
   if (!passwordVerified) {
     return {
       success: false,
@@ -117,14 +117,10 @@ export async function login(login_name: string, password: string) {
     };
   }
 
-  const session = await lucia.createSession(existingUser.id, {});
-  const sessionCookie = lucia.createSessionCookie(session.id);
+  const sessionToken = generateSessionToken();
+  const sessionCookie = await createSession(sessionToken, existingUser.id);
 
-  (await cookies()).set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
+  await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expiresAt));
 
   return {
     success: true,
@@ -136,7 +132,7 @@ export async function changePassword(
   originalPassword: string,
   newPassword: string
 ) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     return {
       success: false,
@@ -145,10 +141,10 @@ export async function changePassword(
   }
 
   const databaseUser = await db
-    .selectFrom("users")
-    .selectAll()
-    .where("id", "=", user.id)
-    .executeTakeFirst();
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .then((rows) => rows[0]);
   if (!databaseUser) {
     return {
       success: false,
@@ -157,7 +153,7 @@ export async function changePassword(
   }
 
   const passwordVerified = await verify(
-    databaseUser.password_hash,
+    databaseUser.passwordHash,
     originalPassword
   );
   if (!passwordVerified) {
@@ -170,10 +166,9 @@ export async function changePassword(
   const newPasswordHash = await hash(newPassword);
 
   await db
-    .updateTable("users")
-    .set("password_hash", newPasswordHash)
-    .where("id", "=", user.id)
-    .execute();
+    .update(users)
+    .set({ passwordHash: newPasswordHash })
+    .where(eq(users.id, user.id));
 
   return {
     success: true,
@@ -182,27 +177,21 @@ export async function changePassword(
 }
 
 export async function logout() {
-  const { session } = await validateRequest();
+  const { session } = await getCurrentSession();
   if (!session) {
     return {
       error: "Unauthorized",
     };
   }
 
-  await lucia.invalidateSession(session.id);
-
-  const sessionCookie = lucia.createBlankSessionCookie();
-  (await cookies()).set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
+  await invalidateSession(session.id);
+  await deleteSessionTokenCookie();
 
   return redirect("/");
 }
 
 export async function deleteAccount() {
-  const { user, session } = await validateRequest();
+  const { user, session } = await getCurrentSession();
   if (!user) {
     return {
       error: "Unauthorized",
@@ -229,38 +218,29 @@ export async function deleteAccount() {
     );
   }
 
-  await db.deleteFrom("users").where("id", "=", user.id).execute();
+  await db.delete(users).where(eq(users.id, user.id));
 
-  await lucia.invalidateSession(session.id);
-
-  const sessionCookie = lucia.createBlankSessionCookie();
-  (await cookies()).set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
+  await invalidateSession(session.id);
+  await deleteSessionTokenCookie();
 
   return redirect("/");
 }
 
-export async function setDiscoverable(discoverable: boolean) {
-  const { user } = await validateRequest();
+export async function setDiscoverable(discoverableBoolean: boolean) {
+  const { user } = await getCurrentSession();
   if (!user) {
     return false;
   }
 
-  await db.transaction().execute(async (trx) => {
-    await trx
-      .updateTable("users")
-      .set("discoverable", discoverable)
-      .where("id", "=", user.id)
-      .execute();
+  const discoverable = discoverableBoolean ? 1 : 0;
+
+  await db.transaction(async (trx) => {
+    await trx.update(users).set({ discoverable }).where(eq(users.id, user.id));
 
     await trx
-      .updateTable("users")
-      .set("site_updated_at", new Date())
-      .where("id", "=", user.id)
-      .execute();
+      .update(users)
+      .set({ siteUpdatedAt: new Date().getTime() })
+      .where(eq(users.id, user.id));
   });
 
   return true;

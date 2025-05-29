@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans_KR } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { validateRequest } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/auth";
 import Image from "next/image";
 import { Toaster } from "@/components/ui/toaster";
 import { getHomepageUrl } from "@/lib/utils";
@@ -22,7 +22,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   return (
     <html lang="ko">

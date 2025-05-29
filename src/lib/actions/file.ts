@@ -17,7 +17,7 @@ import {
   FILE_EXTENSION_MIMETYPE_MAP,
 } from "../const";
 import { revalidatePath } from "next/cache";
-import { db } from "../database";
+import { db } from "@/lib/db";
 import { User } from "lucia";
 import * as Sentry from "@sentry/nextjs";
 import { getUserHomeDirectory, s3Client } from "../utils";

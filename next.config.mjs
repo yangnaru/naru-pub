@@ -1,4 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["@node-rs/argon2"],
@@ -12,6 +14,8 @@ const nextConfig = {
     remotePatterns: [new URL("https://r2-screenshots.naru.pub/*")],
   },
 };
+
+initOpenNextCloudflareForDev();
 
 export default withSentryConfig(
   withSentryConfig(nextConfig, {

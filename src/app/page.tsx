@@ -1,18 +1,12 @@
-import { db } from "@/lib/database";
+import { db } from "@/lib/db";
 import { getHomepageUrl, getRenderedSiteUrl } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { users } from "@/drizzle/schema";
 
 export default async function Home() {
-  const recentlyRenderedUsers = await db
-    .selectFrom("users")
-    .selectAll()
-    .where("discoverable", "=", true)
-    .orderBy("site_updated_at", "desc")
-    .where("site_rendered_at", "is not", null)
-    .limit(99)
-    .execute();
+  const recentlyRenderedUsers = await db.select().from(users).limit(10);
 
   return (
     <div className="flex flex-col gap-16">
@@ -45,13 +39,13 @@ export default async function Home() {
           <h2 className="font-bold">최근 업데이트된</h2>
           <ol className="flex flex-row flex-wrap gap-2">
             {recentlyRenderedUsers.map((user) => {
-              const homepageUrl = getHomepageUrl(user.login_name);
+              const homepageUrl = getHomepageUrl(user.loginName);
 
               return (
                 <li key={user.id} className="flex flex-col gap-2">
                   <Link href={homepageUrl} target="_blank">
                     <Image
-                      src={getRenderedSiteUrl(user.login_name)}
+                      src={getRenderedSiteUrl(user.loginName)}
                       alt="screenshot"
                       width={320}
                       height={240}
@@ -59,7 +53,7 @@ export default async function Home() {
                   </Link>
                   <Button variant="outline" asChild>
                     <Link href={homepageUrl} target="_blank">
-                      {user.login_name}
+                      {user.loginName}
                     </Link>
                   </Button>
                 </li>
