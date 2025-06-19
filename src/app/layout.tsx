@@ -48,15 +48,6 @@ export default async function RootLayout({
                   <li>
                     <Link href="/account">계정</Link>
                   </li>
-                  <li>
-                    <Link
-                      href={getHomepageUrl(user.loginName)}
-                      target="_blank"
-                      className="text-blue-500"
-                    >
-                      {getHomepageUrl(user.loginName)}
-                    </Link>
-                  </li>
                 </>
               ) : (
                 <>
@@ -69,6 +60,18 @@ export default async function RootLayout({
                 </>
               )}
             </ul>
+            {user && (
+              <p className="text-sm">
+                당신만의 갠홈 주소:{" "}
+                <Link
+                  href={getHomepageUrl(user.loginName)}
+                  target="_blank"
+                  className="text-blue-500"
+                >
+                  {getHomepageUrl(user.loginName)}
+                </Link>
+              </p>
+            )}
           </nav>
 
           {children}
