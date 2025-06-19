@@ -11,7 +11,7 @@ export default async function Home() {
     .where("discoverable", "=", true)
     .orderBy("site_updated_at", "desc")
     .where("site_rendered_at", "is not", null)
-    .limit(99)
+    .limit(100)
     .execute();
 
   return (
