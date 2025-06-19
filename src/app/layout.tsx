@@ -37,6 +37,9 @@ export default async function RootLayout({
               <li>
                 <Link href="/">소개</Link>
               </li>
+              <li>
+                <Link href="/open">지표</Link>
+              </li>
               {user ? (
                 <>
                   <li>
