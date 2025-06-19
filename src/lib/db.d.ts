@@ -6,6 +6,13 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface HomeDirectorySizeHistory {
+  id: Generated<number>;
+  user_id: number;
+  size_bytes: number;
+  recorded_at: Timestamp;
+}
+
 export interface Sessions {
   expires_at: Timestamp;
   id: string;
@@ -21,9 +28,12 @@ export interface Users {
   password_hash: string;
   site_rendered_at: Timestamp | null;
   site_updated_at: Timestamp | null;
+  home_directory_size_bytes: number;
+  home_directory_size_bytes_updated_at: Timestamp | null;
 }
 
 export interface DB {
+  home_directory_size_history: HomeDirectorySizeHistory;
   sessions: Sessions;
   users: Users;
 }
