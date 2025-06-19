@@ -60,6 +60,8 @@ export async function signUp(login_name: string, password: string) {
       .values({
         login_name: login_name.toLowerCase(),
         password_hash,
+        home_directory_size_bytes: 0,
+        home_directory_size_bytes_updated_at: null,
       })
       .returningAll()
       .execute();
