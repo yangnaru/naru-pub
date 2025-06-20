@@ -1,6 +1,7 @@
 import { db } from "@/lib/database";
 import UserGrowthChart from "./user-growth-chart";
 import ActiveSessionsChart from "./active-sessions-chart";
+import HomeDirectorySizeDistributionChart from "./home-directory-size-distribution-chart";
 // import HomeDirectorySizesChart from "./home-directory-sizes-chart";
 // import AverageHomeDirectorySizesChart from "./average-home-directory-sizes-chart";
 import {
@@ -151,6 +152,19 @@ async function getCurrentStorageStats() {
   };
 }
 
+async function getHomeDirectorySizeDistributionData() {
+  const users = await db
+    .selectFrom("users")
+    .select(["home_directory_size_bytes"])
+    .where("home_directory_size_bytes", ">", 0)
+    .where("home_directory_size_bytes_updated_at", "is not", null)
+    .execute();
+
+  return users.map((user) => ({
+    sizeBytes: user.home_directory_size_bytes || 0,
+  }));
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -166,6 +180,8 @@ export default async function OpenPage() {
   const averageHomeDirectorySizesData =
     await getAverageHomeDirectorySizesData();
   const currentStats = await getCurrentStorageStats();
+  const homeDirectorySizeDistributionData =
+    await getHomeDirectorySizeDistributionData();
 
   return (
     <div className="flex flex-col gap-8">
@@ -228,9 +244,12 @@ export default async function OpenPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <UserGrowthChart data={userGrowthData} />
         <ActiveSessionsChart data={activeSessionsData} />
+        <HomeDirectorySizeDistributionChart
+          data={homeDirectorySizeDistributionData}
+        />
         {/* <HomeDirectorySizesChart data={homeDirectorySizesData} />
         <AverageHomeDirectorySizesChart data={averageHomeDirectorySizesData} /> */}
       </div>
