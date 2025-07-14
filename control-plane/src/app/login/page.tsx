@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   Form,
   FormControl,
@@ -91,6 +92,14 @@ export default function LoginPage() {
           )}
         />
         <Button type="submit">로그인</Button>
+        <div className="text-center">
+          <Link 
+            href="/forgot-password" 
+            className="text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            비밀번호를 잊으셨나요?
+          </Link>
+        </div>
       </form>
     </Form>
   );
