@@ -13,7 +13,6 @@ const transport = new SmtpTransport({
   secure: true,
   connectionTimeout: 30000,
   socketTimeout: 60000,
-  retries: 3,
 });
 
 export async function sendVerificationEmail(email: string, token: string) {
