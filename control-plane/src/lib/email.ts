@@ -1,18 +1,10 @@
 import { createMessage } from "@upyo/core";
-import { SmtpTransport } from "@upyo/smtp";
+import { MailgunTransport } from "@upyo/mailgun";
 import { generateId } from "lucia";
 
-const transport = new SmtpTransport({
-  host: process.env.SMTP_HOST!,
-  port: parseInt(process.env.SMTP_PORT || "465"),
-  auth: {
-    user: process.env.SMTP_USER!,
-    pass: process.env.SMTP_PASS!,
-    method: "plain",
-  },
-  secure: true,
-  connectionTimeout: 30000,
-  socketTimeout: 60000,
+const transport = new MailgunTransport({
+  domain: process.env.MAILGUN_DOMAIN || "naru.pub",
+  apiKey: process.env.MAILGUN_API_KEY!,
 });
 
 export async function sendVerificationEmail(email: string, token: string) {
