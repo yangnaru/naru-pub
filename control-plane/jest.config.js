@@ -10,14 +10,6 @@ const customJestConfig = {
   // Add more setup options before each test is run
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   
-  // if using TypeScript with a baseUrl set to the root directory then you need the below for alias' to work
-  moduleDirectories: ['node_modules', '<rootDir>/'],
-  
-  // Handle module aliases
-  moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  
   // Test environment
   testEnvironment: 'jest-environment-jsdom',
   
@@ -36,23 +28,22 @@ const customJestConfig = {
     '!src/**/__tests__/**',
   ],
   
-  // Transform settings
-  transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      useESM: true,
-    }],
-  },
-  
   // Extensions to resolve
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   
   // Ignore patterns
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   
-  // Mock static assets
-  moduleNameMapping: {
+  // Mock static assets and modules
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
   },
+  
+  // Transform ES modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(lucia|@lucia-auth)/)'
+  ],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

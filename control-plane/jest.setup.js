@@ -1,5 +1,24 @@
 import '@testing-library/jest-dom';
 
+// Mock lucia globally to avoid ES module issues
+jest.mock('lucia', () => ({
+  generateId: jest.fn((length) => 'mock-id-' + length),
+  Lucia: jest.fn().mockImplementation(() => ({
+    validateSession: jest.fn()
+  }))
+}));
+
+jest.mock('@lucia-auth/adapter-postgresql', () => ({
+  NodePostgresAdapter: jest.fn().mockImplementation(() => ({
+    getSession: jest.fn(),
+    setSession: jest.fn(),
+    deleteSession: jest.fn(),
+    getUser: jest.fn(),
+    setUser: jest.fn(),
+    deleteUser: jest.fn()
+  }))
+}));
+
 // Mock environment variables
 process.env.S3_BUCKET_NAME = 'test-bucket';
 process.env.CLOUDFLARE_ZONE_ID = 'test-zone';
@@ -8,6 +27,21 @@ process.env.NEXT_PUBLIC_DOMAIN = 'test.com';
 
 // Mock global fetch
 global.fetch = jest.fn();
+
+// Mock TextEncoder and TextDecoder for Node.js compatibility
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
+// Mock Request for Next.js compatibility
+global.Request = class MockRequest {
+  constructor(url, init = {}) {
+    this.url = url;
+    this.method = init.method || 'GET';
+    this.headers = init.headers || {};
+    this.body = init.body;
+  }
+};
 
 // Mock console methods to reduce test noise
 global.console = {

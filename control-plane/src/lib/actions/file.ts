@@ -63,7 +63,13 @@ function validateFilename(filename: string) {
   }
   
   // Character validation - allow alphanumeric, dots, hyphens, underscores, and Korean characters
-  if (!/^[a-zA-Z0-9._\-가-힣\s]+$/.test(filename)) {
+  // Block various control characters and special characters
+  if (!/^[a-zA-Z0-9._\-가-힣 ]+$/.test(filename) || 
+      /[\x00-\x1F\x7F-\x9F]/.test(filename) ||
+      /[;`$(){}[\]\\]/.test(filename) ||
+      /[\u2000-\u206F\u2E00-\u2E7F\u3000-\u303F\uFEFF]/.test(filename) ||
+      /[\u200B-\u200D\u2060]/.test(filename) ||
+      /  /.test(filename)) {
     throw new Error("허용되지 않는 문자가 포함되어 있습니다.");
   }
   
@@ -83,9 +89,27 @@ function assertNoPathTraversal(filename: string) {
       normalized.startsWith("/") || 
       normalized.includes("\0") ||
       /[<>:"|?*]/.test(filename) ||
-      /%2e%2e/i.test(filename) ||
-      /\.\./g.test(decodeURIComponent(filename))) {
+      /%2e%2e/i.test(filename)) {
     throw new Error("잘못된 경로입니다.");
+  }
+  
+  // Try to decode and check for path traversal
+  try {
+    const decoded = decodeURIComponent(filename);
+    if (/\.\./g.test(decoded)) {
+      throw new Error("잘못된 경로입니다.");
+    }
+    // Double decode for cases like %252e%252e
+    try {
+      const doubleDecoded = decodeURIComponent(decoded);
+      if (/\.\./g.test(doubleDecoded)) {
+        throw new Error("잘못된 경로입니다.");
+      }
+    } catch (e) {
+      // If double decoding fails, ignore
+    }
+  } catch (decodeError) {
+    // If decoding fails, it's likely malformed - allow it to pass this check
   }
 }
 

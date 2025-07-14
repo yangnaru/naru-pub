@@ -9,8 +9,24 @@ import {
 } from '../file';
 
 // Mock dependencies
+const mockValidateRequest = jest.fn();
 jest.mock('../../auth', () => ({
-  validateRequest: jest.fn()
+  validateRequest: mockValidateRequest
+}));
+
+jest.mock('lucia', () => ({
+  generateId: jest.fn((length) => 'mock-id-' + length)
+}));
+
+jest.mock('@lucia-auth/adapter-postgresql', () => ({
+  NodePostgresAdapter: jest.fn().mockImplementation(() => ({
+    getSession: jest.fn(),
+    setSession: jest.fn(),
+    deleteSession: jest.fn(),
+    getUser: jest.fn(),
+    setUser: jest.fn(),
+    deleteUser: jest.fn()
+  }))
 }));
 
 jest.mock('../../database', () => ({
@@ -25,10 +41,11 @@ jest.mock('../../database', () => ({
   }
 }));
 
+const mockS3Send = jest.fn();
 jest.mock('../../utils', () => ({
   getUserHomeDirectory: jest.fn((loginName: string) => `users/${loginName}`),
   s3Client: {
-    send: jest.fn()
+    send: mockS3Send
   }
 }));
 
@@ -46,8 +63,9 @@ jest.mock('../../const', () => ({
   DEFAULT_INDEX_HTML: '<!DOCTYPE html><html><head><title>Default</title></head><body><h1>Hello</h1></body></html>'
 }));
 
+const mockRevalidatePath = jest.fn();
 jest.mock('next/cache', () => ({
-  revalidatePath: jest.fn()
+  revalidatePath: mockRevalidatePath
 }));
 
 jest.mock('@sentry/nextjs', () => ({
@@ -55,13 +73,6 @@ jest.mock('@sentry/nextjs', () => ({
 }));
 
 // Import mocked dependencies
-import { validateRequest } from '../../auth';
-import { s3Client } from '../../utils';
-import { revalidatePath } from 'next/cache';
-
-const mockValidateRequest = validateRequest as jest.MockedFunction<typeof validateRequest>;
-const mockS3Client = s3Client as jest.Mocked<typeof s3Client>;
-const mockRevalidatePath = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
 
 // Mock user
 const mockUser = {
@@ -87,7 +98,7 @@ describe('File Security Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockValidateRequest.mockResolvedValue({ user: mockUser, session: null });
-    mockS3Client.send.mockResolvedValue({});
+    mockS3Send.mockResolvedValue({});
     mockRevalidatePath.mockImplementation(() => {});
     
     // Mock fetch for Cloudflare API
@@ -216,7 +227,7 @@ describe('File Security Tests', () => {
     });
 
     it('should handle S3 errors gracefully', async () => {
-      mockS3Client.send.mockRejectedValue(new Error('S3 Error'));
+      mockS3Send.mockRejectedValue(new Error('S3 Error'));
       const result = await saveFile('test.html', '<h1>Test</h1>');
       expect(result.success).toBe(false);
       expect(result.message).toBe('파일 저장에 실패했습니다.');
@@ -250,7 +261,7 @@ describe('File Security Tests', () => {
     });
 
     it('should handle S3 errors gracefully', async () => {
-      mockS3Client.send.mockRejectedValue(new Error('S3 Error'));
+      mockS3Send.mockRejectedValue(new Error('S3 Error'));
       const result = await renameFile('old.html', 'new.html');
       expect(result.success).toBe(false);
       expect(result.message).toBe('파일 이름 변경에 실패했습니다.');
@@ -372,7 +383,7 @@ describe('File Security Tests', () => {
     beforeEach(() => {
       // Mock HeadObjectCommand to throw NotFound for new files
       const { NotFound } = require('@aws-sdk/client-s3');
-      mockS3Client.send.mockImplementation((command) => {
+      mockS3Send.mockImplementation((command) => {
         if (command.constructor.name === 'HeadObjectCommand') {
           throw new NotFound({ message: 'Not found', $metadata: {} });
         }
@@ -419,7 +430,7 @@ describe('File Security Tests', () => {
 
     it('should prevent creating files that already exist', async () => {
       // Mock HeadObjectCommand to succeed (file exists)
-      mockS3Client.send.mockImplementation((command) => {
+      mockS3Send.mockImplementation((command) => {
         if (command.constructor.name === 'HeadObjectCommand') {
           return Promise.resolve({});
         }
@@ -435,7 +446,7 @@ describe('File Security Tests', () => {
   describe('deleteFile', () => {
     beforeEach(() => {
       // Mock ListObjectsV2Command to return some objects
-      mockS3Client.send.mockImplementation((command) => {
+      mockS3Send.mockImplementation((command) => {
         if (command.constructor.name === 'ListObjectsV2Command') {
           return Promise.resolve({
             Contents: [
@@ -474,7 +485,7 @@ describe('File Security Tests', () => {
     });
 
     it('should handle S3 errors gracefully', async () => {
-      mockS3Client.send.mockRejectedValue(new Error('S3 Error'));
+      mockS3Send.mockRejectedValue(new Error('S3 Error'));
       const result = await deleteFile('test.html');
       expect(result.success).toBe(false);
       expect(result.message).toBe('파일 삭제에 실패했습니다.');
