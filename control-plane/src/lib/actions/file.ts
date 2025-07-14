@@ -52,14 +52,52 @@ async function invalidateCloudflareCacheSingleFile(
   return response.ok;
 }
 
+function validateFilename(filename: string) {
+  // Length validation
+  if (filename.length > 255) {
+    throw new Error("파일명이 너무 깁니다. (최대 255자)");
+  }
+  
+  if (filename.length === 0) {
+    throw new Error("파일명이 비어있습니다.");
+  }
+  
+  // Character validation - allow alphanumeric, dots, hyphens, underscores, and Korean characters
+  if (!/^[a-zA-Z0-9._\-가-힣\s]+$/.test(filename)) {
+    throw new Error("허용되지 않는 문자가 포함되어 있습니다.");
+  }
+  
+  // Reserved names on Windows
+  const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
+  const nameWithoutExt = filename.split('.')[0].toUpperCase();
+  if (reservedNames.includes(nameWithoutExt)) {
+    throw new Error("예약된 파일명입니다.");
+  }
+}
+
 function assertNoPathTraversal(filename: string) {
-  if (filename.includes("..")) {
+  // Normalize and validate path
+  const normalized = filename.replace(/\\/g, '/').replace(/\/+/g, '/');
+  
+  if (normalized.includes("..") || 
+      normalized.startsWith("/") || 
+      normalized.includes("\0") ||
+      /[<>:"|?*]/.test(filename) ||
+      /%2e%2e/i.test(filename) ||
+      /\.\./g.test(decodeURIComponent(filename))) {
     throw new Error("잘못된 경로입니다.");
   }
 }
 
 function assertAllowedFilename(filename: string) {
-  const extension = filename.split(".").pop();
+  validateFilename(filename);
+  
+  const parts = filename.split(".");
+  if (parts.length < 2) {
+    throw new Error("확장자를 입력해주세요.");
+  }
+  
+  const extension = parts[parts.length - 1].toLowerCase();
   if (!extension) {
     throw new Error("확장자를 입력해주세요.");
   }
@@ -74,7 +112,14 @@ function assertAllowedFilename(filename: string) {
 }
 
 function assertEditableFilename(filename: string) {
-  const extension = filename.split(".").pop();
+  validateFilename(filename);
+  
+  const parts = filename.split(".");
+  if (parts.length < 2) {
+    throw new Error("확장자를 입력해주세요.");
+  }
+  
+  const extension = parts[parts.length - 1].toLowerCase();
   if (!extension) {
     throw new Error("확장자를 입력해주세요.");
   }
@@ -83,7 +128,7 @@ function assertEditableFilename(filename: string) {
     throw new Error(
       `지원하지 않는 파일 형식입니다. ${EDITABLE_FILE_EXTENSIONS.join(
         ", "
-      )} 파일만 생성할 수 있습니다.`
+      )} 파일만 편집할 수 있습니다.`
     );
   }
 }
@@ -190,7 +235,12 @@ export async function deleteFile(filename: string) {
     }
 
     for (const obj of objects.Contents ?? []) {
-      await invalidateCloudflareCacheSingleFile(user, obj.Key!);
+      if (obj.Key) {
+        // Extract filename from S3 key safely
+        const keyParts = obj.Key.split('/');
+        const filename = keyParts[keyParts.length - 1];
+        await invalidateCloudflareCacheSingleFile(user, filename);
+      }
     }
   } catch (e) {
     Sentry.captureException(e);
@@ -215,8 +265,13 @@ export async function renameFile(filename: string, newFilename: string) {
     return { success: false, message: "로그인이 필요합니다." };
   }
 
-  assertNoPathTraversal(filename);
-  assertNoPathTraversal(newFilename);
+  try {
+    assertNoPathTraversal(filename);
+    assertNoPathTraversal(newFilename);
+    validateFilename(newFilename);
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
 
   if (filename === "/index.html") {
     return {
@@ -225,34 +280,42 @@ export async function renameFile(filename: string, newFilename: string) {
     };
   }
 
-  // Copy the object to new location
-  await s3Client.send(
-    new CopyObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      CopySource: `${process.env.S3_BUCKET_NAME}/${getUserHomeDirectory(
-        user.loginName
-      )}/${filename}`,
-      Key: `${getUserHomeDirectory(user.loginName)}/${newFilename}`,
-    })
-  );
+  try {
+    // Copy the object to new location
+    await s3Client.send(
+      new CopyObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        CopySource: `${process.env.S3_BUCKET_NAME}/${getUserHomeDirectory(
+          user.loginName
+        )}/${filename}`,
+        Key: `${getUserHomeDirectory(user.loginName)}/${newFilename}`,
+      })
+    );
 
-  // Delete the old object
-  await s3Client.send(
-    new DeleteObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      Key: `${getUserHomeDirectory(user.loginName)}/${filename}`,
-    })
-  );
+    // Delete the old object
+    await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Key: `${getUserHomeDirectory(user.loginName)}/${filename}`,
+      })
+    );
 
-  await invalidateCloudflareCacheSingleFile(user, filename);
-  await invalidateCloudflareCacheSingleFile(user, newFilename);
+    await invalidateCloudflareCacheSingleFile(user, filename);
+    await invalidateCloudflareCacheSingleFile(user, newFilename);
 
-  revalidatePath("/files", "layout");
-  await updateSiteUpdatedAt(user);
-  return {
-    success: true,
-    message: "파일 이름이 변경되었습니다.",
-  };
+    revalidatePath("/files", "layout");
+    await updateSiteUpdatedAt(user);
+    return {
+      success: true,
+      message: "파일 이름이 변경되었습니다.",
+    };
+  } catch (e) {
+    Sentry.captureException(e);
+    return {
+      success: false,
+      message: "파일 이름 변경에 실패했습니다.",
+    };
+  }
 }
 
 async function uploadSingleFile(user: User, directory: string, file: File) {
@@ -267,6 +330,9 @@ async function uploadSingleFile(user: User, directory: string, file: File) {
   try {
     assertNoPathTraversal(directory);
     assertAllowedFilename(file.name);
+    if (directory.length > 1000) {
+      throw new Error("디렉토리 경로가 너무 깁니다.");
+    }
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -285,7 +351,10 @@ async function uploadSingleFile(user: User, directory: string, file: File) {
       })
     );
 
-    await invalidateCloudflareCacheSingleFile(user, key);
+    // Extract filename from S3 key safely for cache invalidation
+    const keyParts = key.split('/');
+    const filename = keyParts[keyParts.length - 1];
+    await invalidateCloudflareCacheSingleFile(user, filename);
   } catch (e) {
     Sentry.captureException(e);
 
@@ -333,6 +402,9 @@ export async function createDirectory(directory: string) {
 
   try {
     assertNoPathTraversal(directory);
+    if (directory.length > 1000) {
+      throw new Error("디렉토리 경로가 너무 깁니다.");
+    }
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -386,6 +458,9 @@ export async function createFile(directory: string, filename: string) {
     assertNoPathTraversal(directory);
     assertNoPathTraversal(filename);
     assertEditableFilename(filename);
+    if (directory.length > 1000) {
+      throw new Error("디렉토리 경로가 너무 깁니다.");
+    }
   } catch (e: any) {
     return { success: false, message: e.message };
   }
