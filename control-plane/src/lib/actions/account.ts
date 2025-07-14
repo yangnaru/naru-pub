@@ -315,16 +315,6 @@ export async function associateEmail(email: string) {
           expires_at: expiresAt,
         })
         .execute();
-
-      // Update user email (unverified)
-      await trx
-        .updateTable("users")
-        .set({
-          email,
-          email_verified_at: null,
-        })
-        .where("id", "=", user.id)
-        .execute();
     });
 
     // Send verification email
@@ -406,7 +396,14 @@ export async function resendVerificationEmail() {
     };
   }
 
-  if (!user.email) {
+  // Check for pending verification token since email might not be set yet
+  const existingToken = await db
+    .selectFrom("email_verification_tokens")
+    .selectAll()
+    .where("user_id", "=", user.id)
+    .executeTakeFirst();
+
+  if (!existingToken) {
     return {
       success: false,
       message: "연결된 이메일이 없습니다.",
@@ -431,14 +428,14 @@ export async function resendVerificationEmail() {
         .values({
           id: token,
           user_id: user.id,
-          email: user.email,
+          email: existingToken.email,
           expires_at: expiresAt,
         })
         .execute();
     });
 
     // Send verification email
-    await sendVerificationEmail(user.email, token);
+    await sendVerificationEmail(existingToken.email, token);
 
     return {
       success: true,
