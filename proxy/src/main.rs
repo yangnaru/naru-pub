@@ -107,12 +107,8 @@ async fn handle_request(
     // Handle directory paths, empty paths, and paths without extensions
     let path = if path.is_empty() || path == "index.html" {
         "index.html".to_string()
-    } else if path.ends_with('/') || (!path.contains('.') && !path.is_empty()) {
-        if path.ends_with('/') {
-            format!("{}index.html", path)
-        } else {
-            format!("{}/index.html", path)
-        }
+    } else if path.ends_with('/') {
+        format!("{}index.html", path)
     } else {
         path.to_string()
     };
