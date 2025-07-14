@@ -61,18 +61,7 @@ function validateFilename(filename: string) {
   if (filename.length === 0) {
     throw new Error("파일명이 비어있습니다.");
   }
-  
-  // Character validation - allow alphanumeric, dots, hyphens, underscores, and Korean characters
-  // Block various control characters and special characters
-  if (!/^[a-zA-Z0-9._\-가-힣 ]+$/.test(filename) || 
-      /[\x00-\x1F\x7F-\x9F]/.test(filename) ||
-      /[;`$(){}[\]\\]/.test(filename) ||
-      /[\u2000-\u206F\u2E00-\u2E7F\u3000-\u303F\uFEFF]/.test(filename) ||
-      /[\u200B-\u200D\u2060]/.test(filename) ||
-      /  /.test(filename)) {
-    throw new Error("허용되지 않는 문자가 포함되어 있습니다.");
-  }
-  
+    
   // Reserved names on Windows
   const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
   const nameWithoutExt = filename.split('.')[0].toUpperCase();
