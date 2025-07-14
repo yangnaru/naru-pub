@@ -4,6 +4,7 @@ import LogoutButton from "./LogoutButton";
 import DeleteAccountButton from "./DeleteAccountButton";
 import { DiscoverabilityForm } from "./DiscoverabilityForm";
 import ChangePasswordForm from "./ChangePasswordForm";
+import EmailManagement from "./EmailManagement";
 
 export default async function AccountPage() {
   const { user } = await validateRequest();
@@ -23,6 +24,10 @@ export default async function AccountPage() {
         </p>
       </div>
 
+      <EmailManagement 
+        currentEmail={user.email} 
+        emailVerifiedAt={user.emailVerifiedAt} 
+      />
       <DiscoverabilityForm discoverable={user.discoverable} />
       <ChangePasswordForm />
 

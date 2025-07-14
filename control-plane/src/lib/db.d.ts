@@ -6,11 +6,19 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface EmailVerificationTokens {
+  created_at: Generated<Timestamp>;
+  email: string;
+  expires_at: Timestamp;
+  id: string;
+  user_id: number;
+}
+
 export interface HomeDirectorySizeHistory {
   id: Generated<number>;
-  user_id: number;
+  recorded_at: Generated<Timestamp>;
   size_bytes: number;
-  recorded_at: Timestamp;
+  user_id: number | null;
 }
 
 export interface Sessions {
@@ -23,16 +31,18 @@ export interface Users {
   created_at: Generated<Timestamp>;
   discoverable: Generated<boolean>;
   email: string | null;
+  email_verified_at: Timestamp | null;
+  home_directory_size_bytes: Generated<number | null>;
+  home_directory_size_bytes_updated_at: Timestamp | null;
   id: Generated<number>;
   login_name: string;
   password_hash: string;
   site_rendered_at: Timestamp | null;
   site_updated_at: Timestamp | null;
-  home_directory_size_bytes: number;
-  home_directory_size_bytes_updated_at: Timestamp | null;
 }
 
 export interface DB {
+  email_verification_tokens: EmailVerificationTokens;
   home_directory_size_history: HomeDirectorySizeHistory;
   sessions: Sessions;
   users: Users;

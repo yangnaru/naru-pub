@@ -13,6 +13,7 @@ import {
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "../utils";
+import { sendVerificationEmail, generateVerificationToken } from "../email";
 
 async function prepareUserHomeDirectory(userName: string) {
   const bucketName = process.env.S3_BUCKET_NAME!;
@@ -266,4 +267,188 @@ export async function setDiscoverable(discoverable: boolean) {
   });
 
   return true;
+}
+
+export async function associateEmail(email: string) {
+  const { user } = await validateRequest();
+  if (!user) {
+    return {
+      success: false,
+      message: "로그인이 필요합니다.",
+    };
+  }
+
+  // Check if email is already associated with another user
+  const existingUser = await db
+    .selectFrom("users")
+    .select("id")
+    .where("email", "=", email)
+    .where("id", "!=", user.id)
+    .executeTakeFirst();
+
+  if (existingUser) {
+    return {
+      success: false,
+      message: "이미 다른 계정에서 사용 중인 이메일입니다.",
+    };
+  }
+
+  // Generate verification token
+  const token = generateVerificationToken();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      // Delete any existing verification tokens for this user
+      await trx
+        .deleteFrom("email_verification_tokens")
+        .where("user_id", "=", user.id)
+        .execute();
+
+      // Insert new verification token
+      await trx
+        .insertInto("email_verification_tokens")
+        .values({
+          id: token,
+          user_id: user.id,
+          email,
+          expires_at: expiresAt,
+        })
+        .execute();
+
+      // Update user email (unverified)
+      await trx
+        .updateTable("users")
+        .set({
+          email,
+          email_verified_at: null,
+        })
+        .where("id", "=", user.id)
+        .execute();
+    });
+
+    // Send verification email
+    await sendVerificationEmail(email, token);
+
+    return {
+      success: true,
+      message: "인증 이메일이 발송되었습니다. 이메일을 확인해주세요.",
+    };
+  } catch (error) {
+    console.error("Email association error:", error);
+    return {
+      success: false,
+      message: "이메일 연결 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+export async function verifyEmail(token: string) {
+  const verificationToken = await db
+    .selectFrom("email_verification_tokens")
+    .selectAll()
+    .where("id", "=", token)
+    .where("expires_at", ">", new Date())
+    .executeTakeFirst();
+
+  if (!verificationToken) {
+    return {
+      success: false,
+      message: "유효하지 않거나 만료된 인증 토큰입니다.",
+    };
+  }
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      // Mark email as verified with current timestamp
+      await trx
+        .updateTable("users")
+        .set({
+          email: verificationToken.email,
+          email_verified_at: new Date(),
+        })
+        .where("id", "=", verificationToken.user_id)
+        .execute();
+
+      // Delete the verification token
+      await trx
+        .deleteFrom("email_verification_tokens")
+        .where("id", "=", token)
+        .execute();
+    });
+
+    return {
+      success: true,
+      message: "이메일이 성공적으로 인증되었습니다.",
+    };
+  } catch (error) {
+    console.error("Email verification error:", error);
+    return {
+      success: false,
+      message: "이메일 인증 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+export async function resendVerificationEmail() {
+  const { user } = await validateRequest();
+  if (!user) {
+    return {
+      success: false,
+      message: "로그인이 필요합니다.",
+    };
+  }
+
+  if (user.email && user.emailVerifiedAt) {
+    return {
+      success: false,
+      message: "이미 인증된 이메일입니다.",
+    };
+  }
+
+  if (!user.email) {
+    return {
+      success: false,
+      message: "연결된 이메일이 없습니다.",
+    };
+  }
+
+  // Generate new verification token
+  const token = generateVerificationToken();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      // Delete any existing verification tokens for this user
+      await trx
+        .deleteFrom("email_verification_tokens")
+        .where("user_id", "=", user.id)
+        .execute();
+
+      // Insert new verification token
+      await trx
+        .insertInto("email_verification_tokens")
+        .values({
+          id: token,
+          user_id: user.id,
+          email: user.email,
+          expires_at: expiresAt,
+        })
+        .execute();
+    });
+
+    // Send verification email
+    await sendVerificationEmail(user.email, token);
+
+    return {
+      success: true,
+      message: "인증 이메일이 다시 발송되었습니다.",
+    };
+  } catch (error) {
+    console.error("Resend verification email error:", error);
+    return {
+      success: false,
+      message: "이메일 발송 중 오류가 발생했습니다.",
+    };
+  }
 }
