@@ -8,8 +8,12 @@ const transport = new SmtpTransport({
   auth: {
     user: process.env.SMTP_USER!,
     pass: process.env.SMTP_PASS!,
+    method: "plain",
   },
   secure: process.env.SMTP_SECURE === "true",
+  connectionTimeout: 30000,
+  socketTimeout: 60000,
+  retries: 3,
 });
 
 export async function sendVerificationEmail(email: string, token: string) {
@@ -43,9 +47,14 @@ export async function sendVerificationEmail(email: string, token: string) {
         This link will expire in 24 hours.
       `,
     },
+    tags: ["verification", "onboarding"],
   });
 
-  return await transport.send(message);
+  const receipt = await transport.send(message);
+  if (!receipt.successful) {
+    throw new Error(`Failed to send verification email: ${receipt.errorMessages?.join(", ")}`);
+  }
+  return receipt;
 }
 
 export function generateVerificationToken(): string {
