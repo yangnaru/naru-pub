@@ -4,13 +4,13 @@ import { generateId } from "lucia";
 
 const transport = new SmtpTransport({
   host: process.env.SMTP_HOST!,
-  port: parseInt(process.env.SMTP_PORT || "587"),
+  port: parseInt(process.env.SMTP_PORT || "465"),
   auth: {
     user: process.env.SMTP_USER!,
     pass: process.env.SMTP_PASS!,
     method: "plain",
   },
-  secure: process.env.SMTP_SECURE === "true",
+  secure: true,
   connectionTimeout: 30000,
   socketTimeout: 60000,
   retries: 3,
