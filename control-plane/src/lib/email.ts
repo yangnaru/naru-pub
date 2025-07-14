@@ -22,29 +22,29 @@ export async function sendVerificationEmail(email: string, token: string) {
   const message = createMessage({
     from: process.env.FROM_EMAIL || "noreply@naru.pub",
     to: email,
-    subject: "Verify your email address",
+    subject: "이메일 주소를 인증해주세요",
     content: {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Verify your email address</h2>
-          <p>Please click the link below to verify your email address:</p>
+          <h2>이메일 주소 인증</h2>
+          <p>아래 링크를 클릭하여 이메일 주소를 인증해주세요:</p>
           <p>
             <a href="${verificationUrl}" style="background-color: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-              Verify Email
+              이메일 인증하기
             </a>
           </p>
-          <p>If you didn't request this verification, you can safely ignore this email.</p>
-          <p>This link will expire in 24 hours.</p>
+          <p>이메일 인증을 요청하지 않았다면 이 이메일을 무시하셔도 됩니다.</p>
+          <p>이 링크는 24시간 후에 만료됩니다.</p>
         </div>
       `,
       text: `
-        Verify your email address
+        이메일 주소 인증
         
-        Please visit the following link to verify your email address:
+        다음 링크를 방문하여 이메일 주소를 인증해주세요:
         ${verificationUrl}
         
-        If you didn't request this verification, you can safely ignore this email.
-        This link will expire in 24 hours.
+        이메일 인증을 요청하지 않았다면 이 이메일을 무시하셔도 됩니다.
+        이 링크는 24시간 후에 만료됩니다.
       `,
     },
     tags: ["verification", "onboarding"],
