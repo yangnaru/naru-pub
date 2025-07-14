@@ -62,7 +62,7 @@ function ResetPasswordForm() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await resetPassword(token, values.password);
+    const res = await resetPassword(token || '', values.password);
 
     if (!res.success) {
       form.setError("password", {
