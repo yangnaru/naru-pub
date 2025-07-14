@@ -14,6 +14,14 @@ export interface EmailVerificationTokens {
   user_id: number;
 }
 
+export interface PasswordResetTokens {
+  created_at: Generated<Timestamp>;
+  email: string;
+  expires_at: Timestamp;
+  id: string;
+  user_id: number;
+}
+
 export interface HomeDirectorySizeHistory {
   id: Generated<number>;
   recorded_at: Generated<Timestamp>;
@@ -44,6 +52,7 @@ export interface Users {
 export interface DB {
   email_verification_tokens: EmailVerificationTokens;
   home_directory_size_history: HomeDirectorySizeHistory;
+  password_reset_tokens: PasswordResetTokens;
   sessions: Sessions;
   users: Users;
 }

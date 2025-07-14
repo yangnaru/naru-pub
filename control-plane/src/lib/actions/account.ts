@@ -13,7 +13,7 @@ import {
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "../utils";
-import { sendVerificationEmail, generateVerificationToken } from "../email";
+import { sendVerificationEmail, generateVerificationToken, sendPasswordResetEmail, generatePasswordResetToken } from "../email";
 
 async function prepareUserHomeDirectory(userName: string) {
   const bucketName = process.env.S3_BUCKET_NAME!;
@@ -446,6 +446,115 @@ export async function resendVerificationEmail() {
     return {
       success: false,
       message: "이메일 발송 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  // Find user with verified email
+  const user = await db
+    .selectFrom("users")
+    .select(["id", "login_name", "email", "email_verified_at"])
+    .where("email", "=", email)
+    .where("email_verified_at", "is not", null)
+    .executeTakeFirst();
+
+  if (!user) {
+    // Don't reveal whether email exists for security
+    return {
+      success: true,
+      message: "비밀번호 재설정 링크가 이메일로 발송되었습니다.",
+    };
+  }
+
+  // Generate reset token
+  const token = generatePasswordResetToken();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      // Delete any existing password reset tokens for this user
+      await trx
+        .deleteFrom("password_reset_tokens")
+        .where("user_id", "=", user.id)
+        .execute();
+
+      // Insert new password reset token
+      await trx
+        .insertInto("password_reset_tokens")
+        .values({
+          id: token,
+          user_id: user.id,
+          email: user.email!,
+          expires_at: expiresAt,
+        })
+        .execute();
+    });
+
+    // Send password reset email
+    await sendPasswordResetEmail(user.email!, token);
+
+    return {
+      success: true,
+      message: "비밀번호 재설정 링크가 이메일로 발송되었습니다.",
+    };
+  } catch (error) {
+    console.error("Password reset request error:", error);
+    return {
+      success: false,
+      message: "비밀번호 재설정 요청 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  const resetToken = await db
+    .selectFrom("password_reset_tokens")
+    .selectAll()
+    .where("id", "=", token)
+    .where("expires_at", ">", new Date())
+    .executeTakeFirst();
+
+  if (!resetToken) {
+    return {
+      success: false,
+      message: "유효하지 않거나 만료된 비밀번호 재설정 토큰입니다.",
+    };
+  }
+
+  try {
+    const newPasswordHash = await hash(newPassword);
+
+    await db.transaction().execute(async (trx) => {
+      // Update user password
+      await trx
+        .updateTable("users")
+        .set("password_hash", newPasswordHash)
+        .where("id", "=", resetToken.user_id)
+        .execute();
+
+      // Delete the password reset token
+      await trx
+        .deleteFrom("password_reset_tokens")
+        .where("id", "=", token)
+        .execute();
+
+      // Invalidate all existing sessions for security
+      await trx
+        .deleteFrom("sessions")
+        .where("user_id", "=", resetToken.user_id)
+        .execute();
+    });
+
+    return {
+      success: true,
+      message: "비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요.",
+    };
+  } catch (error) {
+    console.error("Password reset error:", error);
+    return {
+      success: false,
+      message: "비밀번호 재설정 중 오류가 발생했습니다.",
     };
   }
 }
