@@ -75,7 +75,6 @@ function assertNoPathTraversal(filename: string) {
   const normalized = filename.replace(/\\/g, '/').replace(/\/+/g, '/');
   
   if (normalized.includes("..") || 
-      normalized.startsWith("/") || 
       normalized.includes("\0") ||
       /[<>:"|?*]/.test(filename) ||
       /%2e%2e/i.test(filename)) {
