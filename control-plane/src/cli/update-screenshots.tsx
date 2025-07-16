@@ -32,6 +32,11 @@ async function main() {
       await page.waitForTimeout(10 * 1000);
       const screenshot = await page.screenshot();
 
+      if (screenshot.length === 0) {
+        console.log(`Skipping ${user.login_name}: screenshot is 0 bytes`);
+        continue;
+      }
+
       await s3Client.send(
         new PutObjectCommand({
           Bucket: process.env.S3_BUCKET_NAME_SCREENSHOTS!,
