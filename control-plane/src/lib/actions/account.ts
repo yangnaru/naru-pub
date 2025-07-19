@@ -213,14 +213,16 @@ export async function requestAccountDeletion() {
     };
   }
 
+  // If user has no verified email, require immediate deletion with JavaScript confirmation
   if (!user.email || !user.emailVerifiedAt) {
     return {
-      success: false,
-      message: "계정 삭제를 위해서는 먼저 이메일 인증이 필요합니다.",
+      success: true,
+      requiresImmediateConfirmation: true,
+      message: "이메일 인증이 없어 즉시 삭제됩니다. 확인하시겠습니까?",
     };
   }
 
-  // Generate deletion token
+  // Generate deletion token for users with verified email
   const token = generateAccountDeletionToken();
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
@@ -249,6 +251,7 @@ export async function requestAccountDeletion() {
 
     return {
       success: true,
+      requiresImmediateConfirmation: false,
       message: "계정 삭제 확인 이메일이 발송되었습니다. 이메일을 확인해주세요.",
     };
   } catch (error) {
@@ -256,6 +259,70 @@ export async function requestAccountDeletion() {
     return {
       success: false,
       message: "계정 삭제 요청 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+export async function deleteAccountImmediately() {
+  const { user, session } = await validateRequest();
+  if (!user) {
+    return {
+      success: false,
+      message: "로그인이 필요합니다.",
+    };
+  }
+
+  // Only allow immediate deletion for users without verified email
+  if (user.email && user.emailVerifiedAt) {
+    return {
+      success: false,
+      message: "이메일이 인증된 계정은 이메일 확인을 통해 삭제해야 합니다.",
+    };
+  }
+
+  try {
+    // List all objects with user's prefix
+    const listCommand = new ListObjectsV2Command({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Prefix: getUserHomeDirectory(user.loginName),
+    });
+
+    const objects = await s3Client.send(listCommand);
+
+    if (objects.Contents && objects.Contents.length > 0) {
+      // Delete all objects in batch
+      await s3Client.send(
+        new DeleteObjectsCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Delete: {
+            Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
+          },
+        })
+      );
+    }
+
+    // Delete user account (this will cascade to all related tables)
+    await db.deleteFrom("users").where("id", "=", user.id).execute();
+
+    // Invalidate session
+    await lucia.invalidateSession(session.id);
+
+    const sessionCookie = lucia.createBlankSessionCookie();
+    (await cookies()).set(
+      sessionCookie.name,
+      sessionCookie.value,
+      sessionCookie.attributes
+    );
+
+    return {
+      success: true,
+      message: "계정이 성공적으로 삭제되었습니다.",
+    };
+  } catch (error) {
+    console.error("Immediate account deletion error:", error);
+    return {
+      success: false,
+      message: "계정 삭제 중 오류가 발생했습니다.",
     };
   }
 }
