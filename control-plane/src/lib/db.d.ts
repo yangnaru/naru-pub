@@ -22,6 +22,14 @@ export interface PasswordResetTokens {
   user_id: number;
 }
 
+export interface AccountDeletionTokens {
+  created_at: Generated<Timestamp>;
+  email: string;
+  expires_at: Timestamp;
+  id: string;
+  user_id: number;
+}
+
 export interface HomeDirectorySizeHistory {
   id: Generated<number>;
   recorded_at: Generated<Timestamp>;
@@ -50,6 +58,7 @@ export interface Users {
 }
 
 export interface DB {
+  account_deletion_tokens: AccountDeletionTokens;
   email_verification_tokens: EmailVerificationTokens;
   home_directory_size_history: HomeDirectorySizeHistory;
   password_reset_tokens: PasswordResetTokens;

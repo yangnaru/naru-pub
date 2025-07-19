@@ -13,7 +13,7 @@ import {
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "../utils";
-import { sendVerificationEmail, generateVerificationToken, sendPasswordResetEmail, generatePasswordResetToken } from "../email";
+import { sendVerificationEmail, generateVerificationToken, sendPasswordResetEmail, generatePasswordResetToken, sendAccountDeletionEmail, generateAccountDeletionToken } from "../email";
 
 async function prepareUserHomeDirectory(userName: string) {
   const bucketName = process.env.S3_BUCKET_NAME!;
@@ -204,46 +204,141 @@ export async function logout() {
   return redirect("/");
 }
 
-export async function deleteAccount() {
-  const { user, session } = await validateRequest();
+export async function requestAccountDeletion() {
+  const { user } = await validateRequest();
   if (!user) {
     return {
-      error: "Unauthorized",
+      success: false,
+      message: "로그인이 필요합니다.",
     };
   }
 
-  // List all objects with user's prefix
-  const listCommand = new ListObjectsV2Command({
-    Bucket: process.env.S3_BUCKET_NAME!,
-    Prefix: getUserHomeDirectory(user.loginName),
-  });
-
-  const objects = await s3Client.send(listCommand);
-
-  if (objects.Contents && objects.Contents.length > 0) {
-    // Delete all objects in batch
-    await s3Client.send(
-      new DeleteObjectsCommand({
-        Bucket: process.env.S3_BUCKET_NAME!,
-        Delete: {
-          Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
-        },
-      })
-    );
+  if (!user.email || !user.emailVerifiedAt) {
+    return {
+      success: false,
+      message: "계정 삭제를 위해서는 먼저 이메일 인증이 필요합니다.",
+    };
   }
 
-  await db.deleteFrom("users").where("id", "=", user.id).execute();
+  // Generate deletion token
+  const token = generateAccountDeletionToken();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-  await lucia.invalidateSession(session.id);
+  try {
+    await db.transaction().execute(async (trx) => {
+      // Delete any existing account deletion tokens for this user
+      await trx
+        .deleteFrom("account_deletion_tokens")
+        .where("user_id", "=", user.id)
+        .execute();
 
-  const sessionCookie = lucia.createBlankSessionCookie();
-  (await cookies()).set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
+      // Insert new account deletion token
+      await trx
+        .insertInto("account_deletion_tokens")
+        .values({
+          id: token,
+          user_id: user.id,
+          email: user.email!,
+          expires_at: expiresAt,
+        })
+        .execute();
+    });
 
-  return redirect("/");
+    // Send account deletion confirmation email
+    await sendAccountDeletionEmail(user.email!, token);
+
+    return {
+      success: true,
+      message: "계정 삭제 확인 이메일이 발송되었습니다. 이메일을 확인해주세요.",
+    };
+  } catch (error) {
+    console.error("Account deletion request error:", error);
+    return {
+      success: false,
+      message: "계정 삭제 요청 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+export async function confirmAccountDeletion(token: string) {
+  const deletionToken = await db
+    .selectFrom("account_deletion_tokens")
+    .selectAll()
+    .where("id", "=", token)
+    .where("expires_at", ">", new Date())
+    .executeTakeFirst();
+
+  if (!deletionToken) {
+    return {
+      success: false,
+      message: "유효하지 않거나 만료된 계정 삭제 토큰입니다.",
+    };
+  }
+
+  const { user, session } = await validateRequest();
+  if (!user || user.id !== deletionToken.user_id) {
+    return {
+      success: false,
+      message: "계정 삭제 권한이 없습니다.",
+    };
+  }
+
+  try {
+    // List all objects with user's prefix
+    const listCommand = new ListObjectsV2Command({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Prefix: getUserHomeDirectory(user.loginName),
+    });
+
+    const objects = await s3Client.send(listCommand);
+
+    if (objects.Contents && objects.Contents.length > 0) {
+      // Delete all objects in batch
+      await s3Client.send(
+        new DeleteObjectsCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Delete: {
+            Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
+          },
+        })
+      );
+    }
+
+    await db.transaction().execute(async (trx) => {
+      // Delete the account deletion token
+      await trx
+        .deleteFrom("account_deletion_tokens")
+        .where("id", "=", token)
+        .execute();
+
+      // Delete user account (this will cascade to all related tables)
+      await trx
+        .deleteFrom("users")
+        .where("id", "=", user.id)
+        .execute();
+    });
+
+    // Invalidate session
+    await lucia.invalidateSession(session.id);
+
+    const sessionCookie = lucia.createBlankSessionCookie();
+    (await cookies()).set(
+      sessionCookie.name,
+      sessionCookie.value,
+      sessionCookie.attributes
+    );
+
+    return {
+      success: true,
+      message: "계정이 성공적으로 삭제되었습니다.",
+    };
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    return {
+      success: false,
+      message: "계정 삭제 중 오류가 발생했습니다.",
+    };
+  }
 }
 
 export async function setDiscoverable(discoverable: boolean) {
