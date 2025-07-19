@@ -6,7 +6,6 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
-    bodySizeLimit: "10mb",
   },
   images: {
     remotePatterns: [new URL("https://r2-screenshots.naru.pub/*")],
