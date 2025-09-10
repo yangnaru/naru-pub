@@ -12,11 +12,11 @@
     "test:coverage": "jest --coverage",
     "test:file": "jest src/lib/actions/__tests__/file.test.ts",
     "test:validation": "jest src/lib/actions/__tests__/file-validation.test.ts",
-    "kysely-codegen": "kysely-codegen --env-file=.env --out-file=src/lib/db.d.ts",
-    "migrate": "tsx --env-file=.env src/cli/migrate.ts",
-    "migrate-down": "tsx --env-file=.env src/cli/migrate-down.ts",
-    "update-screenshots": "tsx --env-file=.env src/cli/update-screenshots.tsx",
-    "update-home-directory-sizes": "tsx --env-file=.env src/cli/update-home-directory-sizes.ts"
+    "kysely-codegen": "kysely-codegen --out-file=src/lib/db.d.ts",
+    "migrate": "tsx src/cli/migrate.ts",
+    "migrate-down": "tsx src/cli/migrate-down.ts",
+    "update-screenshots": "tsx src/cli/update-screenshots.tsx",
+    "update-home-directory-sizes": "tsx src/cli/update-home-directory-sizes.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.722.0",
