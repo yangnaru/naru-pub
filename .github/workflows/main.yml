@@ -26,7 +26,7 @@ jobs:
         run: echo arch=arm64 >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: control-plane
           pull: "true"
           push: "true"
           no-cache: "false"
@@ -59,7 +59,7 @@ jobs:
         run: echo arch=arm64 >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: proxy
           pull: "true"
           push: "true"
           no-cache: "false"
