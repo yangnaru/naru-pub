@@ -36,7 +36,7 @@ RUN npm install --global corepack@latest
 RUN corepack enable pnpm
 RUN corepack use pnpm@latest-10
 RUN pnpm install --frozen-lockfile
-# RUN npx playwright install chromium
+RUN npx playwright install chromium
 
 COPY components.json \
      kysely.config.ts \
