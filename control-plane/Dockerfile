@@ -41,6 +41,7 @@ RUN npx playwright install chromium
 COPY components.json \
      kysely.config.ts \
      next.config.mjs \
+     postcss.config.mjs \
      sentry.edge.config.ts \
      sentry.server.config.ts \
      tailwind.config.ts \
