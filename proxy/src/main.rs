@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
     let s3_client = S3Client::new(&aws_config);
 
     // Create a TCP listener
-    let addr = format!("localhost:{}", config.port);
+    let addr = format!("0.0.0.0:{}", config.port);
     let listener = TcpListener::bind(&addr).await?;
     println!("Server running on http://{}", addr);
 
