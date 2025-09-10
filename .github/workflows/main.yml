@@ -1,0 +1,73 @@
+name: main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  image-control-plane:
+    defaults:
+      run:
+        working-directory: control-plane
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: arch
+        run: echo arch=arm64 >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          pull: "true"
+          push: "true"
+          no-cache: "false"
+          build-args: GIT_COMMIT=${{ github.sha }}
+          tags: ghcr.io/${{ github.repository }}-control-plane:git-${{ github.sha }}-${{ steps.arch.outputs.arch }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}-control-plane:build-cache-${{ steps.arch.outputs.arch }}
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}-control-plane:build-cache-${{ steps.arch.outputs.arch }},mode=max
+          provenance: false
+
+  image-proxy:
+    defaults:
+      run:
+        working-directory: proxy
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: arch
+        run: echo arch=arm64 >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          pull: "true"
+          push: "true"
+          no-cache: "false"
+          build-args: GIT_COMMIT=${{ github.sha }}
+          tags: ghcr.io/${{ github.repository }}-proxy:git-${{ github.sha }}-${{ steps.arch.outputs.arch }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=AGPL-3.0-only
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}-proxy:build-cache-${{ steps.arch.outputs.arch }}
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}-proxy:build-cache-${{ steps.arch.outputs.arch }},mode=max
+          provenance: false
