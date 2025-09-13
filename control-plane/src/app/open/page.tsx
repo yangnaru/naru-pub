@@ -67,64 +67,6 @@ async function getActiveSessionsData() {
   return chartData;
 }
 
-async function getHomeDirectorySizesData() {
-  const history = await db
-    .selectFrom("home_directory_size_history")
-    .innerJoin("users", "users.id", "home_directory_size_history.user_id")
-    .select([
-      "home_directory_size_history.size_bytes",
-      "home_directory_size_history.recorded_at",
-    ])
-    .orderBy("home_directory_size_history.recorded_at", "asc")
-    .execute();
-
-  // Group by month and sum the sizes
-  const monthlyData = history.reduce((acc, record) => {
-    const month = new Date(record.recorded_at).toISOString().slice(0, 7); // YYYY-MM format
-    acc[month] = (acc[month] || 0) + record.size_bytes;
-    return acc;
-  }, {} as Record<string, number>);
-
-  // Convert to chart data format
-  const chartData = Object.entries(monthlyData).map(([month, totalSize]) => ({
-    month,
-    totalSize,
-  }));
-
-  return chartData;
-}
-
-async function getAverageHomeDirectorySizesData() {
-  const history = await db
-    .selectFrom("home_directory_size_history")
-    .innerJoin("users", "users.id", "home_directory_size_history.user_id")
-    .select([
-      "home_directory_size_history.size_bytes",
-      "home_directory_size_history.recorded_at",
-    ])
-    .orderBy("home_directory_size_history.recorded_at", "asc")
-    .execute();
-
-  // Group by month and calculate average sizes
-  const monthlyData = history.reduce((acc, record) => {
-    const month = new Date(record.recorded_at).toISOString().slice(0, 7); // YYYY-MM format
-    if (!acc[month]) {
-      acc[month] = { totalSize: 0, recordCount: 0 };
-    }
-    acc[month].totalSize += record.size_bytes;
-    acc[month].recordCount += 1;
-    return acc;
-  }, {} as Record<string, { totalSize: number; recordCount: number }>);
-
-  // Convert to chart data format with averages
-  const chartData = Object.entries(monthlyData).map(([month, data]) => ({
-    month,
-    averageSize: data.recordCount > 0 ? data.totalSize / data.recordCount : 0,
-    userCount: data.recordCount,
-  }));
-
-  return chartData;
-}
 
 async function getCurrentStorageStats() {
   const users = await db
@@ -176,9 +118,6 @@ function formatBytes(bytes: number): string {
 export default async function OpenPage() {
   const userGrowthData = await getUserGrowthData();
   const activeSessionsData = await getActiveSessionsData();
-  const homeDirectorySizesData = await getHomeDirectorySizesData();
-  const averageHomeDirectorySizesData =
-    await getAverageHomeDirectorySizesData();
   const currentStats = await getCurrentStorageStats();
   const homeDirectorySizeDistributionData =
     await getHomeDirectorySizeDistributionData();

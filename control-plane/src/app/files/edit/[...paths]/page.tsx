@@ -1,14 +1,12 @@
 import path from "path";
-import DirectoryListing from "@/components/browser/DirectoryListing";
-import DirectoryBreadcrumb from "@/components/browser/DirectoryBreadcrumb";
-import Editor from "@/components/Editor";
 import { validateRequest } from "@/lib/auth";
 import {
-  GetObjectCommand,
   HeadObjectCommand,
   NotFound,
 } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "@/lib/utils";
+import { buildFileTree } from "@/lib/fileUtils";
+import FileExplorerWithSelected from "@/components/browser/FileExplorerWithSelected";
 
 export default async function EditPage(
   props: {
@@ -21,7 +19,7 @@ export default async function EditPage(
   if (!user) {
     return (
       <div className="max-w-md mx-auto p-6">
-        <div className="bg-white border-2 border-gray-300  rounded-lg p-6 text-center">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 text-center">
           <h1 className="text-xl font-bold text-gray-800 mb-2">로그인 필요</h1>
           <p className="text-gray-600">파일 편집을 위해 로그인이 필요합니다.</p>
         </div>
@@ -35,38 +33,32 @@ export default async function EditPage(
     .join(getUserHomeDirectory(user.loginName), ...decodedPaths)
     .replaceAll("//", "/");
 
+  // Check if file exists
   const headCommand = new HeadObjectCommand({
     Bucket: process.env.S3_BUCKET_NAME,
     Key: actualFilename,
   });
+  
+  let fileExists = true;
   try {
     await s3Client.send(headCommand);
   } catch (e) {
     if (e instanceof NotFound) {
-      return (
-        <div className="max-w-6xl mx-auto p-6">
-          <DirectoryListing paths={[...decodedPaths, "/"]} />
-        </div>
-      );
+      fileExists = false;
+    } else {
+      throw e;
     }
-    throw e;
   }
 
-  const getCommand = new GetObjectCommand({
-    Bucket: process.env.S3_BUCKET_NAME,
-    Key: actualFilename,
-  });
-  const get = await s3Client.send(getCommand);
+  const fileTree = await buildFileTree(user.loginName);
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex flex-col gap-2">
-        <DirectoryBreadcrumb paths={decodedPaths} />
-        <Editor
-          filename={filename}
-          contents={(await get.Body?.transformToString()) || ""}
-        />
-      </div>
+    <div className="w-full p-6">
+      <FileExplorerWithSelected 
+        initialFiles={fileTree} 
+        userLoginName={user.loginName}
+        initialSelectedFile={fileExists ? filename : null}
+      />
     </div>
   );
 }
