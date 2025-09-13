@@ -123,7 +123,7 @@ export default async function OpenPage() {
     await getHomeDirectorySizeDistributionData();
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div className="w-full p-6 space-y-8">
       <div className="bg-white border-2 border-gray-300  rounded-lg p-6">
         <h2 className="text-3xl font-bold text-gray-800 mb-2">📊 지표</h2>
         <p className="text-gray-600">나루의 사용 현황과 통계를 확인해보세요.</p>
