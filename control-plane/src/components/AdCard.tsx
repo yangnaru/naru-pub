@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardContent,
   CardFooter,
+  CardTitle,
 } from "@/components/ui/card";
 
 interface AdCardProps {
@@ -36,10 +37,9 @@ export function AdCard({
       <CardHeader className="bg-gray-100 border-b border-gray-300 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-2xl p-2 bg-white rounded border border-gray-300">
-              {icon}
-            </div>
-            <h3 className="font-bold text-gray-800 text-lg">{title}</h3>
+            <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+              {icon} {title}
+            </CardTitle>
           </div>
           <span className="text-xs bg-gray-200 text-gray-600 border border-gray-300 px-2 py-1 rounded">
             {label}
