@@ -19,29 +19,31 @@ export default async function Home() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto p-6 space-y-8">
-        <div className="text-center py-8 bg-white rounded-lg border border-gray-300">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4 ">
-            나루
-          </h1>
-          <p className="text-lg text-gray-600 bg-gray-100 inline-block px-4 py-2 rounded-full border border-gray-300">
-            당신의 공간이 되는, 나루.
-          </p>
-        </div>
-
-        <Card className="bg-white border-2 border-gray-300 ">
+        <Card className="bg-white border-2 border-gray-300 shadow-lg">
           <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
             <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
-              📋 소개
+              📖 소개
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
-              <p className="text-gray-700 text-base leading-relaxed">
-                <strong className="text-blue-800">나루</strong>는 누구나 무료로
-                사용할 수 있는 비영리 웹사이트 호스팅 서비스입니다. 개인
-                홈페이지부터 작은 프로젝트까지, 당신의 웹 공간을 만들어보세요.
-              </p>
-            </div>
+            <p className="text-gray-700 text-base leading-relaxed">
+              <strong className="text-blue-800">나루</strong>는 누구나 무료로
+              사용할 수 있는 비영리 웹사이트 호스팅 서비스입니다.
+            </p>
+            <p className="text-gray-700 text-base leading-relaxed">
+              개인 홈페이지나 블로그를 손쉽게 만들고 공유할 수 있도록
+              도와드립니다.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white border-2 border-gray-300 shadow-lg">
+          <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
+            <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+              📋 사용 안내
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
             <div className="space-y-3 text-gray-700">
               <div className="bg-gray-50 border border-gray-200 rounded p-3">
                 <strong className="text-gray-800">💾 저장공간:</strong> 사용자당
@@ -74,10 +76,6 @@ export default async function Home() {
                 </Link>{" "}
                 으로 부탁드립니다.
               </div>
-
-              <div className="text-center text-gray-700 font-bold text-lg bg-gray-100 border border-gray-300 rounded p-3">
-                🌟 그럼, 즐거운 하루 되세요! 🌟
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -108,7 +106,7 @@ export default async function Home() {
         </div>
 
         {recentlyRenderedUsers.length > 0 && (
-          <Card className="bg-white border-2 border-gray-300 ">
+          <Card className="bg-white border-2 border-gray-300 shadow-lg">
             <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
               <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
                 🔄 최근 업데이트된
@@ -122,7 +120,7 @@ export default async function Home() {
                   return (
                     <div
                       key={user.id}
-                      className="bg-white border border-gray-300 rounded-lg p-3  hover: transition-shadow duration-200"
+                      className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
                     >
                       <Link
                         href={homepageUrl}
