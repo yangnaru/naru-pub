@@ -4,10 +4,46 @@ import { useState, useRef } from "react";
 import DirectoryTree from "./DirectoryTree";
 import FileViewer from "./FileViewer";
 import { FileNode } from "@/lib/fileUtils";
+import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 
 interface FileExplorerProps {
   initialFiles: FileNode[];
   userLoginName: string;
+}
+
+function getFileIcon(fileName: string, isDirectory: boolean): string {
+  if (isDirectory) return "📁";
+
+  const extension = fileName.split('.').pop()?.toLowerCase() || "";
+
+  if (EDITABLE_FILE_EXTENSIONS.includes(extension)) {
+    switch (extension) {
+      case "html":
+      case "htm":
+        return "🌐";
+      case "css":
+        return "🎨";
+      case "js":
+        return "⚡";
+      case "json":
+        return "📋";
+      case "md":
+      case "markdown":
+        return "📝";
+      default:
+        return "📄";
+    }
+  }
+
+  if (IMAGE_FILE_EXTENSIONS.includes(extension)) {
+    return "🖼️";
+  }
+
+  if (AUDIO_FILE_EXTENSIONS.includes(extension)) {
+    return "🎵";
+  }
+
+  return "📄";
 }
 
 export default function FileExplorer({ initialFiles, userLoginName }: FileExplorerProps) {
@@ -17,6 +53,8 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
   const dragCounterRef = useRef(0);
 
   const handleFileSelect = (filePath: string, isDirectory: boolean) => {
@@ -157,6 +195,123 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
     }
   };
 
+  const handleStartRename = () => {
+    if (!selectedFile) return;
+
+    // Check if selected item is a file (not directory)
+    const findNode = (nodes: FileNode[], path: string): FileNode | null => {
+      for (const node of nodes) {
+        if (node.path === path) return node;
+        if (node.children) {
+          const found = findNode(node.children, path);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const selectedNode = findNode(files, selectedFile);
+    if (selectedNode?.isDirectory) {
+      return; // Don't allow renaming directories for now
+    }
+
+    const filename = selectedFile.split('/').pop() || "";
+    // Extract filename without extension for editing
+    const lastDotIndex = filename.lastIndexOf('.');
+    const filenameWithoutExt = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+
+    setNewFileName(filenameWithoutExt);
+    setIsRenaming(true);
+  };
+
+  const handleCancelRename = () => {
+    setIsRenaming(false);
+    setNewFileName("");
+  };
+
+  const handleConfirmRename = async () => {
+    if (!selectedFile || !newFileName.trim()) {
+      handleCancelRename();
+      return;
+    }
+
+    try {
+      const originalFilename = selectedFile.split('/').pop() || "";
+      const lastDotIndex = originalFilename.lastIndexOf('.');
+      const extension = lastDotIndex > 0 ? originalFilename.substring(lastDotIndex) : "";
+
+      // Combine new filename with original extension
+      const finalFilename = newFileName.trim() + extension;
+
+      // Check if the new filename is the same as the original
+      if (finalFilename === originalFilename) {
+        handleCancelRename();
+        return;
+      }
+
+      // Check if a file with the new name already exists
+      const pathParts = selectedFile.split('/');
+      pathParts[pathParts.length - 1] = finalFilename;
+      const newPath = pathParts.join('/');
+
+      const checkExisting = (nodes: FileNode[], targetPath: string): boolean => {
+        for (const node of nodes) {
+          if (node.path === targetPath) {
+            return true;
+          }
+          if (node.children) {
+            if (checkExisting(node.children, targetPath)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+
+      if (checkExisting(files, newPath)) {
+        const confirmOverwrite = confirm(
+          `"${finalFilename}" 파일이 이미 존재합니다.\n기존 파일을 덮어쓰시겠습니까?`
+        );
+        if (!confirmOverwrite) {
+          return; // Don't proceed with rename
+        }
+      }
+
+      const response = await fetch("/api/files/rename", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          oldFilename: selectedFile,
+          newFilename: finalFilename,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update selected file to new path
+        setSelectedFile(newPath);
+        await handleRefresh();
+        handleCancelRename();
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("Rename error:", error);
+      alert("파일 이름 변경에 실패했습니다.");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleConfirmRename();
+    } else if (e.key === "Escape") {
+      handleCancelRename();
+    }
+  };
+
   return (
     <div
       className="flex h-[calc(100vh-200px)] bg-white border-2 border-gray-300 rounded-lg overflow-hidden relative"
@@ -184,9 +339,61 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       {/* Right Main Area - File Viewer */}
       <div className="flex-1 flex flex-col min-w-0">
         <div className="p-3 border-b border-gray-300 bg-gray-100">
-          <h3 className="font-medium text-gray-800 truncate">
-            {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
-          </h3>
+          {selectedFile ? (
+            <div className="flex items-center justify-between">
+              {isRenaming ? (
+                <div className="flex items-center space-x-2 flex-1">
+                  <span>{getFileIcon(selectedFile.split('/').pop() || "", false)}</span>
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      value={newFileName}
+                      onChange={(e) => setNewFileName(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="px-2 py-1 text-sm border border-blue-500 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                    />
+                    {(() => {
+                      const originalFilename = selectedFile?.split('/').pop() || "";
+                      const lastDotIndex = originalFilename.lastIndexOf('.');
+                      const extension = lastDotIndex > 0 ? originalFilename.substring(lastDotIndex) : "";
+                      return extension ? (
+                        <span className="px-2 py-1 text-sm bg-gray-100 border border-l-0 border-r-0 border-blue-500 text-gray-600">
+                          {extension}
+                        </span>
+                      ) : null;
+                    })()}
+                    <button
+                      onClick={handleConfirmRename}
+                      className="px-2 py-1 text-xs bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors"
+                      title="저장 (Enter)"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={handleCancelRename}
+                      className="px-2 py-1 text-xs bg-red-100 text-red-700 border border-red-300 rounded-r hover:bg-red-200 hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors"
+                      title="취소 (Esc)"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 flex-1">
+                  <h3
+                    className="font-medium text-gray-800 truncate cursor-pointer hover:text-blue-600 transition-colors"
+                    onClick={handleStartRename}
+                    title="클릭하여 이름 변경"
+                  >
+                    {getFileIcon(selectedFile.split('/').pop() || "", false)} {selectedFile.split('/').pop()}
+                  </h3>
+                </div>
+              )}
+            </div>
+          ) : (
+            <h3 className="font-medium text-gray-800">파일을 선택하세요</h3>
+          )}
         </div>
         <div className="flex-1 overflow-auto">
           {selectedFile ? (

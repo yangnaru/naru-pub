@@ -31,8 +31,7 @@ export default function ImageViewer({ src, alt, filename }: ImageViewerProps) {
       <div className="flex items-center justify-center h-full text-gray-500">
         <div className="text-center">
           <div className="text-6xl mb-4">🖼️</div>
-          <p className="mb-2">이미지를 불러올 수 없습니다</p>
-          <p className="text-sm text-gray-400">{filename}</p>
+          <p>이미지를 불러올 수 없습니다</p>
         </div>
       </div>
     );
@@ -42,10 +41,7 @@ export default function ImageViewer({ src, alt, filename }: ImageViewerProps) {
     <div className="h-full flex flex-col bg-gray-50">
       {/* Image Controls */}
       <div className="p-3 border-b border-gray-300 bg-white">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">🖼️ {filename}</span>
-          </div>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
