@@ -78,7 +78,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto p-6">
       <div className="bg-white border-2 border-gray-300  rounded-lg p-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">회원가입</h1>
