@@ -3,7 +3,6 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { validateRequest } from "@/lib/auth";
 import { getUserHomeDirectory, s3Client } from "@/lib/utils";
 import { EDITABLE_FILE_EXTENSIONS } from "@/lib/const";
-import path from "path";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,15 +21,18 @@ export async function GET(request: NextRequest) {
 
     // Security check: ensure the file is editable
     const extension = filePath.split('.').pop()?.toLowerCase() || '';
+    
     if (!EDITABLE_FILE_EXTENSIONS.includes(extension)) {
-      return NextResponse.json({ error: "File type not editable" }, { status: 400 });
+      return NextResponse.json({ error: `File type '${extension}' not editable` }, { status: 400 });
     }
 
-    const actualFilename = path.join(getUserHomeDirectory(user.loginName), filePath);
+    // Use proper path construction for S3 keys (always use forward slashes)
+    const userDir = getUserHomeDirectory(user.loginName);
+    const s3Key = `${userDir}/${filePath}`.replace(/\/+/g, '/');
 
     const command = new GetObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: actualFilename,
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Key: s3Key,
     });
 
     const response = await s3Client.send(command);
@@ -44,6 +46,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching file content:', error);
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return NextResponse.json(
       { error: "Failed to fetch file content" }, 
       { status: 500 }
