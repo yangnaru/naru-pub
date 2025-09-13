@@ -28,94 +28,91 @@ export default async function RootLayout({
     <html lang="ko">
       <body className={korean.className}>
         <div className="bg-gray-50 min-h-screen">
-          <nav className="bg-white border-b-2 border-gray-300">
-            <div className="max-w-4xl mx-auto p-4">
-              <Link href="/" className="flex flex-row gap-3 items-center mb-4">
-                <h1 className="text-3xl font-bold text-gray-800 drop-">
-                  나루
-                </h1>
-                <Image
-                  src="/logo.png"
-                  alt="logo"
-                  width={28}
-                  height={28}
-                  className="drop-"
-                />
-              </Link>
+          <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50 backdrop-blur-md bg-white/95">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <div className="flex items-center">
+                  <Link href="/" className="flex items-center gap-3 group">
+                    <h1 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                      나루
+                    </h1>
+                    <Image
+                      src="/logo.png"
+                      alt="logo"
+                      width={28}
+                      height={28}
+                      className="group-hover:scale-110 transition-transform duration-200"
+                    />
+                  </Link>
+                </div>
 
-              <ul className="flex flex-row gap-4 text-sm">
-                <li>
+                <div className="flex items-center space-x-1">
                   <Link
                     href="/"
-                    className="text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border border-gray-300 transition-all duration-200 font-medium"
+                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                   >
                     소개
                   </Link>
-                </li>
-                <li>
                   <Link
                     href="/open"
-                    className="text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border border-gray-300 transition-all duration-200 font-medium"
+                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                   >
                     지표
                   </Link>
-                </li>
-                {user ? (
-                  <>
-                    <li>
+                  {user ? (
+                    <>
                       <Link
                         href="/files"
-                        className="text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border border-gray-300 transition-all duration-200 font-medium"
+                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         파일
                       </Link>
-                    </li>
-                    <li>
                       <Link
                         href="/account"
-                        className="text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border border-gray-300 transition-all duration-200 font-medium"
+                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         계정
                       </Link>
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li>
+                    </>
+                  ) : (
+                    <>
                       <Link
                         href="/login"
-                        className="text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border border-gray-300 transition-all duration-200 font-medium"
+                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         로그인
                       </Link>
-                    </li>
-                    <li>
                       <Link
                         href="/signup"
-                        className="text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full border border-gray-300 transition-all duration-200 font-medium"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
                       >
                         회원가입
                       </Link>
-                    </li>
-                  </>
-                )}
-              </ul>
-
-              {user && (
-                <div className="mt-3 p-3 bg-gray-100 border border-gray-300">
-                  <p className="text-sm text-gray-700">
-                    <strong>🏠 당신만의 갠홈 주소:</strong>{" "}
-                    <Link
-                      href={getHomepageUrl(user.loginName)}
-                      target="_blank"
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
-                      {getHomepageUrl(user.loginName)}
-                    </Link>
-                  </p>
+                    </>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
+
+            {user && (
+              <div className="border-t border-gray-200 bg-blue-50/50">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700 flex items-center gap-2">
+                      <span className="text-blue-600">🏠</span>
+                      <span className="font-medium">당신만의 갠홈 주소:</span>
+                      <Link
+                        href={getHomepageUrl(user.loginName)}
+                        target="_blank"
+                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors duration-200"
+                      >
+                        {getHomepageUrl(user.loginName)}
+                      </Link>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </nav>
 
           <main>{children}</main>
