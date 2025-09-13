@@ -124,14 +124,14 @@ export default async function OpenPage() {
 
   return (
     <div className="w-full p-6 space-y-8">
-      <div className="bg-white border-2 border-gray-300  rounded-lg p-6">
+      <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6">
         <h2 className="text-3xl font-bold text-gray-800 mb-2">📊 지표</h2>
         <p className="text-gray-600">나루의 사용 현황과 통계를 확인해보세요.</p>
       </div>
 
       {/* Current Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-white border-2 border-gray-300 ">
+        <Card className="bg-white border-2 border-gray-300 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
             <CardTitle className="text-sm font-medium text-gray-800">
               총 저장 용량
@@ -146,7 +146,7 @@ export default async function OpenPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-white border-2 border-gray-300 ">
+        <Card className="bg-white border-2 border-gray-300 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
             <CardTitle className="text-sm font-medium text-gray-800">
               평균 저장 용량
@@ -159,7 +159,7 @@ export default async function OpenPage() {
             <p className="text-xs text-gray-600">사용자당 평균</p>
           </CardContent>
         </Card>
-        <Card className="bg-white border-2 border-gray-300 ">
+        <Card className="bg-white border-2 border-gray-300 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
             <CardTitle className="text-sm font-medium text-gray-800">
               최대 저장 용량
@@ -172,7 +172,7 @@ export default async function OpenPage() {
             <p className="text-xs text-gray-600">가장 큰 갠홈</p>
           </CardContent>
         </Card>
-        <Card className="bg-white border-2 border-gray-300 ">
+        <Card className="bg-white border-2 border-gray-300 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
             <CardTitle className="text-sm font-medium text-gray-800">
               활성 사용자

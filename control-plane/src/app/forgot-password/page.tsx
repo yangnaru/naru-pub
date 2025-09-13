@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
   if (isSubmitted) {
     return (
       <div className="max-w-md mx-auto p-6">
-        <div className="bg-white border-2 border-gray-300  rounded-lg p-6 text-center">
+        <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6 text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">이메일을 확인해주세요</h1>
           <p className="text-gray-600 mb-4">
             비밀번호 재설정 링크가 입력하신 이메일로 발송되었습니다.
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <div className="bg-white border-2 border-gray-300  rounded-lg p-6">
+      <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">비밀번호 찾기</h1>
           <p className="text-gray-600">등록하신 이메일 주소를 입력해주세요</p>

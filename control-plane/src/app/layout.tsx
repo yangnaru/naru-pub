@@ -28,7 +28,7 @@ export default async function RootLayout({
     <html lang="ko">
       <body className={korean.className}>
         <div className="bg-gray-50 min-h-screen">
-          <nav className="bg-white border-b-2 border-gray-300 ">
+          <nav className="bg-white border-b-2 border-gray-300">
             <div className="max-w-4xl mx-auto p-4">
               <Link href="/" className="flex flex-row gap-3 items-center mb-4">
                 <h1 className="text-3xl font-bold text-gray-800 drop-">
@@ -102,7 +102,7 @@ export default async function RootLayout({
               </ul>
 
               {user && (
-                <div className="mt-3 p-3 bg-gray-100 border border-gray-300 rounded-lg ">
+                <div className="mt-3 p-3 bg-gray-100 border border-gray-300">
                   <p className="text-sm text-gray-700">
                     <strong>🏠 당신만의 갠홈 주소:</strong>{" "}
                     <Link

@@ -314,7 +314,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
   return (
     <div
-      className="flex h-[calc(100vh-200px)] bg-white border-2 border-gray-300 rounded-lg overflow-hidden relative"
+      className="flex h-[calc(100vh-200px)] bg-white border-2 border-gray-300 shadow-lg rounded-lg overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -412,7 +412,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       {/* Drag and Drop Overlay */}
       {isDragOver && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center border-4 border-dashed border-blue-500">
+          <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg text-center border-4 border-dashed border-blue-500">
             <div className="text-6xl mb-4">📁</div>
             <p className="text-xl font-semibold text-blue-700">파일을 여기에 드롭하세요</p>
             <p className="text-sm mt-2 text-gray-600">
@@ -425,7 +425,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       {/* Upload Progress Overlay */}
       {uploading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+          <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg text-center">
             <div className="text-2xl mb-2">⬆️</div>
             <p className="text-lg font-semibold mb-2">파일 업로드 중...</p>
             <div className="w-64 bg-gray-200 rounded-full h-2">

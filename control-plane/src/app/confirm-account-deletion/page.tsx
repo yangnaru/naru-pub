@@ -55,7 +55,7 @@ export default function ConfirmAccountDeletionPage() {
             계정 삭제 확인
           </h2>
         </div>
-        <div className="bg-white p-8 rounded-lg shadow">
+        <div className="bg-white p-8 rounded-lg border-2 border-gray-300 shadow-lg">
           {status === "loading" && token && (
             <div className="space-y-6">
               <div className="text-center">

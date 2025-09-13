@@ -50,7 +50,7 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="max-w-md mx-auto p-6">
-        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 text-center">
+        <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6 text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">유효하지 않은 링크</h1>
           <p className="text-gray-600">
             비밀번호 재설정 링크가 유효하지 않습니다.
@@ -77,7 +77,7 @@ function ResetPasswordForm() {
   if (isSubmitted) {
     return (
       <div className="max-w-md mx-auto p-6">
-        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 text-center">
+        <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6 text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">비밀번호 변경 완료</h1>
           <p className="text-gray-600 mb-4">
             비밀번호가 성공적으로 변경되었습니다.
@@ -96,7 +96,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <div className="bg-white border-2 border-gray-300 rounded-lg p-6">
+      <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">새 비밀번호 설정</h1>
           <p className="text-gray-600">새로운 비밀번호를 설정해주세요</p>

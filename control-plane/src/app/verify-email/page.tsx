@@ -35,7 +35,7 @@ export default function VerifyEmailPage() {
             이메일 인증
           </h2>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg">
           {status === "loading" && (
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>

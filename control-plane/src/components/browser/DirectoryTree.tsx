@@ -163,7 +163,7 @@ function TreeNode({
             onClick={() => setShowContextMenu(false)}
           />
           <div 
-            className="fixed z-20 bg-white border border-gray-300 rounded shadow-md py-1"
+            className="fixed z-20 bg-white border-2 border-gray-300 rounded shadow-lg py-1"
             style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
           >
             <button
