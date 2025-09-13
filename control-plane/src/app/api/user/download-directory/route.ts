@@ -20,15 +20,27 @@ export async function GET() {
     const bucketName = process.env.S3_BUCKET_NAME!;
     const userDirectory = getUserHomeDirectory(user.loginName);
 
-    // List all objects in user's directory (add trailing slash for exact directory match)
-    const listCommand = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: `${userDirectory}/`,
-    });
+    // List all objects in user's directory (with pagination for large directories)
+    const allObjects: any[] = [];
+    let continuationToken: string | undefined;
+    
+    do {
+      const listCommand = new ListObjectsV2Command({
+        Bucket: bucketName,
+        Prefix: `${userDirectory}/`,
+        ContinuationToken: continuationToken,
+      });
 
-    const objects = await s3Client.send(listCommand);
+      const objects = await s3Client.send(listCommand);
+      
+      if (objects.Contents) {
+        allObjects.push(...objects.Contents);
+      }
+      
+      continuationToken = objects.NextContinuationToken;
+    } while (continuationToken);
 
-    if (!objects.Contents || objects.Contents.length === 0) {
+    if (allObjects.length === 0) {
       return NextResponse.json(
         { error: "다운로드할 파일이 없습니다." },
         { status: 404 }
@@ -40,7 +52,7 @@ export async function GET() {
     const zipWriter = new ZipWriter(blobWriter);
 
     // Download each file and add to ZIP
-    for (const object of objects.Contents) {
+    for (const object of allObjects) {
       if (!object.Key) continue;
 
       // Get relative path (remove user directory prefix)

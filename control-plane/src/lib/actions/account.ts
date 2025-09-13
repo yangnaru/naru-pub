@@ -281,24 +281,40 @@ export async function deleteAccountImmediately() {
   }
 
   try {
-    // List all objects with user's prefix
-    const listCommand = new ListObjectsV2Command({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      Prefix: `${getUserHomeDirectory(user.loginName)}/`,
-    });
+    // List all objects with user's prefix (with pagination to ensure we delete everything)
+    const allObjects: any[] = [];
+    let continuationToken: string | undefined;
+    
+    do {
+      const listCommand = new ListObjectsV2Command({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Prefix: `${getUserHomeDirectory(user.loginName)}/`,
+        ContinuationToken: continuationToken,
+      });
 
-    const objects = await s3Client.send(listCommand);
+      const objects = await s3Client.send(listCommand);
+      
+      if (objects.Contents) {
+        allObjects.push(...objects.Contents);
+      }
+      
+      continuationToken = objects.NextContinuationToken;
+    } while (continuationToken);
 
-    if (objects.Contents && objects.Contents.length > 0) {
-      // Delete all objects in batch
-      await s3Client.send(
-        new DeleteObjectsCommand({
-          Bucket: process.env.S3_BUCKET_NAME!,
-          Delete: {
-            Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
-          },
-        })
-      );
+    if (allObjects.length > 0) {
+      // Delete all objects in batches (AWS limit is 1000 objects per delete request)
+      const batchSize = 1000;
+      for (let i = 0; i < allObjects.length; i += batchSize) {
+        const batch = allObjects.slice(i, i + batchSize);
+        await s3Client.send(
+          new DeleteObjectsCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Delete: {
+              Objects: batch.map((obj) => ({ Key: obj.Key! })),
+            },
+          })
+        );
+      }
     }
 
     // Delete user account (this will cascade to all related tables)
@@ -351,24 +367,40 @@ export async function confirmAccountDeletion(token: string) {
   }
 
   try {
-    // List all objects with user's prefix
-    const listCommand = new ListObjectsV2Command({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      Prefix: `${getUserHomeDirectory(user.loginName)}/`,
-    });
+    // List all objects with user's prefix (with pagination to ensure we delete everything)
+    const allObjects: any[] = [];
+    let continuationToken: string | undefined;
+    
+    do {
+      const listCommand = new ListObjectsV2Command({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Prefix: `${getUserHomeDirectory(user.loginName)}/`,
+        ContinuationToken: continuationToken,
+      });
 
-    const objects = await s3Client.send(listCommand);
+      const objects = await s3Client.send(listCommand);
+      
+      if (objects.Contents) {
+        allObjects.push(...objects.Contents);
+      }
+      
+      continuationToken = objects.NextContinuationToken;
+    } while (continuationToken);
 
-    if (objects.Contents && objects.Contents.length > 0) {
-      // Delete all objects in batch
-      await s3Client.send(
-        new DeleteObjectsCommand({
-          Bucket: process.env.S3_BUCKET_NAME!,
-          Delete: {
-            Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
-          },
-        })
-      );
+    if (allObjects.length > 0) {
+      // Delete all objects in batches (AWS limit is 1000 objects per delete request)
+      const batchSize = 1000;
+      for (let i = 0; i < allObjects.length; i += batchSize) {
+        const batch = allObjects.slice(i, i + batchSize);
+        await s3Client.send(
+          new DeleteObjectsCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Delete: {
+              Objects: batch.map((obj) => ({ Key: obj.Key! })),
+            },
+          })
+        );
+      }
     }
 
     await db.transaction().execute(async (trx) => {

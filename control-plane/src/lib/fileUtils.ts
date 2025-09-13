@@ -11,14 +11,30 @@ export interface FileNode {
 export async function buildFileTree(userLoginName: string): Promise<FileNode[]> {
   const homeDirectory = getUserHomeDirectory(userLoginName);
   
-  // Get all objects in the user's directory (add trailing slash for exact directory match)
-  const command = new ListObjectsV2Command({
-    Bucket: process.env.S3_BUCKET_NAME,
-    Prefix: `${homeDirectory}/`,
-  });
+  // Get all objects in the user's directory with pagination support
+  const objects: any[] = [];
+  let continuationToken: string | undefined;
+  
+  do {
+    const command = new ListObjectsV2Command({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Prefix: `${homeDirectory}/`,
+      ContinuationToken: continuationToken,
+    });
 
-  const response = await s3Client.send(command);
-  const objects = response.Contents || [];
+    const response = await s3Client.send(command);
+    
+    if (response.Contents) {
+      objects.push(...response.Contents);
+    }
+    
+    continuationToken = response.NextContinuationToken;
+    
+    // Log if we're paginating to help debug large directories
+    if (continuationToken) {
+      console.log(`Paginating file tree for user ${userLoginName}: ${objects.length} objects loaded so far`);
+    }
+  } while (continuationToken);
 
   // Convert S3 objects to a tree structure
   const tree: Map<string, FileNode> = new Map();
