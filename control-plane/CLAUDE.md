@@ -1,0 +1,1 @@
+This project uses `pnpm`. Don't use `npm`.
