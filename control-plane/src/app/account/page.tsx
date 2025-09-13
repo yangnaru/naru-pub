@@ -2,6 +2,7 @@ import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import LogoutButton from "./LogoutButton";
 import DeleteAccountButton from "./DeleteAccountButton";
+import DownloadDirectoryButton from "./DownloadDirectoryButton";
 import { DiscoverabilityForm } from "./DiscoverabilityForm";
 import ChangePasswordForm from "./ChangePasswordForm";
 import EmailManagement from "./EmailManagement";
@@ -38,7 +39,8 @@ export default async function AccountPage() {
 
       <div className="bg-white border-2 border-gray-300  rounded-lg p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4">계정 작업</h2>
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row gap-4 flex-wrap">
+          <DownloadDirectoryButton />
           <LogoutButton />
           <DeleteAccountButton />
         </div>

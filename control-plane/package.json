@@ -36,6 +36,7 @@
     "@uiw/react-codemirror": "^4.22.2",
     "@upyo/core": "^0.1.1",
     "@upyo/mailgun": "^0.1.1",
+    "@zip.js/zip.js": "^2.8.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "kysely": "^0.27.3",
