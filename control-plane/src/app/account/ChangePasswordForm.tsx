@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -58,65 +59,74 @@ export default function ChangePasswordForm() {
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 max-w-fit"
-      >
-        <FormField
-          control={form.control}
-          name="originalPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>기존 비밀번호</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                비밀번호는 8자 이상이어야 합니다.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="newPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>새 비밀번호</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormDescription>
-                비밀번호는 8자 이상이어야 합니다.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="newPasswordConfirm"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>비밀번호 확인</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="new-password" {...field} />
-              </FormControl>
-              <FormDescription>
-                새 비밀번호를 한 번 더 입력해주세요.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit">비밀번호 변경</Button>
-      </form>
-    </Form>
+    <Card className="bg-white border-2 border-gray-300 shadow-lg">
+      <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
+        <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+          🔒 비밀번호 변경
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="originalPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800">기존 비밀번호</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      autoComplete="current-password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-700">
+                    비밀번호는 8자 이상이어야 합니다.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800">새 비밀번호</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="new-password" {...field} />
+                  </FormControl>
+                  <FormDescription className="text-gray-700">
+                    비밀번호는 8자 이상이어야 합니다.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="newPasswordConfirm"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800">비밀번호 확인</FormLabel>
+                  <FormControl>
+                    <Input type="password" autoComplete="new-password" {...field} />
+                  </FormControl>
+                  <FormDescription className="text-gray-700">
+                    새 비밀번호를 한 번 더 입력해주세요.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit">비밀번호 변경</Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }
