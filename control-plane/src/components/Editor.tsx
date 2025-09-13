@@ -11,16 +11,26 @@ import { toast } from "@/components/hooks/use-toast";
 export default function Editor({
   filename,
   contents,
+  showSaveButton = true,
+  onlyShowSaveButton = false,
+  value: externalValue,
+  onChange: externalOnChange,
 }: {
   filename: string;
   contents: string;
+  showSaveButton?: boolean;
+  onlyShowSaveButton?: boolean;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
-  const [value, setValue] = useState(contents);
+  const [internalValue, setInternalValue] = useState(contents);
+  const value = externalValue !== undefined ? externalValue : internalValue;
+  const setValue = externalOnChange || setInternalValue;
   const onChange = useCallback(
-    (val: React.SetStateAction<string>, viewUpdate: any) => {
+    (val: string) => {
       setValue(val);
     },
-    []
+    [setValue]
   );
 
   const extensions = [
@@ -28,34 +38,60 @@ export default function Editor({
       javascript(),
   ];
 
-  return (
-    <div className="flex flex-col gap-4">
-      <CodeMirror
-        value={value}
-        height="100%"
-        extensions={extensions}
-        onChange={onChange}
-      />
+  const handleSave = async () => {
+    const res = await saveFile(filename, value);
+    if (res.success) {
+      toast({
+        title: res.message,
+        description: filename,
+      });
+    } else {
+      toast({
+        title: "저장 실패",
+        description: res.message,
+      });
+    }
+  };
+
+  if (onlyShowSaveButton) {
+    return (
       <Button
         type="button"
         value="저장"
-        onClick={async () => {
-          const res = await saveFile(filename, value);
-          if (res.success) {
-            toast({
-              title: res.message,
-              description: filename,
-            });
-          } else {
-            toast({
-              title: "저장 실패",
-              description: res.message,
-            });
-          }
-        }}
+        onClick={handleSave}
+        className="w-full"
       >
         저장
       </Button>
+    );
+  }
+
+  return (
+    <div className={`flex flex-col h-full ${showSaveButton ? 'gap-4' : ''}`}>
+      <div className="flex-1 min-h-0">
+        <CodeMirror
+          value={value}
+          height="100%"
+          extensions={extensions}
+          onChange={onChange}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: true,
+            dropCursor: false,
+            allowMultipleSelections: false,
+            highlightSelectionMatches: false,
+          }}
+        />
+      </div>
+      {showSaveButton && (
+        <Button
+          type="button"
+          value="저장"
+          onClick={handleSave}
+        >
+          저장
+        </Button>
+      )}
     </div>
   );
 }

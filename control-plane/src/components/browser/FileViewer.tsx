@@ -1,11 +1,50 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { getPublicAssetUrl } from "@/lib/utils";
 import Editor from "@/components/Editor";
 import ImageViewer from "./ImageViewer";
 import { Button } from "@/components/ui/button";
+import { saveFile } from "@/lib/actions/file";
+import { toast } from "@/components/hooks/use-toast";
+
+const EditorContext = createContext<{
+  value: string;
+  setValue: (value: string) => void;
+} | null>(null);
+
+function SaveButton({ filename }: { filename: string }) {
+  const context = useContext(EditorContext);
+  if (!context) return null;
+
+  const { value } = context;
+
+  const handleSave = async () => {
+    const res = await saveFile(filename, value);
+    if (res.success) {
+      toast({
+        title: res.message,
+        description: filename,
+      });
+    } else {
+      toast({
+        title: "저장 실패",
+        description: res.message,
+      });
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      onClick={handleSave}
+      className="w-full"
+    >
+      저장
+    </Button>
+  );
+}
 
 interface FileViewerProps {
   filePath: string;
@@ -16,6 +55,7 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
   const [fileContent, setFileContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editorValue, setEditorValue] = useState<string>("");
   
   const fileName = filePath.split('/').pop() || '';
   const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
@@ -46,6 +86,7 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
       }
       const content = await response.text();
       setFileContent(content);
+      setEditorValue(content);
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다');
     } finally {
@@ -79,9 +120,22 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
   // Handle different file types
   if (isEditable) {
     return (
-      <div className="h-full p-4">
-        <Editor filename={filePath} contents={fileContent} />
-      </div>
+      <EditorContext.Provider value={{ value: editorValue, setValue: setEditorValue }}>
+        <div className="h-full flex flex-col">
+          <div className="flex-1 p-4 overflow-auto min-h-0">
+            <Editor 
+              filename={filePath} 
+              contents={fileContent} 
+              showSaveButton={false}
+              value={editorValue}
+              onChange={setEditorValue}
+            />
+          </div>
+          <div className="p-4 border-t border-gray-300 bg-gray-50">
+            <SaveButton filename={filePath} />
+          </div>
+        </div>
+      </EditorContext.Provider>
     );
   }
 

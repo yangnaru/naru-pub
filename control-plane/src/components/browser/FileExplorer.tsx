@@ -65,9 +65,9 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       </div>
 
       {/* Right Main Area - File Viewer */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <div className="p-3 border-b border-gray-300 bg-gray-100">
-          <h3 className="font-medium text-gray-800">
+          <h3 className="font-medium text-gray-800 truncate">
             {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
           </h3>
         </div>

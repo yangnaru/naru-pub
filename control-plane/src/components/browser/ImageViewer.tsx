@@ -96,8 +96,10 @@ export default function ImageViewer({ src, alt, filename }: ImageViewerProps) {
               className="max-w-full max-h-full border border-gray-300 rounded"
               style={{ 
                 display: 'block',
-                maxWidth: 'none',
-                maxHeight: 'none'
+                maxWidth: zoom === 1 ? '100%' : 'none',
+                maxHeight: zoom === 1 ? '100%' : 'none',
+                width: zoom === 1 ? 'auto' : undefined,
+                height: zoom === 1 ? 'auto' : undefined
               }}
             />
           </div>
