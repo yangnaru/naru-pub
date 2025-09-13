@@ -90,8 +90,48 @@ function TreeNode({
   };
 
   const handleDelete = () => {
-    if (confirm(`정말로 "${node.name}"을(를) 삭제하시겠습니까?`)) {
-      onDelete(node.path);
+    if (node.isDirectory) {
+      // For directories, show all files that will be deleted
+      const getFilesInDirectory = (dirNode: FileNode): string[] => {
+        const files: string[] = [];
+        if (dirNode.children) {
+          for (const child of dirNode.children) {
+            if (child.isDirectory) {
+              files.push(...getFilesInDirectory(child));
+            } else {
+              files.push(child.path);
+            }
+          }
+        }
+        return files;
+      };
+
+      const affectedFiles = getFilesInDirectory(node);
+      const fileCount = affectedFiles.length;
+      
+      let confirmMessage = `정말로 폴더 "${node.name}"을(를) 삭제하시겠습니까?`;
+      
+      if (fileCount > 0) {
+        confirmMessage += `\n\n이 작업으로 ${fileCount}개의 파일이 함께 삭제됩니다:`;
+        const maxShowFiles = 10;
+        const filesToShow = affectedFiles.slice(0, maxShowFiles);
+        confirmMessage += `\n• ${filesToShow.join('\n• ')}`;
+        
+        if (fileCount > maxShowFiles) {
+          confirmMessage += `\n... 그리고 ${fileCount - maxShowFiles}개 파일 더`;
+        }
+      } else {
+        confirmMessage += '\n\n(빈 폴더입니다)';
+      }
+      
+      if (confirm(confirmMessage)) {
+        onDelete(node.path);
+      }
+    } else {
+      // For files, simple confirmation
+      if (confirm(`정말로 "${node.name}"을(를) 삭제하시겠습니까?`)) {
+        onDelete(node.path);
+      }
     }
     setShowContextMenu(false);
   };
@@ -171,7 +211,6 @@ export default function DirectoryTree({
   const [newFileName, setNewFileName] = useState("");
   const [showNewDirectoryInput, setShowNewDirectoryInput] = useState(false);
   const [showNewFileInput, setShowNewFileInput] = useState(false);
-  const [currentDirectory, setCurrentDirectory] = useState("");
   const [flashingItems, setFlashingItems] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -394,7 +433,7 @@ export default function DirectoryTree({
                 onChange={(e) => setNewDirectoryName(e.target.value)}
                 placeholder="폴더 이름"
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
-                onKeyPress={(e) => e.key === "Enter" && handleCreateDirectory()}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateDirectory()}
               />
               <Button size="sm" onClick={handleCreateDirectory} className="text-xs">
                 생성
@@ -410,7 +449,7 @@ export default function DirectoryTree({
                 onChange={(e) => setNewFileName(e.target.value)}
                 placeholder="파일 이름 (예: test.html)"
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
-                onKeyPress={(e) => e.key === "Enter" && handleCreateFile()}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateFile()}
               />
               <Button size="sm" onClick={handleCreateFile} className="text-xs">
                 생성
