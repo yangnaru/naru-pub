@@ -50,6 +50,9 @@ COPY components.json \
 COPY public/ public/
 COPY src/ src/
 
+ARG NEXT_PUBLIC_DOMAIN=naru.pub
+ENV NEXT_PUBLIC_DOMAIN=$NEXT_PUBLIC_DOMAIN
+
 RUN pnpm run build
 
 EXPOSE 3000
