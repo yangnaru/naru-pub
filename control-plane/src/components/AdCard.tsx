@@ -32,19 +32,31 @@ export function AdCard({
   buttonHref,
 }: AdCardProps) {
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
+    <Card className="w-full bg-white border-2 border-gray-300 ">
+      <CardHeader className="bg-gray-100 border-b border-gray-300 pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{icon}</span>
-            <h3 className="font-semibold">{title}</h3>
+          <div className="flex items-center gap-3">
+            <div className="text-2xl p-2 bg-white rounded border border-gray-300">
+              {icon}
+            </div>
+            <h3 className="font-bold text-gray-800 text-lg">{title}</h3>
           </div>
-          <span className="text-xs">{label}</span>
+          <span className="text-xs bg-gray-200 text-gray-600 border border-gray-300 px-2 py-1 rounded">
+            {label}
+          </span>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+      <CardContent className="flex flex-col sm:flex-row items-center gap-4 p-6">
         <div className="flex-shrink-0">
-          <Image src={imageSrc} alt={imageAlt} width={100} height={100} />
+          <div className="p-2 bg-white border border-gray-300 rounded">
+            <Image
+              src={imageSrc}
+              alt={imageAlt}
+              width={100}
+              height={100}
+              className="hover:opacity-90 transition-opacity"
+            />
+          </div>
         </div>
         <div className="flex-1 text-center sm:text-left">
           <div className="flex flex-col gap-4">
@@ -55,8 +67,11 @@ export function AdCard({
           </div>
         </div>
       </CardContent>
-      <CardFooter>
-        <Button asChild className="w-full">
+      <CardFooter className="p-6 pt-0">
+        <Button
+          asChild
+          className="w-full bg-gray-600 hover:bg-gray-700 text-white border border-gray-400 font-medium"
+        >
           <Link href={buttonHref} target="_blank">
             {buttonText}
           </Link>

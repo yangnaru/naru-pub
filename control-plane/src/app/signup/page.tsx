@@ -78,65 +78,91 @@ export default function SignUpPage() {
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 max-w-fit"
-      >
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>아이디</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={usernamePlaceholder}
-                  autoCapitalize="none"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                로그인과 홈페이지 도메인에 사용될 아이디입니다. ({domain})
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>비밀번호</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormDescription>
-                비밀번호는 8자 이상이어야 합니다.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="passwordConfirm"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>비밀번호 확인</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormDescription>
-                위에서 입력한 비밀번호를 한 번 더 입력해주세요.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit">회원 가입</Button>
-      </form>
-    </Form>
+    <div className="max-w-md mx-auto">
+      <div className="bg-white border-2 border-gray-300  rounded-lg p-6">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">회원가입</h1>
+          <p className="text-gray-600">나루에서 당신만의 웹 공간을 만드세요</p>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800 font-medium">
+                    아이디
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={usernamePlaceholder}
+                      autoCapitalize="none"
+                      {...field}
+                      className="border-gray-300 focus:border-gray-500 bg-white"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-600 text-sm">
+                    로그인과 홈페이지 도메인에 사용될 아이디입니다. ({domain})
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800 font-medium">
+                    비밀번호
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      {...field}
+                      className="border-gray-300 focus:border-gray-500 bg-white"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-600 text-sm">
+                    비밀번호는 8자 이상이어야 합니다.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="passwordConfirm"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800 font-medium">
+                    비밀번호 확인
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      {...field}
+                      className="border-gray-300 focus:border-gray-500 bg-white"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-600 text-sm">
+                    위에서 입력한 비밀번호를 한 번 더 입력해주세요.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white border border-gray-400 font-medium"
+            >
+              회원 가입
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </div>
   );
 }

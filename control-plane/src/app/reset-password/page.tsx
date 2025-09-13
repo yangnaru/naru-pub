@@ -49,9 +49,9 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="max-w-md mx-auto mt-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">유효하지 않은 링크</h1>
+      <div className="max-w-md mx-auto p-6">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">유효하지 않은 링크</h1>
           <p className="text-gray-600">
             비밀번호 재설정 링크가 유효하지 않습니다.
             다시 비밀번호 재설정을 요청해주세요.
@@ -76,14 +76,17 @@ function ResetPasswordForm() {
 
   if (isSubmitted) {
     return (
-      <div className="max-w-md mx-auto mt-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">비밀번호 변경 완료</h1>
+      <div className="max-w-md mx-auto p-6">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">비밀번호 변경 완료</h1>
           <p className="text-gray-600 mb-4">
             비밀번호가 성공적으로 변경되었습니다.
             새로운 비밀번호로 로그인해주세요.
           </p>
-          <Button onClick={() => window.location.href = "/login"}>
+          <Button 
+            onClick={() => window.location.href = "/login"}
+            className="bg-gray-600 hover:bg-gray-700 text-white border border-gray-400 font-medium"
+          >
             로그인하러 가기
           </Button>
         </div>
@@ -92,50 +95,67 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-8">
-      <h1 className="text-2xl font-bold mb-6">새 비밀번호 설정</h1>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4"
-        >
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>새 비밀번호</FormLabel>
-                <FormControl>
-                  <Input type="password" {...field} />
-                </FormControl>
-                <FormDescription>
-                  비밀번호는 8자 이상이어야 합니다.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="passwordConfirm"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>새 비밀번호 확인</FormLabel>
-                <FormControl>
-                  <Input type="password" {...field} />
-                </FormControl>
-                <FormDescription>
-                  위에서 입력한 비밀번호를 한 번 더 입력해주세요.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" className="w-full">
-            비밀번호 변경
-          </Button>
-        </form>
-      </Form>
+    <div className="max-w-md mx-auto p-6">
+      <div className="bg-white border-2 border-gray-300 rounded-lg p-6">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">새 비밀번호 설정</h1>
+          <p className="text-gray-600">새로운 비밀번호를 설정해주세요</p>
+        </div>
+        
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800 font-medium">새 비밀번호</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      {...field} 
+                      className="border-gray-300 focus:border-gray-500 bg-white"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-600 text-sm">
+                    비밀번호는 8자 이상이어야 합니다.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="passwordConfirm"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-800 font-medium">새 비밀번호 확인</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      {...field} 
+                      className="border-gray-300 focus:border-gray-500 bg-white"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-600 text-sm">
+                    위에서 입력한 비밀번호를 한 번 더 입력해주세요.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button 
+              type="submit" 
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white border border-gray-400 font-medium"
+            >
+              비밀번호 변경
+            </Button>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }
