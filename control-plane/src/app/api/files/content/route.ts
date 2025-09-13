@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "File path is required" }, { status: 400 });
     }
 
+    // Security check: prevent path traversal attacks
+    if (filePath.includes('..') || filePath.startsWith('/')) {
+      return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
+    }
+
     // Security check: ensure the file is editable
     const extension = filePath.split('.').pop()?.toLowerCase() || '';
     
