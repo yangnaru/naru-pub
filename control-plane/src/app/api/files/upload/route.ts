@@ -6,9 +6,16 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const result = await uploadFile(null, formData);
     
-    if (result.success) {
-      return NextResponse.json({ success: true, message: result.message });
+    // Handle inconsistent return types from uploadFile
+    if ('success' in result) {
+      // Result has success property
+      if (result.success) {
+        return NextResponse.json({ success: true, message: result.message });
+      } else {
+        return NextResponse.json({ success: false, message: result.message }, { status: 400 });
+      }
     } else {
+      // Result only has message property (error case)
       return NextResponse.json({ success: false, message: result.message }, { status: 400 });
     }
   } catch (error) {

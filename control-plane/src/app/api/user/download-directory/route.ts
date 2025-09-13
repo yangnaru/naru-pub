@@ -68,7 +68,7 @@ export async function GET() {
             chunks.push(value);
           }
           
-          const blob = new Blob(chunks);
+          const blob = new Blob(chunks as BlobPart[]);
           await zipWriter.add(relativePath, blob.stream());
         }
       } catch (error) {
