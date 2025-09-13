@@ -1,6 +1,6 @@
 FROM node:24-slim
 
-# Install system dependencies for Playwright
+# Install system dependencies for Playwright in single layer
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -28,16 +28,23 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY package.json \
-     pnpm-lock.yaml \
-     ./
+# Setup pnpm in single layer
+RUN npm install --global corepack@latest && \
+    corepack enable pnpm && \
+    corepack use pnpm@latest-10
 
-RUN npm install --global corepack@latest
-RUN corepack enable pnpm
-RUN corepack use pnpm@latest-10
-RUN pnpm install --frozen-lockfile
-RUN npx playwright install chromium
+# Copy dependency files first for better caching
+COPY package.json pnpm-lock.yaml ./
 
+# Install dependencies (this layer will be cached unless package files change)
+RUN pnpm install --frozen-lockfile && \
+    npx playwright install chromium
+
+# Set build arguments and environment early
+ARG NEXT_PUBLIC_DOMAIN=naru.pub
+ENV NEXT_PUBLIC_DOMAIN=$NEXT_PUBLIC_DOMAIN
+
+# Copy config files (less frequently changed)
 COPY components.json \
      kysely.config.ts \
      next.config.mjs \
@@ -47,12 +54,14 @@ COPY components.json \
      tailwind.config.ts \
      tsconfig.json \
      ./
+
+# Copy static assets (less frequently changed)
 COPY public/ public/
+
+# Copy source code (most frequently changed - should be last)
 COPY src/ src/
 
-ARG NEXT_PUBLIC_DOMAIN=naru.pub
-ENV NEXT_PUBLIC_DOMAIN=$NEXT_PUBLIC_DOMAIN
-
+# Build the application
 RUN pnpm run build
 
 EXPOSE 3000

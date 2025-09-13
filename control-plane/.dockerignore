@@ -1,4 +1,79 @@
-node_modules
-.next
-.swc
-.env
+# Build output
+.next/
+out/
+build/
+dist/
+.swc/
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output
+
+# ESLint cache
+.eslintcache
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+
+# Testing
+jest.config.js
+jest.setup.js
+
+# Documentation
+README.md
+LICENSE
+CHANGELOG.md
+*.md
+
+# Temporary files
+tmp/
+temp/
+
+# Development tools
+.turbo
