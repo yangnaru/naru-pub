@@ -16,7 +16,8 @@
     "migrate": "tsx src/cli/migrate.ts",
     "migrate-down": "tsx src/cli/migrate-down.ts",
     "update-screenshots": "tsx src/cli/update-screenshots.tsx",
-    "update-home-directory-sizes": "tsx src/cli/update-home-directory-sizes.ts"
+    "update-home-directory-sizes": "tsx src/cli/update-home-directory-sizes.ts",
+    "fix-multiple-slashes": "tsx src/cli/fix-multiple-slashes.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.722.0",
@@ -62,6 +63,7 @@
     "@types/pg": "^8.11.6",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
+    "dotenv": "^17.2.2",
     "eslint": "^8",
     "eslint-config-next": "15.4.2",
     "identity-obj-proxy": "^3.0.0",
