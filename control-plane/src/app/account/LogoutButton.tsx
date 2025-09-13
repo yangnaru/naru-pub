@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/actions/account";
+import { LogOut } from "lucide-react";
 
 export default function LogoutButton() {
   return (
@@ -10,7 +11,9 @@ export default function LogoutButton() {
       onClick={async () => {
         logout();
       }}
+      className="flex items-center gap-2"
     >
+      <LogOut size={16} />
       로그아웃
     </Button>
   );

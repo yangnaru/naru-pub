@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { requestAccountDeletion, deleteAccountImmediately } from "@/lib/actions/account";
 import { useState } from "react";
+import { Trash2, Loader } from "lucide-react";
 
 export default function DeleteAccountButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -45,8 +46,19 @@ export default function DeleteAccountButton() {
           await handleDeleteAccount();
         }
       }}
+      className="flex items-center gap-2"
     >
-      {isLoading ? "처리 중..." : "계정 삭제"}
+      {isLoading ? (
+        <>
+          <Loader size={16} className="animate-spin" />
+          처리 중...
+        </>
+      ) : (
+        <>
+          <Trash2 size={16} />
+          계정 삭제
+        </>
+      )}
     </Button>
   );
 }

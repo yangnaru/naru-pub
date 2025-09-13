@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Save } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -48,7 +49,8 @@ export function DiscoverabilityForm({
     <Card className="bg-white border-2 border-gray-300 shadow-lg">
       <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
         <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
-          🔍 검색 및 발견 설정
+          <Search size={20} />
+          검색 및 발견 설정
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
@@ -78,7 +80,10 @@ export function DiscoverabilityForm({
                 </FormItem>
               )}
             />
-            <Button type="submit">저장</Button>
+            <Button type="submit" className="flex items-center gap-2">
+              <Save size={16} />
+              저장
+            </Button>
           </form>
         </Form>
       </CardContent>

@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Lock, Key } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -62,7 +63,8 @@ export default function ChangePasswordForm() {
     <Card className="bg-white border-2 border-gray-300 shadow-lg">
       <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
         <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
-          🔒 비밀번호 변경
+          <Lock size={20} />
+          비밀번호 변경
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
@@ -123,7 +125,10 @@ export default function ChangePasswordForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit">비밀번호 변경</Button>
+            <Button type="submit" className="flex items-center gap-2">
+              <Key size={16} />
+              비밀번호 변경
+            </Button>
           </form>
         </Form>
       </CardContent>

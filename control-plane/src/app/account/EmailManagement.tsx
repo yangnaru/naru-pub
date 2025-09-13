@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { associateEmail, resendVerificationEmail } from "@/lib/actions/account";
 import { useToast } from "@/components/hooks/use-toast";
+import { Mail, CheckCircle, Clock, Loader, Send } from "lucide-react";
 
 const emailSchema = z.object({
   email: z.string().email("유효한 이메일 주소를 입력해주세요."),
@@ -86,7 +87,8 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
     <Card className="bg-white border-2 border-gray-300 shadow-lg">
       <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
         <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
-          📧 이메일 관리
+          <Mail size={20} />
+          이메일 관리
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
@@ -100,8 +102,9 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
               <div className="flex items-center gap-2">
                 {emailVerifiedAt ? (
                   <div className="text-right">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      ✓ 인증됨
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <CheckCircle size={12} />
+                      인증됨
                     </span>
                     <p className="text-xs text-gray-500 mt-1">
                       {new Date(emailVerifiedAt).toLocaleDateString('ko-KR')}
@@ -109,15 +112,26 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
                   </div>
                 ) : (
                   <>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <Clock size={12} />
                       인증 대기
                     </span>
                     <button
                       onClick={handleResendVerification}
                       disabled={isResending}
-                      className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
                     >
-                      {isResending ? "발송 중..." : "재발송"}
+                      {isResending ? (
+                        <>
+                          <Loader size={12} className="animate-spin" />
+                          발송 중...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={12} />
+                          재발송
+                        </>
+                      )}
                     </button>
                   </>
                 )}
@@ -146,9 +160,19 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {isSubmitting ? "처리 중..." : currentEmail ? "이메일 변경" : "이메일 추가"}
+            {isSubmitting ? (
+              <>
+                <Loader size={16} className="animate-spin" />
+                처리 중...
+              </>
+            ) : (
+              <>
+                <Mail size={16} />
+                {currentEmail ? "이메일 변경" : "이메일 추가"}
+              </>
+            )}
           </button>
         </form>
 

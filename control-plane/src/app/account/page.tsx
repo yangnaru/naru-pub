@@ -7,6 +7,7 @@ import DownloadDirectoryButton from "./DownloadDirectoryButton";
 import { DiscoverabilityForm } from "./DiscoverabilityForm";
 import ChangePasswordForm from "./ChangePasswordForm";
 import EmailManagement from "./EmailManagement";
+import { Settings, User } from "lucide-react";
 
 export default async function AccountPage() {
   const { user } = await validateRequest();
@@ -21,13 +22,14 @@ export default async function AccountPage() {
         <Card className="bg-white border-2 border-gray-300 shadow-lg">
           <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
             <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
-              👤 계정 관리
+              <User size={20} /> 계정 관리
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <div className="bg-gray-50 border border-gray-200 rounded p-3">
               <p className="text-gray-700 text-base leading-relaxed mb-2">
-                안녕하세요, <strong className="text-blue-800">{user.loginName}</strong>님!
+                안녕하세요,{" "}
+                <strong className="text-blue-800">{user.loginName}</strong>님!
               </p>
               <p className="text-gray-700 text-base leading-relaxed">
                 나루와 {user.createdAt.getFullYear()}년{" "}
@@ -48,7 +50,7 @@ export default async function AccountPage() {
         <Card className="bg-white border-2 border-gray-300 shadow-lg">
           <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
             <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
-              ⚙️ 계정 작업
+              <Settings size={20} /> 계정 작업
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
