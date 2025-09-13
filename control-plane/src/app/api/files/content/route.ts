@@ -5,8 +5,13 @@ import { getUserHomeDirectory, s3Client } from "@/lib/utils";
 import { EDITABLE_FILE_EXTENSIONS } from "@/lib/const";
 
 export async function GET(request: NextRequest) {
+  let user = null;
+  let userDir = '';
+  let filePath = '';
+  
   try {
-    const { user } = await validateRequest();
+    const authResult = await validateRequest();
+    user = authResult.user;
     
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     const url = new URL(request.url);
-    const filePath = url.searchParams.get('path');
+    filePath = url.searchParams.get('path') || '';
     
     if (!filePath) {
       return NextResponse.json({ error: "File path is required" }, { status: 400 });
@@ -43,8 +48,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Use proper path construction for S3 keys (always use forward slashes)
-    const userDir = getUserHomeDirectory(user.loginName);
+    userDir = getUserHomeDirectory(user.loginName);
     const s3Key = `${userDir}/${filePath}`.replaceAll("//", "/");
+
+    // Log the exact S3 key being requested (production safe)
+    console.log('Requesting S3 key:', s3Key);
 
     const command = new GetObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME!,
@@ -69,8 +77,25 @@ export async function GET(request: NextRequest) {
     });
 
     // Log production-safe debugging info for NoSuchKey errors
-    if (error instanceof Error && error.name === 'NoSuchKey') {
+    if (error instanceof Error && error.name === 'NoSuchKey' && user) {
       console.error('NoSuchKey error - file not found in S3');
+      
+      // List available files for this user to help debug
+      try {
+        const { ListObjectsV2Command } = await import("@aws-sdk/client-s3");
+        const debugUserDir = userDir || getUserHomeDirectory(user.loginName);
+        const listCommand = new ListObjectsV2Command({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Prefix: debugUserDir,
+          MaxKeys: 20
+        });
+        const listResponse = await s3Client.send(listCommand);
+        const availableKeys = listResponse.Contents?.map(obj => obj.Key) || [];
+        console.log('Available S3 keys for user (first 20):', availableKeys);
+        console.log('Requested path was:', filePath);
+      } catch (listError) {
+        console.error('Could not list S3 objects for debugging:', listError);
+      }
     }
 
     return NextResponse.json(
