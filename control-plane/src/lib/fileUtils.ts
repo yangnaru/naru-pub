@@ -11,10 +11,10 @@ export interface FileNode {
 export async function buildFileTree(userLoginName: string): Promise<FileNode[]> {
   const homeDirectory = getUserHomeDirectory(userLoginName);
   
-  // Get all objects in the user's directory
+  // Get all objects in the user's directory (add trailing slash for exact directory match)
   const command = new ListObjectsV2Command({
     Bucket: process.env.S3_BUCKET_NAME,
-    Prefix: homeDirectory,
+    Prefix: `${homeDirectory}/`,
   });
 
   const response = await s3Client.send(command);

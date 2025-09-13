@@ -20,10 +20,10 @@ export async function GET() {
     const bucketName = process.env.S3_BUCKET_NAME!;
     const userDirectory = getUserHomeDirectory(user.loginName);
 
-    // List all objects in user's directory
+    // List all objects in user's directory (add trailing slash for exact directory match)
     const listCommand = new ListObjectsV2Command({
       Bucket: bucketName,
-      Prefix: userDirectory,
+      Prefix: `${userDirectory}/`,
     });
 
     const objects = await s3Client.send(listCommand);

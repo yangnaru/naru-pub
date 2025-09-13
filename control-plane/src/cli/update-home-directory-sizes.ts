@@ -5,7 +5,7 @@ import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 async function calculateUserHomeDirectorySize(
   loginName: string
 ): Promise<number> {
-  const prefix = getUserHomeDirectory(loginName);
+  const prefix = `${getUserHomeDirectory(loginName)}/`;
 
   try {
     const command = new ListObjectsV2Command({

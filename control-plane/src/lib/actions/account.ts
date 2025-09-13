@@ -284,7 +284,7 @@ export async function deleteAccountImmediately() {
     // List all objects with user's prefix
     const listCommand = new ListObjectsV2Command({
       Bucket: process.env.S3_BUCKET_NAME!,
-      Prefix: getUserHomeDirectory(user.loginName),
+      Prefix: `${getUserHomeDirectory(user.loginName)}/`,
     });
 
     const objects = await s3Client.send(listCommand);
@@ -354,7 +354,7 @@ export async function confirmAccountDeletion(token: string) {
     // List all objects with user's prefix
     const listCommand = new ListObjectsV2Command({
       Bucket: process.env.S3_BUCKET_NAME!,
-      Prefix: getUserHomeDirectory(user.loginName),
+      Prefix: `${getUserHomeDirectory(user.loginName)}/`,
     });
 
     const objects = await s3Client.send(listCommand);

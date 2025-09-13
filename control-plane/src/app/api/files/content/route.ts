@@ -51,6 +51,20 @@ export async function GET(request: NextRequest) {
     userDir = getUserHomeDirectory(user.loginName);
     const s3Key = `${userDir}/${filePath}`.replaceAll("//", "/");
 
+    // CRITICAL SECURITY CHECK: Ensure the S3 key stays within user's directory
+    if (!s3Key.startsWith(`${userDir}/`) || s3Key === userDir) {
+      console.error('SECURITY VIOLATION: Attempted path traversal', {
+        user: user.loginName,
+        userDir,
+        filePath,
+        constructedKey: s3Key
+      });
+      return NextResponse.json(
+        { error: "Access denied: Invalid file path" }, 
+        { status: 403 }
+      );
+    }
+
     // Log the exact S3 key being requested (production safe)
     console.log('Requesting S3 key:', s3Key);
 
@@ -86,7 +100,7 @@ export async function GET(request: NextRequest) {
         const debugUserDir = userDir || getUserHomeDirectory(user.loginName);
         const listCommand = new ListObjectsV2Command({
           Bucket: process.env.S3_BUCKET_NAME!,
-          Prefix: debugUserDir,
+          Prefix: `${debugUserDir}/`, // Add trailing slash to ensure exact directory match
           MaxKeys: 20
         });
         const listResponse = await s3Client.send(listCommand);
