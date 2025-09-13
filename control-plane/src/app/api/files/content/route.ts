@@ -12,6 +12,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Log environment info for production debugging (safe logging)
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Production file content request:', {
+        hasS3Bucket: !!process.env.S3_BUCKET_NAME,
+        hasAwsKeys: !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY,
+        hasR2AccountId: !!process.env.R2_ACCOUNT_ID,
+        userExists: !!user?.loginName,
+        nodeEnv: process.env.NODE_ENV
+      });
+    }
+
     const url = new URL(request.url);
     const filePath = url.searchParams.get('path');
     
@@ -33,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     // Use proper path construction for S3 keys (always use forward slashes)
     const userDir = getUserHomeDirectory(user.loginName);
-    const s3Key = `${userDir}/${filePath}`.replace(/\/+/g, '/');
+    const s3Key = `${userDir}/${filePath}`.replaceAll("//", "/");
 
     const command = new GetObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME!,
@@ -56,6 +67,12 @@ export async function GET(request: NextRequest) {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
+
+    // Log production-safe debugging info for NoSuchKey errors
+    if (error instanceof Error && error.name === 'NoSuchKey') {
+      console.error('NoSuchKey error - file not found in S3');
+    }
+
     return NextResponse.json(
       { error: "Failed to fetch file content" }, 
       { status: 500 }
