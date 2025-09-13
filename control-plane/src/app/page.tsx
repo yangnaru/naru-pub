@@ -3,6 +3,7 @@ import { getHomepageUrl, getRenderedSiteUrl } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { AdCard } from "@/components/AdCard";
 
 export default async function Home() {
   const recentlyRenderedUsers = await db
@@ -38,6 +39,31 @@ export default async function Home() {
           으로 부탁드립니다.
         </p>
         <p className="break-keep">그럼, 즐거운 하루 되세요!</p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <AdCard
+          icon="🥒"
+          title="오이카페"
+          label="동맹 사이트 광고"
+          imageSrc="/ad/8f1572d356a332381c53e1f7e6b77afb0e64f1bdb6a4b46c76a6bb6f5a680a30.png"
+          imageAlt="오이카페 캐릭터"
+          description="2000년도 감성의 웹 그림판, 오이카페"
+          subtitle="오에카키 스타일로 그림을 그리고 넷캔도 즐겨보세요!"
+          buttonText="오이 깎으러 가기 →"
+          buttonHref="https://oeee.cafe"
+        />
+        <AdCard
+          icon="🖋️"
+          title="타이포 블루"
+          label="동맹 사이트 광고"
+          imageSrc="/ad/1339fc50a058b6d7f6a782c76d61839262459bd47c8e37c7421cc14b28bbfdba.png"
+          imageAlt="푸른 배경"
+          description="텍스트 전용 블로깅 플랫폼, 타이포 블루"
+          subtitle="자신의 글을 메일링과 연합우주를 통해 발행하세요!"
+          buttonText="글 쓰러 가기 →"
+          buttonHref="https://typo.blue"
+        />
       </div>
 
       {recentlyRenderedUsers.length > 0 && (
