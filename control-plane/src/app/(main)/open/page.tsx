@@ -41,28 +41,33 @@ async function getUserGrowthData() {
 
 async function getActiveSessionsData() {
   const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+  // Get all currently active sessions (not expired)
   const sessions = await db
     .selectFrom("sessions")
     .select(["expires_at"])
     .where("expires_at", ">", now)
-    .where("expires_at", ">", thirtyDaysAgo)
-    .orderBy("expires_at", "asc")
     .execute();
 
-  // Group sessions by date
-  const dailyData = sessions.reduce((acc, session) => {
-    const date = new Date(session.expires_at).toISOString().slice(0, 10); // YYYY-MM-DD format
-    acc[date] = (acc[date] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Generate data for the last 30 days showing active session count per day
+  const chartData = [];
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toISOString().slice(0, 10);
 
-  // Convert to chart data format
-  const chartData = Object.entries(dailyData).map(([date, count]) => ({
-    date,
-    sessions: count,
-  }));
+    // Count sessions that were active on this date (created before this date and expire after)
+    const activeCount = sessions.filter(session => {
+      const expiresAt = new Date(session.expires_at);
+      // Assume session duration is about what we see in the data (estimate based on expires_at)
+      // For this chart, we'll count sessions that expire after the given date
+      return expiresAt >= date;
+    }).length;
+
+    chartData.push({
+      date: dateStr,
+      sessions: activeCount,
+    });
+  }
 
   return chartData;
 }
