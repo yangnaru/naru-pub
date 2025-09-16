@@ -121,7 +121,7 @@ export default function LoginPage() {
             />
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-white border border-primary font-medium"
+              className="w-full bg-primary hover:bg-primary/90 border border-primary font-medium"
             >
               로그인
             </Button>
