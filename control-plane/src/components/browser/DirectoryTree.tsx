@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { FileNode } from "@/lib/fileUtils";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/hooks/use-toast";
 
 interface DirectoryTreeProps {
   files: FileNode[];
@@ -50,15 +51,18 @@ function getFileIcon(fileName: string, isDirectory: boolean): string {
   return "📄";
 }
 
-function TreeNode({ 
-  node, 
-  level = 0, 
-  selectedFile, 
-  expandedFolders, 
-  onFileSelect, 
+function TreeNode({
+  node,
+  level = 0,
+  selectedFile,
+  expandedFolders,
+  onFileSelect,
   onFolderToggle,
   onDelete,
-  flashingItems
+  flashingItems,
+  onMoveFile,
+  dragOverDirectory,
+  onDragOverDirectoryChange
 }: {
   node: FileNode;
   level?: number;
@@ -68,12 +72,18 @@ function TreeNode({
   onFolderToggle: (folderPath: string) => void;
   onDelete: (filePath: string) => void;
   flashingItems: Set<string>;
+  onMoveFile: (sourcePath: string, targetDirectory: string) => void;
+  dragOverDirectory: string | null;
+  onDragOverDirectoryChange: (directory: string | null) => void;
 }) {
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const isExpanded = expandedFolders.has(node.path);
   const isSelected = selectedFile === node.path;
   const isFlashing = flashingItems.has(node.path);
+  const isDragOver = dragOverDirectory === node.path;
+  const isInDragTargetSubtree = dragOverDirectory ? (node.path === dragOverDirectory || node.path.startsWith(dragOverDirectory + "/")) : false;
   
   const handleClick = () => {
     if (node.isDirectory) {
@@ -109,22 +119,22 @@ function TreeNode({
 
       const affectedFiles = getFilesInDirectory(node);
       const fileCount = affectedFiles.length;
-      
+
       let confirmMessage = `정말로 폴더 "${node.name}"을(를) 삭제하시겠습니까?`;
-      
+
       if (fileCount > 0) {
         confirmMessage += `\n\n이 작업으로 ${fileCount}개의 파일이 함께 삭제됩니다:`;
         const maxShowFiles = 10;
         const filesToShow = affectedFiles.slice(0, maxShowFiles);
         confirmMessage += `\n• ${filesToShow.join('\n• ')}`;
-        
+
         if (fileCount > maxShowFiles) {
           confirmMessage += `\n... 그리고 ${fileCount - maxShowFiles}개 파일 더`;
         }
       } else {
         confirmMessage += '\n\n(빈 폴더입니다)';
       }
-      
+
       if (confirm(confirmMessage)) {
         onDelete(node.path);
       }
@@ -137,15 +147,98 @@ function TreeNode({
     setShowContextMenu(false);
   };
 
+  // Drag handlers
+  const handleDragStart = (e: React.DragEvent) => {
+    if (node.isDirectory) {
+      e.preventDefault(); // Don't allow dragging directories
+      return;
+    }
+    setIsDragging(true);
+    e.dataTransfer.setData("text/plain", node.path);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Drop handlers (only for directories)
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!node.isDirectory) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+
+    // Set this directory as the current drag target
+    if (dragOverDirectory !== node.path) {
+      onDragOverDirectoryChange(node.path);
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    if (!node.isDirectory) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Set this directory as the current drag target
+    onDragOverDirectoryChange(node.path);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!node.isDirectory) return;
+    e.preventDefault();
+
+    // Only clear if we're the current drag target and actually leaving
+    if (dragOverDirectory === node.path) {
+      const relatedTarget = e.relatedTarget as Element;
+      if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+        onDragOverDirectoryChange(null);
+      }
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (!node.isDirectory) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    onDragOverDirectoryChange(null);
+
+    const sourcePath = e.dataTransfer.getData("text/plain");
+    if (sourcePath && sourcePath !== node.path) {
+      // Don't allow moving into a subdirectory of itself
+      if (sourcePath.startsWith(node.path + "/")) {
+        toast({
+          title: "이동 실패",
+          description: "파일을 하위 디렉토리로 이동할 수 없습니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+      onMoveFile(sourcePath, node.path);
+    }
+  };
+
   return (
-    <div>
+    <div
+      className={isInDragTargetSubtree && node.isDirectory ? "bg-blue-100/80 dark:bg-blue-900/40" : ""}
+      onDragOver={node.isDirectory ? handleDragOver : undefined}
+      onDragEnter={node.isDirectory ? handleDragEnter : undefined}
+      onDragLeave={node.isDirectory ? handleDragLeave : undefined}
+      onDrop={node.isDirectory ? handleDrop : undefined}
+    >
       <div
-        className={`flex items-center py-1 px-2 cursor-pointer hover:bg-accent text-sm transition-all duration-300 ${
-          isSelected ? "bg-accent border-l-4 border-primary font-medium" : ""
-        } ${isFlashing ? "bg-green-100 animate-pulse" : ""}`}
+        className={`flex items-center py-1 px-2 cursor-pointer hover:bg-accent text-sm transition-all duration-300 border-2 border-dashed ${
+          isSelected ? "bg-primary/10 font-medium text-primary" : ""
+        } ${isFlashing ? "bg-green-100 animate-pulse" : ""} ${
+          isDragging ? "opacity-50" : ""
+        } ${isDragOver && node.isDirectory ? "bg-blue-200 dark:bg-blue-800 border-blue-500" : isInDragTargetSubtree && node.isDirectory ? "border-blue-300 dark:border-blue-700" : "border-transparent"}`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
+        draggable={!node.isDirectory}
         onClick={handleClick}
         onContextMenu={handleRightClick}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
         {node.isDirectory && (
           <span className="mr-1 text-xs">
@@ -190,6 +283,9 @@ function TreeNode({
               onFolderToggle={onFolderToggle}
               onDelete={onDelete}
               flashingItems={flashingItems}
+              onMoveFile={onMoveFile}
+              dragOverDirectory={dragOverDirectory}
+              onDragOverDirectoryChange={onDragOverDirectoryChange}
             />
           ))}
         </div>
@@ -213,6 +309,8 @@ export default function DirectoryTree({
   const [showNewDirectoryInput, setShowNewDirectoryInput] = useState(false);
   const [showNewFileInput, setShowNewFileInput] = useState(false);
   const [flashingItems, setFlashingItems] = useState<Set<string>>(new Set());
+  const [isRootDropZone, setIsRootDropZone] = useState(false);
+  const [dragOverDirectory, setDragOverDirectory] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get current directory based on selected file/folder
@@ -374,7 +472,7 @@ export default function DirectoryTree({
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         onRefresh();
         // If deleted file was selected, clear selection
@@ -387,6 +485,109 @@ export default function DirectoryTree({
     } catch (error) {
       console.error("Delete error:", error);
       alert("파일 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleMoveFile = async (sourcePath: string, targetDirectory: string) => {
+    try {
+      const response = await fetch("/api/files/move", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sourcePath,
+          targetDirectory,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // If moving into a subdirectory, expand it (only if not already expanded)
+        if (targetDirectory && !expandedFolders.has(targetDirectory)) {
+          onFolderToggle(targetDirectory);
+        }
+
+        onRefresh();
+
+        // Update selected file if it was the moved file
+        if (selectedFile === sourcePath && result.newPath) {
+          onFileSelect(result.newPath, false);
+        }
+
+        // Flash the moved file in its new location
+        if (result.newPath) {
+          flashItem(result.newPath);
+        }
+
+        // Show success toast
+        toast({
+          title: "파일 이동 완료",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "파일 이동 실패",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Move file error:", error);
+      toast({
+        title: "파일 이동 실패",
+        description: "파일 이동 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Root drop zone handlers
+  const handleRootDragOver = (e: React.DragEvent) => {
+    // Only handle if dragging from within our file tree and not over a specific directory
+    if (e.dataTransfer.types.includes("text/plain") && !dragOverDirectory) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    }
+  };
+
+  const handleRootDragEnter = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes("text/plain") && !dragOverDirectory) {
+      e.preventDefault();
+      setIsRootDropZone(true);
+    }
+  };
+
+  const handleRootDragLeave = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes("text/plain")) {
+      e.preventDefault();
+      // Only hide if we're leaving the container entirely and not moving to a directory
+      if (!e.currentTarget.contains(e.relatedTarget as Node) && !dragOverDirectory) {
+        setIsRootDropZone(false);
+      }
+    }
+  };
+
+  const handleRootDrop = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes("text/plain")) {
+      e.preventDefault();
+      setIsRootDropZone(false);
+      setDragOverDirectory(null);
+
+      const sourcePath = e.dataTransfer.getData("text/plain");
+      if (sourcePath) {
+        // Move to root directory (empty string)
+        handleMoveFile(sourcePath, "");
+      }
+    }
+  };
+
+  const handleDragOverDirectoryChange = (directory: string | null) => {
+    setDragOverDirectory(directory);
+    // Clear root drop zone when over a specific directory
+    if (directory) {
+      setIsRootDropZone(false);
     }
   };
 
@@ -480,15 +681,39 @@ export default function DirectoryTree({
             onFolderToggle={onFolderToggle}
             onDelete={handleDelete}
             flashingItems={flashingItems}
+            onMoveFile={handleMoveFile}
+            dragOverDirectory={dragOverDirectory}
+            onDragOverDirectoryChange={handleDragOverDirectoryChange}
           />
         ))}
-        
+
         {files.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
             <div className="text-4xl mb-2">📂</div>
             <p className="text-sm">파일이 없습니다</p>
           </div>
         )}
+
+        {/* Root Drop Zone at bottom */}
+        <div
+          className={`mt-4 p-4 border-2 border-dashed rounded-lg text-center transition-all duration-200 ${
+            isRootDropZone
+              ? "bg-blue-100 dark:bg-blue-900 border-blue-400 text-blue-600 dark:text-blue-400"
+              : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50"
+          }`}
+          onDragOver={handleRootDragOver}
+          onDragEnter={handleRootDragEnter}
+          onDragLeave={handleRootDragLeave}
+          onDrop={handleRootDrop}
+        >
+          <div className="text-2xl mb-2">📁</div>
+          <div className="text-sm font-medium">
+            {isRootDropZone ? "루트 폴더로 이동" : "루트 폴더"}
+          </div>
+          <div className="text-xs text-muted-foreground/70 mt-1">
+            파일을 여기로 드래그하여 루트로 이동
+          </div>
+        </div>
       </div>
     </div>
   );
