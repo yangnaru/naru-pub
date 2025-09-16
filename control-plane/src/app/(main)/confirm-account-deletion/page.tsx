@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
 export default function ConfirmAccountDeletionPage() {
   const searchParams = useSearchParams();
@@ -55,32 +56,30 @@ export default function ConfirmAccountDeletionPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            계정 삭제 확인
-          </h2>
-        </div>
-        <div className="bg-white p-8 rounded-lg border-2 border-gray-300 shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="max-w-md w-full p-6">
+        <div className="bg-card border-2 border-border shadow-lg rounded-lg p-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              계정 삭제 확인
+            </h1>
+          </div>
           {status === "loading" && token && (
             <div className="space-y-6">
               <div className="text-center">
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                 </p>
-                <div className="mt-4 p-4 bg-red-50 rounded-md">
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800/30">
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">
+                      <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
                         삭제될 데이터
                       </h3>
-                      <div className="mt-2 text-sm text-red-700">
+                      <div className="mt-2 text-sm text-red-700 dark:text-red-400">
                         <ul className="list-disc pl-5 space-y-1">
                           <li>모든 파일과 웹사이트 데이터</li>
                           <li>계정 정보 및 설정</li>
@@ -115,31 +114,26 @@ export default function ConfirmAccountDeletionPage() {
 
           {status === "success" && (
             <div className="text-center space-y-4">
-              <div className="text-green-600">
-                <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                  <circle cx="24" cy="24" r="22" fill="#10B981" stroke="white" strokeWidth="4"/>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" stroke="white" d="M14 24l6 6 14-14"/>
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900">계정 삭제 완료</h3>
-              <p className="text-gray-600">{message}</p>
-              <p className="text-sm text-gray-500">3초 후 홈페이지로 이동합니다...</p>
+              <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400 mx-auto" />
+              <h2 className="text-xl font-semibold text-green-700 dark:text-green-400">
+                계정 삭제 완료
+              </h2>
+              <p className="text-green-600 dark:text-green-500">{message}</p>
+              <p className="text-sm text-muted-foreground">3초 후 홈페이지로 이동합니다...</p>
             </div>
           )}
 
           {status === "error" && (
             <div className="text-center space-y-4">
-              <div className="text-red-600">
-                <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                  <circle cx="24" cy="24" r="22" fill="#EF4444" stroke="white" strokeWidth="4"/>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" stroke="white" d="M16 16l16 16M32 16L16 32"/>
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900">오류 발생</h3>
-              <p className="text-gray-600">{message}</p>
+              <XCircle className="h-16 w-16 text-red-600 dark:text-red-400 mx-auto" />
+              <h2 className="text-xl font-semibold text-red-700 dark:text-red-400">
+                오류 발생
+              </h2>
+              <p className="text-red-600 dark:text-red-500">{message}</p>
               <Button
                 variant="outline"
                 onClick={() => window.location.href = "/account"}
+                className="w-full"
               >
                 계정 페이지로 돌아가기
               </Button>
