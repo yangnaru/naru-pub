@@ -58,7 +58,11 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
   const dragCounterRef = useRef(0);
 
   const handleFileSelect = (filePath: string, isDirectory: boolean) => {
-    if (!isDirectory) {
+    if (isDirectory) {
+      // When a directory is clicked, set it as the current working directory
+      setSelectedFile(filePath);
+    } else {
+      // For files, set as selected file
       setSelectedFile(filePath);
     }
   };
@@ -381,13 +385,40 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                 </div>
               ) : (
                 <div className="flex items-center space-x-2 flex-1">
-                  <h3
-                    className="font-medium text-gray-800 truncate cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={handleStartRename}
-                    title="클릭하여 이름 변경"
-                  >
-                    {getFileIcon(selectedFile.split('/').pop() || "", false)} {selectedFile.split('/').pop()}
-                  </h3>
+                  {(() => {
+                    // Check if selected item is a directory
+                    const findNode = (nodes: FileNode[], path: string): FileNode | null => {
+                      for (const node of nodes) {
+                        if (node.path === path) return node;
+                        if (node.children) {
+                          const found = findNode(node.children, path);
+                          if (found) return found;
+                        }
+                      }
+                      return null;
+                    };
+
+                    const selectedNode = findNode(files, selectedFile);
+                    const isDirectory = selectedNode?.isDirectory;
+
+                    if (isDirectory) {
+                      return (
+                        <h3 className="font-medium text-gray-800 truncate">
+                          {getFileIcon(selectedFile.split('/').pop() || "", true)} {selectedFile.split('/').pop() || "루트"} (작업 폴더)
+                        </h3>
+                      );
+                    } else {
+                      return (
+                        <h3
+                          className="font-medium text-gray-800 truncate cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={handleStartRename}
+                          title="클릭하여 이름 변경"
+                        >
+                          {getFileIcon(selectedFile.split('/').pop() || "", false)} {selectedFile.split('/').pop()}
+                        </h3>
+                      );
+                    }
+                  })()}
                 </div>
               )}
             </div>
@@ -397,7 +428,35 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
         </div>
         <div className="flex-1 overflow-auto">
           {selectedFile ? (
-            <FileViewer filePath={selectedFile} userLoginName={userLoginName} />
+            (() => {
+              // Check if selected item is a directory
+              const findNode = (nodes: FileNode[], path: string): FileNode | null => {
+                for (const node of nodes) {
+                  if (node.path === path) return node;
+                  if (node.children) {
+                    const found = findNode(node.children, path);
+                    if (found) return found;
+                  }
+                }
+                return null;
+              };
+
+              const selectedNode = findNode(files, selectedFile);
+
+              if (selectedNode?.isDirectory) {
+                return (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">📁</div>
+                      <p className="text-lg font-medium mb-2">현재 작업 폴더: {selectedFile || "루트"}</p>
+                      <p>이 폴더에서 파일을 생성하거나 업로드할 수 있습니다</p>
+                    </div>
+                  </div>
+                );
+              } else {
+                return <FileViewer filePath={selectedFile} userLoginName={userLoginName} />;
+              }
+            })()
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">

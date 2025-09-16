@@ -78,6 +78,7 @@ function TreeNode({
   const handleClick = () => {
     if (node.isDirectory) {
       onFolderToggle(node.path);
+      onFileSelect(node.path, true);
     } else {
       onFileSelect(node.path, false);
     }
