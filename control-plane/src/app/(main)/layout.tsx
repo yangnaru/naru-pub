@@ -28,7 +28,7 @@ export default async function RootLayout({
     <html lang="ko">
       <body className={korean.className}>
         <div className="bg-gray-50 min-h-screen">
-          <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50 backdrop-blur-md bg-white/95">
+          <nav className="bg-white border-b border-gray-200">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
                 <div className="flex items-center">
