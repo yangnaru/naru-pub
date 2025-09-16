@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, XCircle, Loader } from "lucide-react";
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
@@ -41,50 +43,49 @@ export default function VerifyEmailPage() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            이메일 인증
-          </h2>
-        </div>
-        <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="max-w-md w-full p-6">
+        <div className="bg-card border-2 border-border shadow-lg rounded-lg p-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              이메일 인증
+            </h1>
+          </div>
+
           {status === "loading" && (
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">인증 중입니다...</p>
+              <Loader className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">인증 중입니다...</p>
             </div>
           )}
-          
+
           {status === "success" && (
             <div className="text-center">
-              <div className="text-green-600 text-4xl mb-4">✓</div>
-              <h3 className="text-lg font-medium text-green-800 mb-2">
+              <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-green-700 dark:text-green-400 mb-2">
                 인증 완료
-              </h3>
-              <p className="text-green-700 mb-4">{message}</p>
-              <a
-                href="/account"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                계정 관리로 이동
-              </a>
+              </h2>
+              <p className="text-green-600 dark:text-green-500 mb-6">{message}</p>
+              <Button asChild className="w-full">
+                <a href="/account">
+                  계정 관리로 이동
+                </a>
+              </Button>
             </div>
           )}
-          
+
           {status === "error" && (
             <div className="text-center">
-              <div className="text-red-600 text-4xl mb-4">✗</div>
-              <h3 className="text-lg font-medium text-red-800 mb-2">
+              <XCircle className="h-16 w-16 text-red-600 dark:text-red-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-red-700 dark:text-red-400 mb-2">
                 인증 실패
-              </h3>
-              <p className="text-red-700 mb-4">{message}</p>
-              <a
-                href="/account"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                계정 관리로 이동
-              </a>
+              </h2>
+              <p className="text-red-600 dark:text-red-500 mb-6">{message}</p>
+              <Button variant="outline" asChild className="w-full">
+                <a href="/account">
+                  계정 관리로 이동
+                </a>
+              </Button>
             </div>
           )}
         </div>
