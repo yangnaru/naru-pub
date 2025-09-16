@@ -2,11 +2,6 @@ import { withSentryConfig } from "@sentry/nextjs";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["@node-rs/argon2"],
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
-  },
   images: {
     remotePatterns: [new URL("https://r2-screenshots.naru.pub/*")],
   },

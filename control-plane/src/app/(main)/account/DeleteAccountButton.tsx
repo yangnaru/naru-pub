@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { requestAccountDeletion, deleteAccountImmediately } from "@/lib/actions/account";
 import { useState } from "react";
 import { Trash2, Loader } from "lucide-react";
 import { toast } from "sonner";
@@ -12,12 +11,26 @@ export default function DeleteAccountButton() {
   const handleDeleteAccount = async () => {
     setIsLoading(true);
     try {
-      const result = await requestAccountDeletion();
+      const response = await fetch("/api/account/request-account-deletion", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
       
       if (result.success && result.requiresImmediateConfirmation) {
         // User has no verified email - show immediate deletion confirmation
         if (confirm("이메일 인증이 없어 계정이 즉시 삭제됩니다. 모든 파일과 데이터가 영구적으로 삭제됩니다. 정말로 계속하시겠습니까?")) {
-          const deleteResult = await deleteAccountImmediately();
+          const deleteResponse = await fetch("/api/account/delete-account-immediately", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const deleteResult = await deleteResponse.json();
           if (deleteResult.success) {
             toast.success(deleteResult.message);
             window.location.href = "/";

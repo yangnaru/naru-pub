@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { verifyEmail } from "@/lib/actions/account";
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
@@ -17,14 +16,28 @@ export default function VerifyEmailPage() {
       return;
     }
 
-    verifyEmail(token).then((result) => {
-      if (result.success) {
-        setStatus("success");
-      } else {
+    // Call the verify email API
+    fetch("/api/account/verify-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          setStatus("success");
+          setMessage(result.message);
+        } else {
+          setStatus("error");
+          setMessage(result.message);
+        }
+      })
+      .catch(() => {
         setStatus("error");
-      }
-      setMessage(result.message);
-    });
+        setMessage("이메일 인증 중 오류가 발생했습니다.");
+      });
   }, [searchParams]);
 
   return (

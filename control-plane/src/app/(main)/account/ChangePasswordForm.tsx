@@ -17,7 +17,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { changePassword } from "@/lib/actions/account";
 import { toast } from "sonner";
 
 const formSchema = z
@@ -48,15 +47,27 @@ export default function ChangePasswordForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await changePassword(
-      values.originalPassword,
-      values.newPassword
-    );
+    try {
+      const response = await fetch("/api/account/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          originalPassword: values.originalPassword,
+          newPassword: values.newPassword,
+        }),
+      });
 
-    if (res.success) {
-      toast.success(res.message);
-    } else {
-      toast.error(res.message);
+      const res = await response.json();
+      if (res.success) {
+        toast.success(res.message);
+        form.reset();
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("비밀번호 변경 중 오류가 발생했습니다.");
     }
   }
 

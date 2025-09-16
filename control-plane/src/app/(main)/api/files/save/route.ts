@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  DeleteObjectsCommand,
-  ListObjectsV2Command,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { validateRequest } from "@/lib/auth";
 import { getUserHomeDirectory, s3Client } from "@/lib/utils";
 import { User } from "lucia";
 import * as Sentry from "@sentry/nextjs";
+import {
+  EDITABLE_FILE_EXTENSIONS,
+  FILE_EXTENSION_MIMETYPE_MAP,
+} from "@/lib/const";
 import { db } from "@/lib/database";
-import { revalidatePath } from "next/cache";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -16,6 +16,13 @@ function assertNoPathTraversal(filename: string) {
   }
   if (filename.startsWith("/")) {
     throw new Error("Absolute path detected in filename.");
+  }
+}
+
+function assertEditableFilename(filename: string) {
+  const extension = filename.split(".").pop();
+  if (!extension || !EDITABLE_FILE_EXTENSIONS.includes(extension)) {
+    throw new Error(`File type ${extension} is not editable.`);
   }
 }
 
@@ -63,17 +70,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { filename } = await request.json();
+    const { filename, contents } = await request.json();
 
-    if (!filename) {
+    if (!filename || contents === undefined) {
       return NextResponse.json(
-        { success: false, message: "파일명이 필요합니다." },
+        { success: false, message: "파일명과 내용이 필요합니다." },
         { status: 400 }
       );
     }
 
     try {
       assertNoPathTraversal(filename);
+      assertEditableFilename(filename);
     } catch (e: any) {
       return NextResponse.json(
         { success: false, message: e.message },
@@ -81,66 +89,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (filename === "/index.html") {
-      return NextResponse.json(
-        { success: false, message: "홈 페이지는 삭제할 수 없습니다." },
-        { status: 400 }
-      );
-    }
-
-    const key = `${getUserHomeDirectory(user.loginName)}/${filename}`.replaceAll(
-      "//",
-      "/"
-    );
-
     try {
-      // List all objects with the prefix
-      const listCommand = new ListObjectsV2Command({
-        Bucket: process.env.S3_BUCKET_NAME!,
-        Prefix: key,
-      });
-      const objects = await s3Client.send(listCommand);
-
-      // Delete all objects with the prefix
-      if (objects.Contents && objects.Contents.length > 0) {
-        await s3Client.send(
-          new DeleteObjectsCommand({
-            Bucket: process.env.S3_BUCKET_NAME!,
-            Delete: {
-              Objects: objects.Contents.map((obj) => ({ Key: obj.Key! })),
-            },
-          })
-        );
-      }
-
-      for (const obj of objects.Contents ?? []) {
-        if (obj.Key) {
-          // Extract filename from S3 key safely
-          const keyParts = obj.Key.split('/');
-          const filename = keyParts[keyParts.length - 1];
-          await invalidateCloudflareCacheSingleFile(user, filename);
-        }
-      }
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Key: `${getUserHomeDirectory(user.loginName)}/${filename}`,
+          Body: contents,
+          ContentType: FILE_EXTENSION_MIMETYPE_MAP[filename.split(".").pop()!],
+        })
+      );
     } catch (e) {
-      Sentry.captureException(e);
-      console.error("S3 delete error:", e);
+      console.error("S3 save error:", e);
       return NextResponse.json(
-        { success: false, message: "파일 삭제에 실패했습니다." },
+        { success: false, message: "파일 저장에 실패했습니다." },
         { status: 500 }
       );
     }
 
-    revalidatePath("/files", "layout");
-    await updateSiteUpdatedAt(user);
+    try {
+      await updateSiteUpdatedAt(user);
+    } catch (e) {
+      Sentry.captureException(e);
+    }
+
+    try {
+      await invalidateCloudflareCacheSingleFile(user, filename);
+    } catch (e) {
+      Sentry.captureException(e);
+    }
 
     return NextResponse.json({
       success: true,
-      message: "파일이 삭제되었습니다.",
+      message: "파일이 저장되었습니다.",
     });
   } catch (error) {
-    console.error("Delete error:", error);
+    console.error("Save file error:", error);
     return NextResponse.json(
-      { success: false, message: "파일 삭제에 실패했습니다." },
+      { success: false, message: "파일 저장에 실패했습니다." },
       { status: 500 }
     );
   }

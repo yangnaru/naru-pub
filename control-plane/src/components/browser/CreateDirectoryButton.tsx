@@ -1,7 +1,5 @@
 "use client";
 
-import { createDirectory } from "@/lib/actions/file";
-import path from "path";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -20,13 +18,25 @@ export function CreateDirectoryButton({
           return;
         }
 
-        const res = await createDirectory(
-          path.join(baseDirectory, newDirectory)
-        );
-        if (res.success) {
-          toast.success(`${res.message}: ${newDirectory}`);
-        } else {
-          toast.error(`${res.message}: ${newDirectory}`);
+        try {
+          const directoryPath = `${baseDirectory}/${newDirectory}`.replaceAll("//", "/");
+          const response = await fetch("/api/files/create-directory", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ directory: directoryPath }),
+          });
+
+          const res = await response.json();
+          if (res.success) {
+            toast.success(`${res.message}: ${newDirectory}`);
+            window.location.reload();
+          } else {
+            toast.error(`${res.message}: ${newDirectory}`);
+          }
+        } catch (error) {
+          toast.error(`폴더 생성에 실패했습니다: ${newDirectory}`);
         }
       }}
     >

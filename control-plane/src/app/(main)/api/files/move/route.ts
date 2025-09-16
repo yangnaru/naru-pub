@@ -1,8 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { renameFile } from "@/lib/actions/file";
-import { HeadObjectCommand } from "@aws-sdk/client-s3";
+import {
+  HeadObjectCommand,
+  CopyObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { validateRequest } from "@/lib/auth";
 import { getUserHomeDirectory, s3Client } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
+import { User } from "lucia";
+import * as Sentry from "@sentry/nextjs";
+import { db } from "@/lib/database";
+
+async function invalidateCloudflareCacheSingleFile(user: User, filename: string) {
+  const zoneId = process.env.CLOUDFLARE_ZONE_ID!;
+  const userApiToken = process.env.CLOUDFLARE_USER_API_TOKEN!;
+  const url = `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${userApiToken}`,
+    },
+    body: JSON.stringify({
+      files: [
+        `${getUserHomeDirectory(user.loginName)}/${filename}`.replaceAll(
+          "//",
+          "/"
+        ),
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    Sentry.captureException(response);
+  }
+}
+
+async function updateSiteUpdatedAt(user: User) {
+  await db
+    .updateTable("users")
+    .set("site_updated_at", new Date())
+    .where("id", "=", user.id)
+    .execute();
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,16 +109,47 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const result = await renameFile(sourcePath, newPath);
+    // Inline the rename functionality
+    try {
+      // Copy the object to new location
+      await s3Client.send(
+        new CopyObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          CopySource: `${process.env.S3_BUCKET_NAME}/${getUserHomeDirectory(
+            user.loginName
+          )}/${sourcePath}`,
+          Key: `${getUserHomeDirectory(user.loginName)}/${newPath}`,
+        })
+      );
 
-    if (result.success) {
+      // Delete the old object
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Key: `${getUserHomeDirectory(user.loginName)}/${sourcePath}`,
+        })
+      );
+
+      // Invalidate Cloudflare cache
+      await Promise.all([
+        invalidateCloudflareCacheSingleFile(user, sourcePath),
+        invalidateCloudflareCacheSingleFile(user, newPath)
+      ]);
+
+      revalidatePath("/files", "layout");
+      await updateSiteUpdatedAt(user);
+
       return NextResponse.json({
         success: true,
         message: `파일이 성공적으로 이동되었습니다.`,
         newPath
       });
-    } else {
-      return NextResponse.json({ success: false, message: result.message }, { status: 400 });
+    } catch (moveError) {
+      Sentry.captureException(moveError);
+      return NextResponse.json(
+        { success: false, message: "파일 이동에 실패했습니다." },
+        { status: 500 }
+      );
     }
   } catch (error) {
     console.error("Move file error:", error);

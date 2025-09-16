@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { renameFile } from "@/lib/actions/file";
 import { toast } from "sonner";
 
 export default function DeleteButton({ filename }: { filename: string }) {
@@ -14,14 +13,24 @@ export default function DeleteButton({ filename }: { filename: string }) {
           return;
         }
 
-        const originalPath = filename.split("/");
-        const newPath = `${originalPath.slice(0, -1).join("/")}/${newFilename}`;
+        try {
+          const response = await fetch("/api/files/rename", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ oldFilename: filename, newFilename }),
+          });
 
-        const res = await renameFile(filename, newPath);
-        if (res.success) {
-          toast.success(`${res.message}: ${filename} → ${newFilename}`);
-        } else {
-          toast.error(`${res.message}: ${filename} → ${newFilename}`);
+          const res = await response.json();
+          if (res.success) {
+            toast.success(`${res.message}: ${filename} → ${newFilename}`);
+            window.location.reload();
+          } else {
+            toast.error(`${res.message}: ${filename} → ${newFilename}`);
+          }
+        } catch (error) {
+          toast.error(`파일 이름 변경에 실패했습니다: ${filename} → ${newFilename}`);
         }
       }}
     >

@@ -18,7 +18,6 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { setDiscoverable } from "@/lib/actions/account";
 
 const FormSchema = z.object({
   discoverable: z.boolean().default(false).optional(),
@@ -37,10 +36,26 @@ export function DiscoverabilityForm({
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    await setDiscoverable(data.discoverable ?? false);
+    try {
+      const response = await fetch("/api/account/set-discoverable", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          discoverable: data.discoverable ?? false,
+        }),
+      });
 
-    toast.success(`사이트 검색 및 발견 허용 설정이 변경되었습니다. 검색 및 발견: ${data.discoverable ? "허용" : "비허용"}`);
-
+      const res = await response.json();
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("설정 변경 중 오류가 발생했습니다.");
+    }
   }
 
   return (

@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { requestPasswordReset } from "@/lib/actions/account";
 import { useState } from "react";
 
 const formSchema = z.object({
@@ -34,15 +33,31 @@ export default function ForgotPasswordPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await requestPasswordReset(values.email);
+    try {
+      const response = await fetch("/api/account/request-password-reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: values.email,
+        }),
+      });
 
-    if (!res.success) {
+      const res = await response.json();
+      if (res.success) {
+        setIsSubmitted(true);
+      } else {
+        form.setError("email", {
+          type: "manual",
+          message: res.message,
+        });
+      }
+    } catch (error) {
       form.setError("email", {
         type: "manual",
-        message: res.message,
+        message: "요청 처리 중 오류가 발생했습니다.",
       });
-    } else {
-      setIsSubmitted(true);
     }
   }
 

@@ -16,7 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { associateEmail, resendVerificationEmail } from "@/lib/actions/account";
 import { toast } from "sonner";
 import { Mail, CheckCircle, Clock, Loader, Send } from "lucide-react";
 
@@ -45,9 +44,20 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
   const onSubmit = async (data: EmailFormData) => {
     setIsSubmitting(true);
     try {
-      const result = await associateEmail(data.email);
+      const response = await fetch("/api/account/associate-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+        }),
+      });
+
+      const result = await response.json();
       if (result.success) {
         toast.success(`이메일이 성공적으로 업데이트되었습니다: ${result.message}`);
+        window.location.reload();
       } else {
         toast.error(`오류가 발생했습니다: ${result.message}`);
       }
@@ -60,7 +70,14 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
   const handleResendVerification = async () => {
     setIsResending(true);
     try {
-      const result = await resendVerificationEmail();
+      const response = await fetch("/api/account/resend-verification-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
       if (result.success) {
         toast.success(`인증 이메일이 재발송되었습니다: ${result.message}`);
       } else {

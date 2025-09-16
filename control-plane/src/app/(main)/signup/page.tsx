@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signUp } from "@/lib/actions/account";
 import { LOGIN_NAME_REGEX } from "@/lib/const";
 
 const formSchema = z
@@ -65,15 +64,32 @@ export default function SignUpPage() {
   }`;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await signUp(values.username, values.password);
+    try {
+      const response = await fetch("/api/account/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          login_name: values.username,
+          password: values.password,
+        }),
+      });
 
-    if (!res.success) {
+      const res = await response.json();
+      if (res.success) {
+        window.location.href = "/";
+      } else {
+        form.setError("username", {
+          type: "manual",
+          message: res.message,
+        });
+      }
+    } catch (error) {
       form.setError("username", {
         type: "manual",
-        message: res.message,
+        message: "가입 중 오류가 발생했습니다.",
       });
-    } else {
-      window.location.href = "/";
     }
   }
 

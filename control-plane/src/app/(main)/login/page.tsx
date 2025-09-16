@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { login } from "@/lib/actions/account";
 import { LOGIN_NAME_REGEX } from "@/lib/const";
 import { toast } from "sonner";
 
@@ -50,12 +49,26 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await login(values.username, values.password);
+    try {
+      const response = await fetch("/api/account/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          login_name: values.username,
+          password: values.password,
+        }),
+      });
 
-    if (!res.success) {
-      toast.error("로그인에 실패했습니다.");
-    } else {
-      location.href = "/";
+      const res = await response.json();
+      if (res.success) {
+        location.href = "/";
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("로그인 중 오류가 발생했습니다.");
     }
   }
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { confirmAccountDeletion } from "@/lib/actions/account";
 import { Button } from "@/components/ui/button";
 
 export default function ConfirmAccountDeletionPage() {
@@ -27,7 +26,15 @@ export default function ConfirmAccountDeletionPage() {
 
     setIsProcessing(true);
     try {
-      const result = await confirmAccountDeletion(token);
+      const response = await fetch("/api/account/confirm-account-deletion", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      const result = await response.json();
       if (result.success) {
         setStatus("success");
         setMessage(result.message);

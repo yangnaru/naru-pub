@@ -7,7 +7,6 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { useTheme } from "next-themes";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
-import { saveFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -46,11 +45,23 @@ export default function Editor({
   ];
 
   const handleSave = async () => {
-    const res = await saveFile(filename, value);
-    if (res.success) {
-      toast.success(`${res.message}: ${filename}`);
-    } else {
-      toast.error(`저장 실패: ${res.message}`);
+    try {
+      const response = await fetch("/api/files/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ filename, contents: value }),
+      });
+
+      const res = await response.json();
+      if (res.success) {
+        toast.success(`${res.message}: ${filename}`);
+      } else {
+        toast.error(`저장 실패: ${res.message}`);
+      }
+    } catch (error) {
+      toast.error(`파일 저장에 실패했습니다: ${filename}`);
     }
   };
 
