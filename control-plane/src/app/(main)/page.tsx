@@ -17,60 +17,60 @@ export default async function Home() {
     .execute();
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="max-w-4xl mx-auto p-6 space-y-8">
-        <Card className="bg-white border-2 border-gray-300 shadow-lg">
-          <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
-            <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="bg-secondary border-b-2 border-border">
+            <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
               📖 소개
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <p className="text-gray-700 text-base leading-relaxed">
-              <strong className="text-blue-800">나루</strong>는 누구나 무료로
+            <p className="text-muted-foreground text-base leading-relaxed">
+              <strong className="text-primary">나루</strong>는 누구나 무료로
               사용할 수 있는 비영리 웹사이트 호스팅 서비스입니다.
             </p>
-            <p className="text-gray-700 text-base leading-relaxed">
+            <p className="text-muted-foreground text-base leading-relaxed">
               개인 홈페이지나 블로그를 손쉽게 만들고 공유할 수 있도록
               도와드립니다.
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-2 border-gray-300 shadow-lg">
-          <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
-            <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="bg-secondary border-b-2 border-border">
+            <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
               📋 사용 안내
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <div className="space-y-3 text-gray-700">
-              <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                <strong className="text-gray-800">💾 저장공간:</strong> 사용자당
+            <div className="space-y-3 text-muted-foreground">
+              <div className="bg-background border border-border rounded p-3">
+                <strong className="text-foreground">💾 저장공간:</strong> 사용자당
                 1GB의 저장 용량이 제공됩니다.
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                <strong className="text-gray-800">🎵 미디어:</strong> 크기가 큰
+              <div className="bg-background border border-border rounded p-3">
+                <strong className="text-foreground">🎵 미디어:</strong> 크기가 큰
                 음악이나 영상은 되도록 SoundCloud나 YouTube로 게시해 주세요.
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                <strong className="text-gray-800">⚠️ 주의:</strong> 트래픽을
+              <div className="bg-background border border-border rounded p-3">
+                <strong className="text-foreground">⚠️ 주의:</strong> 트래픽을
                 과도하게 유발하는 행위는 자제해 주세요.
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                <strong className="text-gray-800">ℹ️ 면책:</strong> 나루는
+              <div className="bg-background border border-border rounded p-3">
+                <strong className="text-foreground">ℹ️ 면책:</strong> 나루는
                 비영리 서비스이며, 사용상 발생하는 문제에 대해 어떠한 책임도
                 지지 않습니다.
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                <strong className="text-gray-800">📞 문의:</strong> 문의는{" "}
+              <div className="bg-background border border-border rounded p-3">
+                <strong className="text-foreground">📞 문의:</strong> 문의는{" "}
                 <Link
                   href="https://x.com/naru_pub"
-                  className="text-blue-600 underline hover:text-blue-800"
+                  className="text-primary underline hover:text-primary/80"
                 >
                   @naru_pub
                 </Link>{" "}
@@ -106,9 +106,9 @@ export default async function Home() {
         </div>
 
         {recentlyRenderedUsers.length > 0 && (
-          <Card className="bg-white border-2 border-gray-300 shadow-lg">
-            <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
-              <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+          <Card className="bg-card border-2 border-border shadow-lg">
+            <CardHeader className="bg-secondary border-b-2 border-border">
+              <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
                 🔄 최근 업데이트된
               </CardTitle>
             </CardHeader>
@@ -120,14 +120,14 @@ export default async function Home() {
                   return (
                     <div
                       key={user.id}
-                      className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
+                      className="bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200"
                     >
                       <Link
                         href={homepageUrl}
                         target="_blank"
                         className="block"
                       >
-                        <div className="border border-gray-300 rounded mb-3 overflow-hidden">
+                        <div className="border border-border rounded mb-3 overflow-hidden">
                           <Image
                             src={getRenderedSiteUrl(user.login_name)}
                             alt="screenshot"
@@ -138,7 +138,7 @@ export default async function Home() {
                         </div>
                         <Button
                           variant="outline"
-                          className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
+                          className="w-full border-border text-muted-foreground hover:bg-background bg-card"
                         >
                           {user.login_name}
                         </Button>

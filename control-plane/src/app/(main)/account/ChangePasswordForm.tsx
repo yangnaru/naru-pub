@@ -60,9 +60,9 @@ export default function ChangePasswordForm() {
   }
 
   return (
-    <Card className="bg-white border-2 border-gray-300 shadow-lg">
-      <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
-        <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+    <Card className="bg-card border-2 border-border shadow-lg">
+      <CardHeader className="bg-secondary border-b-2 border-border">
+        <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
           <Lock size={20} />
           비밀번호 변경
         </CardTitle>
@@ -78,7 +78,7 @@ export default function ChangePasswordForm() {
               name="originalPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800">기존 비밀번호</FormLabel>
+                  <FormLabel className="text-foreground">기존 비밀번호</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -86,7 +86,7 @@ export default function ChangePasswordForm() {
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription className="text-gray-700">
+                  <FormDescription className="text-muted-foreground">
                     비밀번호는 8자 이상이어야 합니다.
                   </FormDescription>
                   <FormMessage />
@@ -98,11 +98,11 @@ export default function ChangePasswordForm() {
               name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800">새 비밀번호</FormLabel>
+                  <FormLabel className="text-foreground">새 비밀번호</FormLabel>
                   <FormControl>
                     <Input type="password" autoComplete="new-password" {...field} />
                   </FormControl>
-                  <FormDescription className="text-gray-700">
+                  <FormDescription className="text-muted-foreground">
                     비밀번호는 8자 이상이어야 합니다.
                   </FormDescription>
                   <FormMessage />
@@ -114,11 +114,11 @@ export default function ChangePasswordForm() {
               name="newPasswordConfirm"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800">비밀번호 확인</FormLabel>
+                  <FormLabel className="text-foreground">비밀번호 확인</FormLabel>
                   <FormControl>
                     <Input type="password" autoComplete="new-password" {...field} />
                   </FormControl>
-                  <FormDescription className="text-gray-700">
+                  <FormDescription className="text-muted-foreground">
                     새 비밀번호를 한 번 더 입력해주세요.
                   </FormDescription>
                   <FormMessage />

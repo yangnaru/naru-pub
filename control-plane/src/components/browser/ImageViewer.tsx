@@ -28,7 +28,7 @@ export default function ImageViewer({ src, alt, filename }: ImageViewerProps) {
 
   if (imageError) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         <div className="text-center">
           <div className="text-6xl mb-4">🖼️</div>
           <p>이미지를 불러올 수 없습니다</p>
@@ -38,9 +38,9 @@ export default function ImageViewer({ src, alt, filename }: ImageViewerProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-muted">
       {/* Image Controls */}
-      <div className="p-3 border-b border-gray-300 bg-white">
+      <div className="p-3 border-b border-border bg-card">
         <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             <Button
@@ -51,7 +51,7 @@ export default function ImageViewer({ src, alt, filename }: ImageViewerProps) {
             >
               축소
             </Button>
-            <span className="text-xs text-gray-600 min-w-[4rem] text-center">
+            <span className="text-xs text-muted-foreground min-w-[4rem] text-center">
               {Math.round(zoom * 100)}%
             </span>
             <Button
@@ -89,7 +89,7 @@ export default function ImageViewer({ src, alt, filename }: ImageViewerProps) {
               src={src}
               alt={alt}
               onError={() => setImageError(true)}
-              className="max-w-full max-h-full border border-gray-300 rounded"
+              className="max-w-full max-h-full border border-border rounded"
               style={{ 
                 display: 'block',
                 maxWidth: zoom === 1 ? '100%' : 'none',

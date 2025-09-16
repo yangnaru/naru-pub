@@ -79,10 +79,10 @@ export default function SignUpPage() {
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6">
+      <div className="bg-card border-2 border-border shadow-lg rounded-lg p-6">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">회원가입</h1>
-          <p className="text-gray-600">나루에서 당신만의 웹 공간을 만드세요</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">회원가입</h1>
+          <p className="text-muted-foreground">나루에서 당신만의 웹 공간을 만드세요</p>
         </div>
 
         <Form {...form}>
@@ -92,7 +92,7 @@ export default function SignUpPage() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800 font-medium">
+                  <FormLabel className="text-foreground font-medium">
                     아이디
                   </FormLabel>
                   <FormControl>
@@ -100,10 +100,10 @@ export default function SignUpPage() {
                       placeholder={usernamePlaceholder}
                       autoCapitalize="none"
                       {...field}
-                      className="border-gray-300 focus:border-gray-500 bg-white"
+                      className="border-border focus:border-primary bg-card"
                     />
                   </FormControl>
-                  <FormDescription className="text-gray-600 text-sm">
+                  <FormDescription className="text-muted-foreground text-sm">
                     로그인과 홈페이지 도메인에 사용될 아이디입니다. ({domain})
                   </FormDescription>
                   <FormMessage />
@@ -115,17 +115,17 @@ export default function SignUpPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800 font-medium">
+                  <FormLabel className="text-foreground font-medium">
                     비밀번호
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       {...field}
-                      className="border-gray-300 focus:border-gray-500 bg-white"
+                      className="border-border focus:border-primary bg-card"
                     />
                   </FormControl>
-                  <FormDescription className="text-gray-600 text-sm">
+                  <FormDescription className="text-muted-foreground text-sm">
                     비밀번호는 8자 이상이어야 합니다.
                   </FormDescription>
                   <FormMessage />
@@ -137,17 +137,17 @@ export default function SignUpPage() {
               name="passwordConfirm"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800 font-medium">
+                  <FormLabel className="text-foreground font-medium">
                     비밀번호 확인
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       {...field}
-                      className="border-gray-300 focus:border-gray-500 bg-white"
+                      className="border-border focus:border-primary bg-card"
                     />
                   </FormControl>
-                  <FormDescription className="text-gray-600 text-sm">
+                  <FormDescription className="text-muted-foreground text-sm">
                     위에서 입력한 비밀번호를 한 번 더 입력해주세요.
                   </FormDescription>
                   <FormMessage />
@@ -156,7 +156,7 @@ export default function SignUpPage() {
             />
             <Button
               type="submit"
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white border border-gray-400 font-medium"
+              className="w-full bg-primary hover:bg-primary/90 text-white border border-primary font-medium"
             >
               회원 가입
             </Button>

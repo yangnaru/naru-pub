@@ -3,6 +3,9 @@
 import React, { useCallback, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { EditorView } from "@codemirror/view";
+import { useTheme } from "next-themes";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { saveFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
@@ -23,6 +26,7 @@ export default function Editor({
   value?: string;
   onChange?: (value: string) => void;
 }) {
+  const { resolvedTheme } = useTheme();
   const [internalValue, setInternalValue] = useState(contents);
   const value = externalValue !== undefined ? externalValue : internalValue;
   const setValue = externalOnChange || setInternalValue;
@@ -33,9 +37,12 @@ export default function Editor({
     [setValue]
   );
 
+  const isDark = resolvedTheme === "dark";
+
   const extensions = [
     EDITABLE_FILE_EXTENSION_MAP[filename.split(".").pop() as string]?.() ??
       javascript(),
+    ...(isDark ? [oneDark] : []),
   ];
 
   const handleSave = async () => {
@@ -74,6 +81,7 @@ export default function Editor({
           height="100%"
           extensions={extensions}
           onChange={onChange}
+          theme={isDark ? "dark" : "light"}
           basicSetup={{
             lineNumbers: true,
             foldGutter: true,

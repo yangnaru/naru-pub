@@ -318,16 +318,16 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
   return (
     <div
-      className="flex min-h-[calc(100vh-200px)] bg-white border-2 border-gray-300 shadow-lg rounded-lg overflow-hidden relative"
+      className="flex min-h-[calc(100vh-200px)] bg-card border-2 border-border shadow-lg rounded-lg overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       {/* Left Sidebar - Directory Tree */}
-      <div className="w-80 border-r border-gray-300 bg-gray-50 overflow-auto">
-        <div className="p-3 border-b border-gray-300 bg-gray-100">
-          <h3 className="font-medium text-gray-800">📁 파일 탐색기</h3>
+      <div className="w-80 border-r border-border bg-muted overflow-auto">
+        <div className="p-3 border-b border-border bg-secondary">
+          <h3 className="font-medium text-foreground">📁 파일 탐색기</h3>
         </div>
         <DirectoryTree
           files={files}
@@ -342,7 +342,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
       {/* Right Main Area - File Viewer */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="p-3 border-b border-gray-300 bg-gray-100">
+        <div className="p-3 border-b border-border bg-secondary">
           {selectedFile ? (
             <div className="flex items-center justify-between">
               {isRenaming ? (
@@ -354,7 +354,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                       value={newFileName}
                       onChange={(e) => setNewFileName(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      className="px-2 py-1 text-sm border border-blue-500 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-2 py-1 text-sm border border-primary rounded-l focus:outline-none focus:ring-2 focus:ring-primary"
                       autoFocus
                     />
                     {(() => {
@@ -362,7 +362,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                       const lastDotIndex = originalFilename.lastIndexOf('.');
                       const extension = lastDotIndex > 0 ? originalFilename.substring(lastDotIndex) : "";
                       return extension ? (
-                        <span className="px-2 py-1 text-sm bg-gray-100 border border-l-0 border-r-0 border-blue-500 text-gray-600">
+                        <span className="px-2 py-1 text-sm bg-secondary border border-l-0 border-r-0 border-primary text-muted-foreground">
                           {extension}
                         </span>
                       ) : null;
@@ -403,14 +403,14 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
                     if (isDirectory) {
                       return (
-                        <h3 className="font-medium text-gray-800 truncate">
+                        <h3 className="font-medium text-foreground truncate">
                           {getFileIcon(selectedFile.split('/').pop() || "", true)} {selectedFile.split('/').pop() || "루트"} (작업 폴더)
                         </h3>
                       );
                     } else {
                       return (
                         <h3
-                          className="font-medium text-gray-800 truncate cursor-pointer hover:text-blue-600 transition-colors"
+                          className="font-medium text-foreground truncate cursor-pointer hover:text-primary transition-colors"
                           onClick={handleStartRename}
                           title="클릭하여 이름 변경"
                         >
@@ -423,7 +423,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
               )}
             </div>
           ) : (
-            <h3 className="font-medium text-gray-800">파일을 선택하세요</h3>
+            <h3 className="font-medium text-foreground">파일을 선택하세요</h3>
           )}
         </div>
         <div className="flex-1 overflow-auto">
@@ -445,7 +445,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
               if (selectedNode?.isDirectory) {
                 return (
-                  <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
                     <div className="text-center">
                       <div className="text-6xl mb-4">📁</div>
                       <p className="text-lg font-medium mb-2">현재 작업 폴더: {selectedFile || "루트"}</p>
@@ -458,7 +458,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
               }
             })()
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
                 <div className="text-6xl mb-4">📂</div>
                 <p>왼쪽에서 파일을 선택하여 내용을 확인하세요</p>
@@ -470,11 +470,11 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
       {/* Drag and Drop Overlay */}
       {isDragOver && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg text-center border-4 border-dashed border-blue-500">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-lg border-2 border-border shadow-lg text-center border-4 border-dashed border-primary">
             <div className="text-6xl mb-4">📁</div>
-            <p className="text-xl font-semibold text-blue-700">파일을 여기에 드롭하세요</p>
-            <p className="text-sm mt-2 text-gray-600">
+            <p className="text-xl font-semibold text-primary">파일을 여기에 드롭하세요</p>
+            <p className="text-sm mt-2 text-muted-foreground">
               {getCurrentDirectory() || "루트 폴더"}에 업로드됩니다
             </p>
           </div>
@@ -483,17 +483,17 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
       {/* Upload Progress Overlay */}
       {uploading && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg text-center">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-lg border-2 border-border shadow-lg text-center">
             <div className="text-2xl mb-2">⬆️</div>
             <p className="text-lg font-semibold mb-2">파일 업로드 중...</p>
-            <div className="w-64 bg-gray-200 rounded-full h-2">
+            <div className="w-64 bg-secondary rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
-            <p className="text-sm text-gray-600 mt-2">{uploadProgress}%</p>
+            <p className="text-sm text-muted-foreground mt-2">{uploadProgress}%</p>
           </div>
         </div>
       )}

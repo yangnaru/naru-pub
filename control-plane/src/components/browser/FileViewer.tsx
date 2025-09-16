@@ -99,7 +99,7 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">파일을 불러오는 중...</p>
+          <p className="text-muted-foreground">파일을 불러오는 중...</p>
         </div>
       </div>
     );
@@ -111,7 +111,7 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
         <div className="text-center">
           <div className="text-4xl mb-4">❌</div>
           <p className="text-red-600 mb-2">파일을 불러올 수 없습니다</p>
-          <p className="text-sm text-gray-500">{error}</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
               onChange={setEditorValue}
             />
           </div>
-          <div className="p-4 border-t border-gray-300 bg-gray-50">
+          <div className="p-4 border-t border-border bg-muted">
             <SaveButton filename={filePath} />
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
       <div className="flex items-center justify-center h-full">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">🎵</div>
-          <h3 className="text-lg font-medium text-gray-800 mb-4">{fileName}</h3>
+          <h3 className="text-lg font-medium text-foreground mb-4">{fileName}</h3>
           <audio 
             controls 
             className="w-full mb-4"
@@ -180,8 +180,8 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
         <div className="text-6xl mb-4">📄</div>
-        <h3 className="text-lg font-medium text-gray-800 mb-2">{fileName}</h3>
-        <p className="text-gray-600 mb-4">
+        <h3 className="text-lg font-medium text-foreground mb-2">{fileName}</h3>
+        <p className="text-muted-foreground mb-4">
           이 파일 형식은 미리보기를 지원하지 않습니다
         </p>
         <div className="space-y-2">

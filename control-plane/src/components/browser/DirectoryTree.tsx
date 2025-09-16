@@ -140,8 +140,8 @@ function TreeNode({
   return (
     <div>
       <div
-        className={`flex items-center py-1 px-2 cursor-pointer hover:bg-gray-200 text-sm transition-all duration-300 ${
-          isSelected ? "bg-blue-100 border-l-4 border-blue-600 font-medium" : ""
+        className={`flex items-center py-1 px-2 cursor-pointer hover:bg-accent text-sm transition-all duration-300 ${
+          isSelected ? "bg-accent border-l-4 border-primary font-medium" : ""
         } ${isFlashing ? "bg-green-100 animate-pulse" : ""}`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={handleClick}
@@ -153,7 +153,7 @@ function TreeNode({
           </span>
         )}
         <span className="mr-2">{getFileIcon(node.name, node.isDirectory)}</span>
-        <span className="text-sm text-gray-800 truncate">{node.name}</span>
+        <span className="text-sm text-foreground truncate">{node.name}</span>
       </div>
 
       {/* Context Menu */}
@@ -164,11 +164,11 @@ function TreeNode({
             onClick={() => setShowContextMenu(false)}
           />
           <div 
-            className="fixed z-20 bg-white border-2 border-gray-300 rounded shadow-lg py-1"
+            className="fixed z-20 bg-card border-2 border-border rounded shadow-lg py-1"
             style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
           >
             <button
-              className="block w-full text-left px-3 py-1 text-sm hover:bg-gray-100 text-red-600"
+              className="block w-full text-left px-3 py-1 text-sm hover:bg-accent text-destructive"
               onClick={handleDelete}
             >
               🗑️ 삭제
@@ -393,9 +393,9 @@ export default function DirectoryTree({
   return (
     <div>
       {/* Toolbar */}
-      <div className="p-2 border-b border-gray-300 bg-gray-100">
+      <div className="p-2 border-b border-border bg-secondary">
         <div className="space-y-2">
-          <div className="text-xs text-gray-600 mb-1">
+          <div className="text-xs text-muted-foreground mb-1">
             현재 위치: {targetDirectory || "루트"}
           </div>
           <div className="flex space-x-1">
@@ -433,7 +433,7 @@ export default function DirectoryTree({
                 value={newDirectoryName}
                 onChange={(e) => setNewDirectoryName(e.target.value)}
                 placeholder="폴더 이름"
-                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                className="flex-1 px-2 py-1 text-xs border border-border rounded"
                 onKeyDown={(e) => e.key === "Enter" && handleCreateDirectory()}
               />
               <Button size="sm" onClick={handleCreateDirectory} className="text-xs">
@@ -449,7 +449,7 @@ export default function DirectoryTree({
                 value={newFileName}
                 onChange={(e) => setNewFileName(e.target.value)}
                 placeholder="파일 이름 (예: test.html)"
-                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                className="flex-1 px-2 py-1 text-xs border border-border rounded"
                 onKeyDown={(e) => e.key === "Enter" && handleCreateFile()}
               />
               <Button size="sm" onClick={handleCreateFile} className="text-xs">
@@ -484,7 +484,7 @@ export default function DirectoryTree({
         ))}
         
         {files.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-muted-foreground py-8">
             <div className="text-4xl mb-2">📂</div>
             <p className="text-sm">파일이 없습니다</p>
           </div>

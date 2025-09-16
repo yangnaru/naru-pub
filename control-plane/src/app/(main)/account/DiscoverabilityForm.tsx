@@ -46,9 +46,9 @@ export function DiscoverabilityForm({
   }
 
   return (
-    <Card className="bg-white border-2 border-gray-300 shadow-lg">
-      <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
-        <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+    <Card className="bg-card border-2 border-border shadow-lg">
+      <CardHeader className="bg-secondary border-b-2 border-border">
+        <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
           <Search size={20} />
           검색 및 발견 설정
         </CardTitle>
@@ -63,7 +63,7 @@ export function DiscoverabilityForm({
               control={form.control}
               name="discoverable"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 bg-gray-50 border border-gray-200 rounded p-3">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 bg-muted border border-border rounded p-3">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -71,8 +71,8 @@ export function DiscoverabilityForm({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel className="text-gray-800">검색 및 발견 허용</FormLabel>
-                    <FormDescription className="text-gray-700">
+                    <FormLabel className="text-foreground">검색 및 발견 허용</FormLabel>
+                    <FormDescription className="text-muted-foreground">
                       해당 설정을 활성화한 경우 나루 메인 홈페이지에 노출될 수
                       있습니다.
                     </FormDescription>

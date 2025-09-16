@@ -61,10 +61,10 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6">
+      <div className="bg-card border-2 border-border shadow-lg rounded-lg p-6">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">로그인</h1>
-          <p className="text-gray-600">나루 계정으로 로그인하세요</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">로그인</h1>
+          <p className="text-muted-foreground">나루 계정으로 로그인하세요</p>
         </div>
 
         <Form {...form}>
@@ -74,13 +74,13 @@ export default function LoginPage() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800 font-medium">
+                  <FormLabel className="text-foreground font-medium">
                     아이디
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      className="border-gray-300 focus:border-gray-500 bg-white"
+                      className="border-border focus:border-primary bg-card"
                     />
                   </FormControl>
                   <FormMessage />
@@ -92,14 +92,14 @@ export default function LoginPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-800 font-medium">
+                  <FormLabel className="text-foreground font-medium">
                     비밀번호
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       {...field}
-                      className="border-gray-300 focus:border-gray-500 bg-white"
+                      className="border-border focus:border-primary bg-card"
                     />
                   </FormControl>
                   <FormMessage />
@@ -108,14 +108,14 @@ export default function LoginPage() {
             />
             <Button
               type="submit"
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white border border-gray-400 font-medium"
+              className="w-full bg-primary hover:bg-primary/90 text-white border border-primary font-medium"
             >
               로그인
             </Button>
             <div className="text-center pt-2">
               <Link
                 href="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-800 underline"
+                className="text-sm text-primary hover:text-primary/80 underline"
               >
                 비밀번호를 잊으셨나요?
               </Link>

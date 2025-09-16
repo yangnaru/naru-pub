@@ -5,8 +5,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { associateEmail, resendVerificationEmail } from "@/lib/actions/account";
-import { useToast } from "@/components/hooks/use-toast";
+import { toast } from "@/components/hooks/use-toast";
 import { Mail, CheckCircle, Clock, Loader, Send } from "lucide-react";
 
 const emailSchema = z.object({
@@ -23,14 +34,8 @@ interface EmailManagementProps {
 export default function EmailManagement({ currentEmail, emailVerifiedAt }: EmailManagementProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const { toast } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<EmailFormData>({
+  const form = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
     defaultValues: {
       email: currentEmail || "",
@@ -43,17 +48,20 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
       const result = await associateEmail(data.email);
       if (result.success) {
         toast({
+          title: "이메일이 성공적으로 업데이트되었습니다.",
           description: result.message,
         });
       } else {
         toast({
+          title: "오류가 발생했습니다.",
           description: result.message,
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        description: "오류가 발생했습니다.",
+        title: "오류가 발생했습니다.",
+        description: "이메일 업데이트 중 문제가 발생했습니다.",
         variant: "destructive",
       });
     }
@@ -66,17 +74,20 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
       const result = await resendVerificationEmail();
       if (result.success) {
         toast({
+          title: "인증 이메일이 재발송되었습니다.",
           description: result.message,
         });
       } else {
         toast({
+          title: "오류가 발생했습니다.",
           description: result.message,
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        description: "오류가 발생했습니다.",
+        title: "오류가 발생했습니다.",
+        description: "이메일 재발송 중 문제가 발생했습니다.",
         variant: "destructive",
       });
     }
@@ -84,42 +95,42 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
   };
 
   return (
-    <Card className="bg-white border-2 border-gray-300 shadow-lg">
-      <CardHeader className="bg-gray-100 border-b-2 border-gray-300">
-        <CardTitle className="text-gray-800 text-xl font-bold flex items-center gap-2">
+    <Card className="bg-card border-2 border-border shadow-lg">
+      <CardHeader className="bg-secondary border-b-2 border-border">
+        <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
           <Mail size={20} />
           이메일 관리
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
         {currentEmail && (
-          <div className="bg-gray-50 border border-gray-200 rounded p-3">
+          <div className="bg-muted border border-border rounded p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">현재 이메일</p>
-                <p className="font-medium text-gray-700">{currentEmail}</p>
+                <p className="text-sm text-muted-foreground">현재 이메일</p>
+                <p className="font-medium text-muted-foreground">{currentEmail}</p>
               </div>
               <div className="flex items-center gap-2">
                 {emailVerifiedAt ? (
                   <div className="text-right">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                       <CheckCircle size={12} />
                       인증됨
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {new Date(emailVerifiedAt).toLocaleDateString('ko-KR')}
                     </p>
                   </div>
                 ) : (
                   <>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                       <Clock size={12} />
                       인증 대기
                     </span>
                     <button
                       onClick={handleResendVerification}
                       disabled={isResending}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-50"
                     >
                       {isResending ? (
                         <>
@@ -140,45 +151,50 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              {currentEmail ? "이메일 변경" : "이메일 추가"}
-            </label>
-            <input
-              {...register("email")}
-              type="email"
-              id="email"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="your@email.com"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">
+                    {currentEmail ? "이메일 변경" : "이메일 추가"}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription className="text-muted-foreground">
+                    새 이메일 주소를 입력하면 인증 이메일이 발송됩니다.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader size={16} className="animate-spin" />
-                처리 중...
-              </>
-            ) : (
-              <>
-                <Mail size={16} />
-                {currentEmail ? "이메일 변경" : "이메일 추가"}
-              </>
-            )}
-          </button>
-        </form>
+            <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+              {isSubmitting ? (
+                <>
+                  <Loader size={16} className="animate-spin" />
+                  처리 중...
+                </>
+              ) : (
+                <>
+                  <Mail size={16} />
+                  {currentEmail ? "이메일 변경" : "이메일 추가"}
+                </>
+              )}
+            </Button>
+          </form>
+        </Form>
 
         {!emailVerifiedAt && currentEmail && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-            <p className="text-sm text-yellow-800">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 dark:bg-yellow-900/20 dark:border-yellow-800/30">
+            <p className="text-sm text-yellow-800 dark:text-yellow-300">
               이메일 인증이 완료되지 않았습니다. 이메일함을 확인해주세요.
             </p>
           </div>

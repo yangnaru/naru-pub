@@ -28,20 +28,20 @@ export default async function RootLayout({
 
   return (
     <html lang="ko" suppressHydrationWarning>
+      <body className={korean.className}>
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
       >
-      <body className={korean.className}>
-        <div className="bg-gray-50 min-h-screen">
-          <nav className="bg-white border-b border-gray-200">
+        <div className="bg-background min-h-screen">
+          <nav className="bg-card border-b border-border">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
                 <div className="flex items-center">
                   <Link href="/" className="flex items-center gap-3 group">
-                    <h1 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                    <h1 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-200">
                       나루
                     </h1>
                     <Image
@@ -50,6 +50,9 @@ export default async function RootLayout({
                       width={28}
                       height={28}
                       className="group-hover:scale-110 transition-transform duration-200"
+                      style={{
+                        filter: 'var(--logo-filter, none)',
+                      }}
                     />
                   </Link>
                 </div>
@@ -57,13 +60,13 @@ export default async function RootLayout({
                 <div className="flex items-center space-x-1">
                   <Link
                     href="/"
-                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                    className="text-muted-foreground hover:text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                   >
                     소개
                   </Link>
                   <Link
                     href="/open"
-                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                    className="text-muted-foreground hover:text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                   >
                     지표
                   </Link>
@@ -71,13 +74,13 @@ export default async function RootLayout({
                     <>
                       <Link
                         href="/files"
-                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        className="text-muted-foreground hover:text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         파일
                       </Link>
                       <Link
                         href="/account"
-                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        className="text-muted-foreground hover:text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         계정
                       </Link>
@@ -86,13 +89,13 @@ export default async function RootLayout({
                     <>
                       <Link
                         href="/login"
-                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        className="text-muted-foreground hover:text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                       >
                         로그인
                       </Link>
                       <Link
                         href="/signup"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
                       >
                         회원가입
                       </Link>
@@ -104,16 +107,16 @@ export default async function RootLayout({
             </div>
 
             {user && (
-              <div className="border-t border-gray-200 bg-blue-50/50">
+              <div className="border-t border-border bg-primary/5">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700 flex items-center gap-2">
-                      <span className="text-blue-600">🏠</span>
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="text-primary">🏠</span>
                       <span className="font-medium">당신만의 갠홈 주소:</span>
                       <Link
                         href={getHomepageUrl(user.loginName)}
                         target="_blank"
-                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors duration-200"
+                        className="text-primary hover:text-primary/80 font-medium hover:underline transition-colors duration-200"
                       >
                         {getHomepageUrl(user.loginName)}
                       </Link>
@@ -127,8 +130,8 @@ export default async function RootLayout({
           <main>{children}</main>
         </div>
         <Toaster />
-      </body>
       </ThemeProvider>
+      </body>
     </html>
   );
 }
