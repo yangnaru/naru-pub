@@ -6,6 +6,8 @@ import { validateRequest } from "@/lib/auth";
 import Image from "next/image";
 import { Toaster } from "@/components/ui/toaster";
 import { getHomepageUrl } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from "@/components/ModeToggle";
 
 const korean = IBM_Plex_Sans_KR({
   subsets: ["latin"],
@@ -25,7 +27,13 @@ export default async function RootLayout({
   const { user } = await validateRequest();
 
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
       <body className={korean.className}>
         <div className="bg-gray-50 min-h-screen">
           <nav className="bg-white border-b border-gray-200">
@@ -90,6 +98,7 @@ export default async function RootLayout({
                       </Link>
                     </>
                   )}
+                  <ModeToggle />
                 </div>
               </div>
             </div>
@@ -119,6 +128,7 @@ export default async function RootLayout({
         </div>
         <Toaster />
       </body>
+      </ThemeProvider>
     </html>
   );
 }
