@@ -57,7 +57,6 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
       const result = await response.json();
       if (result.success) {
         toast.success(`이메일이 성공적으로 업데이트되었습니다: ${result.message}`);
-        window.location.reload();
       } else {
         toast.error(`오류가 발생했습니다: ${result.message}`);
       }
