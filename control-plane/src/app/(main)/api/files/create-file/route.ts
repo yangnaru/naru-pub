@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const { directory, filename } = await request.json();
 
-    if (!directory || !filename) {
+    if (directory === null || directory === undefined || !filename) {
       return NextResponse.json(
         { success: false, message: "디렉토리와 파일명이 필요합니다." },
         { status: 400 }
@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      assertNoPathTraversal(directory);
+      if (directory) {
+        assertNoPathTraversal(directory);
+      }
       assertNoPathTraversal(filename);
       assertEditableFilename(filename);
       if (directory.length > 1000) {
@@ -72,7 +74,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const key = `${getUserHomeDirectory(user.loginName)}/${directory}/${filename}`
+    const key = directory
+      ? `${getUserHomeDirectory(user.loginName)}/${directory}/${filename}`
+      : `${getUserHomeDirectory(user.loginName)}/${filename}`;
+    const normalizedKey = key
       .replaceAll("///", "/")
       .replaceAll("//", "/");
 
@@ -80,7 +85,7 @@ export async function POST(request: NextRequest) {
       await s3Client.send(
         new HeadObjectCommand({
           Bucket: process.env.S3_BUCKET_NAME!,
-          Key: key,
+          Key: normalizedKey,
         })
       );
 
@@ -94,7 +99,7 @@ export async function POST(request: NextRequest) {
           await s3Client.send(
             new PutObjectCommand({
               Bucket: process.env.S3_BUCKET_NAME!,
-              Key: key,
+              Key: normalizedKey,
               Body: "", // Create empty file
               ContentType:
                 FILE_EXTENSION_MIMETYPE_MAP[filename.split(".").pop()!],
