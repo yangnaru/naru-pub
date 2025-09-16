@@ -231,7 +231,7 @@ function TreeNode({
           isSelected ? "bg-primary/10 font-medium text-primary" : ""
         } ${isFlashing ? "bg-green-100 animate-pulse" : ""} ${
           isDragging ? "opacity-50" : ""
-        } ${isDragOver && node.isDirectory ? "bg-blue-200 dark:bg-blue-800 border-blue-500" : isInDragTargetSubtree && node.isDirectory ? "border-blue-300 dark:border-blue-700" : "border-transparent"}`}
+        } ${isDragOver && node.isDirectory ? "bg-primary/20 border-primary" : isInDragTargetSubtree && node.isDirectory ? "border-primary/50" : "border-transparent"}`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         draggable={!node.isDirectory}
         onClick={handleClick}
@@ -696,7 +696,7 @@ export default function DirectoryTree({
         <div
           className={`mt-4 p-4 border-2 border-dashed rounded-lg text-center transition-all duration-200 ${
             isRootDropZone
-              ? "bg-blue-100 dark:bg-blue-900 border-blue-400 text-blue-600 dark:text-blue-400"
+              ? "bg-primary/20 border-primary text-primary"
               : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50"
           }`}
           onDragOver={handleRootDragOver}
