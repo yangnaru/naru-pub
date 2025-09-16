@@ -314,7 +314,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
   return (
     <div
-      className="flex h-[calc(100vh-200px)] bg-white border-2 border-gray-300 shadow-lg rounded-lg overflow-hidden relative"
+      className="flex min-h-[calc(100vh-200px)] bg-white border-2 border-gray-300 shadow-lg rounded-lg overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
