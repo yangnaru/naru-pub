@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { FileNode } from "@/lib/fileUtils";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ interface DirectoryTreeProps {
   expandedFolders: Set<string>;
   onFileSelect: (filePath: string, isDirectory: boolean) => void;
   onFolderToggle: (folderPath: string) => void;
-  userLoginName: string;
   onRefresh: () => void;
 }
 
@@ -300,7 +299,6 @@ export default function DirectoryTree({
   expandedFolders,
   onFileSelect,
   onFolderToggle,
-  userLoginName,
   onRefresh,
 }: DirectoryTreeProps) {
   const [uploading, setUploading] = useState(false);

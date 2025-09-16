@@ -124,65 +124,65 @@ export default async function OpenPage() {
 
   return (
     <div className="w-full p-6 space-y-8">
-      <div className="bg-white border-2 border-gray-300 shadow-lg rounded-lg p-6">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">📊 지표</h2>
-        <p className="text-gray-600">나루의 사용 현황과 통계를 확인해보세요.</p>
+      <div className="bg-card border-2 border-border shadow-lg rounded-lg p-6">
+        <h2 className="text-3xl font-bold text-foreground mb-2">📊 지표</h2>
+        <p className="text-muted-foreground">나루의 사용 현황과 통계를 확인해보세요.</p>
       </div>
 
       {/* Current Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-white border-2 border-gray-300 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
-            <CardTitle className="text-sm font-medium text-gray-800">
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
+            <CardTitle className="text-sm font-medium text-foreground">
               총 저장 용량
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-foreground">
               {formatBytes(currentStats.totalSize)}
             </div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               {currentStats.userCount}명의 사용자
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-white border-2 border-gray-300 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
-            <CardTitle className="text-sm font-medium text-gray-800">
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
+            <CardTitle className="text-sm font-medium text-foreground">
               평균 저장 용량
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-foreground">
               {formatBytes(currentStats.averageSize)}
             </div>
-            <p className="text-xs text-gray-600">사용자당 평균</p>
+            <p className="text-xs text-muted-foreground">사용자당 평균</p>
           </CardContent>
         </Card>
-        <Card className="bg-white border-2 border-gray-300 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
-            <CardTitle className="text-sm font-medium text-gray-800">
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
+            <CardTitle className="text-sm font-medium text-foreground">
               최대 저장 용량
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-foreground">
               {formatBytes(currentStats.maxSize)}
             </div>
-            <p className="text-xs text-gray-600">가장 큰 갠홈</p>
+            <p className="text-xs text-muted-foreground">가장 큰 갠홈</p>
           </CardContent>
         </Card>
-        <Card className="bg-white border-2 border-gray-300 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-100 border-b border-gray-300">
-            <CardTitle className="text-sm font-medium text-gray-800">
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
+            <CardTitle className="text-sm font-medium text-foreground">
               활성 사용자
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-foreground">
               {currentStats.userCount}명
             </div>
-            <p className="text-xs text-gray-600">저장 용량이 계산된 사용자</p>
+            <p className="text-xs text-muted-foreground">저장 용량이 계산된 사용자</p>
           </CardContent>
         </Card>
       </div>

@@ -30,24 +30,24 @@ export default function ActiveSessionsChart({
   data,
 }: ActiveSessionsChartProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>대시보드 활성 세션</CardTitle>
-        <CardDescription>일별 대시보드 활성 세션 수 변화</CardDescription>
+    <Card className="bg-card border-2 border-border shadow-lg">
+      <CardHeader className="bg-secondary border-b-2 border-border">
+        <CardTitle className="text-foreground">대시보드 활성 세션</CardTitle>
+        <CardDescription className="text-muted-foreground">일별 대시보드 활성 세션 수 변화</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.2} />
             <XAxis
               dataKey="date"
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -85,7 +85,7 @@ export default function ActiveSessionsChart({
             <Line
               type="monotone"
               dataKey="sessions"
-              stroke="#dc2626"
+              stroke="hsl(var(--chart-2))"
               strokeWidth={2}
               dot={false}
             />

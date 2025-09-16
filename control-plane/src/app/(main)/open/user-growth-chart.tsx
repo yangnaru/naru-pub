@@ -28,24 +28,24 @@ interface UserGrowthChartProps {
 
 export default function UserGrowthChart({ data }: UserGrowthChartProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>사용자 성장 추이</CardTitle>
-        <CardDescription>월별 누적 사용자 수 변화</CardDescription>
+    <Card className="bg-card border-2 border-border shadow-lg">
+      <CardHeader className="bg-secondary border-b-2 border-border">
+        <CardTitle className="text-foreground">사용자 성장 추이</CardTitle>
+        <CardDescription className="text-muted-foreground">월별 누적 사용자 수 변화</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.2} />
             <XAxis
               dataKey="month"
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -83,7 +83,7 @@ export default function UserGrowthChart({ data }: UserGrowthChartProps) {
             <Line
               type="monotone"
               dataKey="users"
-              stroke="#2563eb"
+              stroke="hsl(var(--chart-1))"
               strokeWidth={2}
               dot={false}
             />

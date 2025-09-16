@@ -92,20 +92,20 @@ export default function HomeDirectorySizeDistributionChart({
   const histogramData = createHistogramData(data);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>홈 디렉토리 크기 분포</CardTitle>
-        <CardDescription>
+    <Card className="bg-card border-2 border-border shadow-lg">
+      <CardHeader className="bg-secondary border-b-2 border-border">
+        <CardTitle className="text-foreground">홈 디렉토리 크기 분포</CardTitle>
+        <CardDescription className="text-muted-foreground">
           사용자별 홈 디렉토리 크기 분포 히스토그램
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={histogramData}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.2} />
             <XAxis
               dataKey="range"
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={10}
               tickLine={false}
               axisLine={false}
@@ -114,7 +114,7 @@ export default function HomeDirectorySizeDistributionChart({
               height={80}
             />
             <YAxis
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -150,7 +150,7 @@ export default function HomeDirectorySizeDistributionChart({
                 return null;
               }}
             />
-            <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
