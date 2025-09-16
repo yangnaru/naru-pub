@@ -7,7 +7,7 @@ import Editor from "@/components/Editor";
 import ImageViewer from "./ImageViewer";
 import { Button } from "@/components/ui/button";
 import { saveFile } from "@/lib/actions/file";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 const EditorContext = createContext<{
   value: string;
@@ -23,15 +23,9 @@ function SaveButton({ filename }: { filename: string }) {
   const handleSave = async () => {
     const res = await saveFile(filename, value);
     if (res.success) {
-      toast({
-        title: res.message,
-        description: filename,
-      });
+      toast.success(`${res.message}: ${filename}`);
     } else {
-      toast({
-        title: "저장 실패",
-        description: res.message,
-      });
+      toast.error(`저장 실패: ${res.message}`);
     }
   };
 

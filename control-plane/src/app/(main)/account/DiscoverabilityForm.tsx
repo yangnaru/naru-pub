@@ -17,7 +17,7 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 import { setDiscoverable } from "@/lib/actions/account";
 
 const FormSchema = z.object({
@@ -39,10 +39,8 @@ export function DiscoverabilityForm({
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     await setDiscoverable(data.discoverable ?? false);
 
-    toast({
-      title: "사이트 검색 및 발견 허용 설정이 변경되었습니다.",
-      description: `검색 및 발견: ${data.discoverable ? "허용" : "비허용"}`,
-    });
+    toast.success(`사이트 검색 및 발견 허용 설정이 변경되었습니다. 검색 및 발견: ${data.discoverable ? "허용" : "비허용"}`);
+
   }
 
   return (

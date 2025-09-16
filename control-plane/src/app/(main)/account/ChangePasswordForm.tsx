@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { changePassword } from "@/lib/actions/account";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 const formSchema = z
   .object({
@@ -53,10 +53,11 @@ export default function ChangePasswordForm() {
       values.newPassword
     );
 
-    toast({
-      title: res.message,
-      variant: res.success ? "default" : "destructive",
-    });
+    if (res.success) {
+      toast.success(res.message);
+    } else {
+      toast.error(res.message);
+    }
   }
 
   return (

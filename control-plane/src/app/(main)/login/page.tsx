@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { login } from "@/lib/actions/account";
 import { LOGIN_NAME_REGEX } from "@/lib/const";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   username: z
@@ -53,7 +53,7 @@ export default function LoginPage() {
     const res = await login(values.username, values.password);
 
     if (!res.success) {
-      toast({ title: "로그인에 실패했습니다." });
+      toast.error("로그인에 실패했습니다.");
     } else {
       location.href = "/";
     }

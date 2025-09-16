@@ -4,7 +4,7 @@ import "./globals.css";
 import Link from "next/link";
 import { validateRequest } from "@/lib/auth";
 import Image from "next/image";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { getHomepageUrl } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/ModeToggle";

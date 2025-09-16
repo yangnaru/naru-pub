@@ -2,7 +2,7 @@
 
 import { createFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 export function CreateFileButton({ baseDirectory }: { baseDirectory: string }) {
   return (
@@ -18,7 +18,9 @@ export function CreateFileButton({ baseDirectory }: { baseDirectory: string }) {
         const res = await createFile(baseDirectory, filename);
 
         if (res?.success) {
-          toast({ title: res.message, description: filename });
+          toast.success(`${res.message}: ${filename}`);
+        } else if (res) {
+          toast.error(`${res.message}: ${filename}`);
         }
       }}
     >

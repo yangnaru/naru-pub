@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { FileNode } from "@/lib/fileUtils";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 interface DirectoryTreeProps {
   files: FileNode[];
@@ -207,11 +207,7 @@ function TreeNode({
     if (sourcePath && sourcePath !== node.path) {
       // Don't allow moving into a subdirectory of itself
       if (sourcePath.startsWith(node.path + "/")) {
-        toast({
-          title: "이동 실패",
-          description: "파일을 하위 디렉토리로 이동할 수 없습니다.",
-          variant: "destructive",
-        });
+        toast.error("파일을 하위 디렉토리로 이동할 수 없습니다.");
         return;
       }
       onMoveFile(sourcePath, node.path);
@@ -381,11 +377,11 @@ export default function DirectoryTree({
           flashItem(filePath);
         }
       } else {
-        alert(result.message); // Keep alerts for errors
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Upload error:", error);
-      alert("파일 업로드에 실패했습니다.");
+      toast.error("파일 업로드에 실패했습니다.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -417,11 +413,11 @@ export default function DirectoryTree({
         onRefresh();
         flashItem(newDirPath);
       } else {
-        alert(result.message); // Keep alerts for errors
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Create directory error:", error);
-      alert("디렉토리 생성에 실패했습니다.");
+      toast.error("디렉토리 생성에 실패했습니다.");
     }
   };
 
@@ -449,11 +445,11 @@ export default function DirectoryTree({
         onRefresh();
         flashItem(newFilePath);
       } else {
-        alert(result.message); // Keep alerts for errors
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Create file error:", error);
-      alert("파일 생성에 실패했습니다.");
+      toast.error("파일 생성에 실패했습니다.");
     }
   };
 
@@ -478,11 +474,11 @@ export default function DirectoryTree({
           onFileSelect("", false);
         }
       } else {
-        alert(result.message); // Keep alerts for errors
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Delete error:", error);
-      alert("파일 삭제에 실패했습니다.");
+      toast.error("파일 삭제에 실패했습니다.");
     }
   };
 
@@ -520,24 +516,13 @@ export default function DirectoryTree({
         }
 
         // Show success toast
-        toast({
-          title: "파일 이동 완료",
-          description: result.message,
-        });
+        toast.success(result.message);
       } else {
-        toast({
-          title: "파일 이동 실패",
-          description: result.message,
-          variant: "destructive",
-        });
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Move file error:", error);
-      toast({
-        title: "파일 이동 실패",
-        description: "파일 이동 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
+      toast.error("파일 이동 중 오류가 발생했습니다.");
     }
   };
 

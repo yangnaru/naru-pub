@@ -9,7 +9,7 @@ import { useTheme } from "next-themes";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { saveFile } from "@/lib/actions/file";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function Editor({
   filename,
@@ -48,15 +48,9 @@ export default function Editor({
   const handleSave = async () => {
     const res = await saveFile(filename, value);
     if (res.success) {
-      toast({
-        title: res.message,
-        description: filename,
-      });
+      toast.success(`${res.message}: ${filename}`);
     } else {
-      toast({
-        title: "저장 실패",
-        description: res.message,
-      });
+      toast.error(`저장 실패: ${res.message}`);
     }
   };
 

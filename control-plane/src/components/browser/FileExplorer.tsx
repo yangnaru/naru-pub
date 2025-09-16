@@ -5,6 +5,7 @@ import DirectoryTree from "./DirectoryTree";
 import FileViewer from "./FileViewer";
 import { FileNode } from "@/lib/fileUtils";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
+import { toast } from "sonner";
 
 interface FileExplorerProps {
   initialFiles: FileNode[];
@@ -189,12 +190,12 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
           setUploading(false);
         }, 1000);
       } else {
-        alert(result.message);
+        toast.error(result.message);
         setUploading(false);
       }
     } catch (error) {
       console.error("Upload error:", error);
-      alert("파일 업로드에 실패했습니다.");
+      toast.error("파일 업로드에 실패했습니다.");
       setUploading(false);
     }
   };
@@ -300,11 +301,11 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
         await handleRefresh();
         handleCancelRename();
       } else {
-        alert(result.message);
+        toast.error(result.message);
       }
     } catch (error) {
       console.error("Rename error:", error);
-      alert("파일 이름 변경에 실패했습니다.");
+      toast.error("파일 이름 변경에 실패했습니다.");
     }
   };
 

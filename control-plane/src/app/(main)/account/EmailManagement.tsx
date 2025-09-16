@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { associateEmail, resendVerificationEmail } from "@/lib/actions/account";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 import { Mail, CheckCircle, Clock, Loader, Send } from "lucide-react";
 
 const emailSchema = z.object({
@@ -47,23 +47,12 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
     try {
       const result = await associateEmail(data.email);
       if (result.success) {
-        toast({
-          title: "이메일이 성공적으로 업데이트되었습니다.",
-          description: result.message,
-        });
+        toast.success(`이메일이 성공적으로 업데이트되었습니다: ${result.message}`);
       } else {
-        toast({
-          title: "오류가 발생했습니다.",
-          description: result.message,
-          variant: "destructive",
-        });
+        toast.error(`오류가 발생했습니다: ${result.message}`);
       }
     } catch (error) {
-      toast({
-        title: "오류가 발생했습니다.",
-        description: "이메일 업데이트 중 문제가 발생했습니다.",
-        variant: "destructive",
-      });
+      toast.error("오류가 발생했습니다: 이메일 업데이트 중 문제가 발생했습니다.");
     }
     setIsSubmitting(false);
   };
@@ -73,23 +62,12 @@ export default function EmailManagement({ currentEmail, emailVerifiedAt }: Email
     try {
       const result = await resendVerificationEmail();
       if (result.success) {
-        toast({
-          title: "인증 이메일이 재발송되었습니다.",
-          description: result.message,
-        });
+        toast.success(`인증 이메일이 재발송되었습니다: ${result.message}`);
       } else {
-        toast({
-          title: "오류가 발생했습니다.",
-          description: result.message,
-          variant: "destructive",
-        });
+        toast.error(`오류가 발생했습니다: ${result.message}`);
       }
     } catch (error) {
-      toast({
-        title: "오류가 발생했습니다.",
-        description: "이메일 재발송 중 문제가 발생했습니다.",
-        variant: "destructive",
-      });
+      toast.error("오류가 발생했습니다: 이메일 재발송 중 문제가 발생했습니다.");
     }
     setIsResending(false);
   };

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { renameFile } from "@/lib/actions/file";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function DeleteButton({ filename }: { filename: string }) {
   return (
@@ -18,10 +18,11 @@ export default function DeleteButton({ filename }: { filename: string }) {
         const newPath = `${originalPath.slice(0, -1).join("/")}/${newFilename}`;
 
         const res = await renameFile(filename, newPath);
-        toast({
-          title: res.message,
-          description: `${filename} → ${newFilename}`,
-        });
+        if (res.success) {
+          toast.success(`${res.message}: ${filename} → ${newFilename}`);
+        } else {
+          toast.error(`${res.message}: ${filename} → ${newFilename}`);
+        }
       }}
     >
       이름 변경

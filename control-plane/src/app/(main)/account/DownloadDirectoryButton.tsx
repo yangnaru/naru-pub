@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function DownloadDirectoryButton() {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -14,7 +15,7 @@ export default function DownloadDirectoryButton() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        alert(errorData.error || "갠홈 다운로드 중 오류가 발생했습니다.");
+        toast.error(errorData.error || "갠홈 다운로드 중 오류가 발생했습니다.");
         return;
       }
 
@@ -36,7 +37,7 @@ export default function DownloadDirectoryButton() {
 
     } catch (error) {
       console.error("Download error:", error);
-      alert("갠홈 다운로드 중 오류가 발생했습니다.");
+      toast.error("갠홈 다운로드 중 오류가 발생했습니다.");
     } finally {
       setIsDownloading(false);
     }

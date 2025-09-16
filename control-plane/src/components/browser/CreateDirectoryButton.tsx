@@ -3,7 +3,7 @@
 import { createDirectory } from "@/lib/actions/file";
 import path from "path";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/hooks/use-toast";
+import { toast } from "sonner";
 
 export function CreateDirectoryButton({
   baseDirectory,
@@ -23,7 +23,11 @@ export function CreateDirectoryButton({
         const res = await createDirectory(
           path.join(baseDirectory, newDirectory)
         );
-        toast({ title: res.message, description: newDirectory });
+        if (res.success) {
+          toast.success(`${res.message}: ${newDirectory}`);
+        } else {
+          toast.error(`${res.message}: ${newDirectory}`);
+        }
       }}
     >
       새 폴더
