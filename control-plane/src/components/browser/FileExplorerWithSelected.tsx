@@ -87,7 +87,6 @@ export default function FileExplorerWithSelected({
           expandedFolders={expandedFolders}
           onFileSelect={handleFileSelect}
           onFolderToggle={handleFolderToggle}
-          userLoginName={userLoginName}
           onRefresh={handleRefresh}
         />
       </div>
