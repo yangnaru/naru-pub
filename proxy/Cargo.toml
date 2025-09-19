@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.36", features = ["full"] }
-hyper = { version = "1.2", features = ["full"] }
+hyper = { version = "1.7", features = ["full"] }
 hyper-util = { version = "0.1", features = ["full"] }
 http-body-util = "0.1"
 aws-config = "1.1"
