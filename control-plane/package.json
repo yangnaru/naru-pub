@@ -69,7 +69,7 @@
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "dotenv": "^17.2.2",
-    "eslint": "^8",
+    "eslint": "^9",
     "eslint-config-next": "15.4.2",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.4",
