@@ -67,11 +67,11 @@ importers:
         specifier: ^4.22.2
         version: 4.25.1(@babel/runtime@7.28.4)(@codemirror/autocomplete@6.18.7)(@codemirror/language@6.11.3)(@codemirror/lint@6.8.5)(@codemirror/search@6.5.11)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.38.2)(codemirror@6.0.2)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@upyo/core':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@upyo/mailgun':
-        specifier: ^0.1.1
-        version: 0.1.1(@upyo/core@0.1.1)
+        specifier: ^0.3.0
+        version: 0.3.0(@upyo/core@0.3.0)
       '@zip.js/zip.js':
         specifier: ^2.8.2
         version: 2.8.2
@@ -2642,15 +2642,15 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@upyo/core@0.1.1':
-    resolution: {integrity: sha512-uyI6U9Zk56XgVLV3rWQsdJRE2RzCIHBAmHbFkHB3cNqyW0yNnBj18aQZp9SP0GhfrQ60K+uAAsl6eX81wp8vIw==}
+  '@upyo/core@0.3.0':
+    resolution: {integrity: sha512-S6M+5Ptp+t8ZA9MxgEcLA5qOidrOcYEwD8/W5pFovAUT0fEItiNnux8xIc0V3KXfVHRRjiyO+rEz+GXo3fEzoA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
-  '@upyo/mailgun@0.1.1':
-    resolution: {integrity: sha512-n0/OcPoTDrSFPGj+NRVa6EkXz+NyrzOCrr+mSk2WKLXfJe2B8zoNfftW2ZasajZwhpeq+Nw5VcubcrrTV8W38w==}
+  '@upyo/mailgun@0.3.0':
+    resolution: {integrity: sha512-VHgfd5ZFnuKWdn5VOYu0zI4RJO78D8cphDMCqC6RTZG91a+a+lPRjLnjLOx3MSJE3LDVHAlY/7bhH4U18DAUhA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     peerDependencies:
-      '@upyo/core': 0.1.1
+      '@upyo/core': 0.3.0
 
   '@webassemblyjs/ast@1.14.1':
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}
@@ -8601,11 +8601,11 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@upyo/core@0.1.1': {}
+  '@upyo/core@0.3.0': {}
 
-  '@upyo/mailgun@0.1.1(@upyo/core@0.1.1)':
+  '@upyo/mailgun@0.3.0(@upyo/core@0.3.0)':
     dependencies:
-      '@upyo/core': 0.1.1
+      '@upyo/core': 0.3.0
 
   '@webassemblyjs/ast@1.14.1':
     dependencies:
