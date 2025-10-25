@@ -98,7 +98,7 @@ export default async function Home() {
             label="동맹 사이트 광고"
             imageSrc="/ad/1339fc50a058b6d7f6a782c76d61839262459bd47c8e37c7421cc14b28bbfdba.png"
             imageAlt="타이포 블루 캐릭터"
-            description="텍스트 전용 블로깅 플랫폼, 타이포 블루"
+            description="새로운 블로깅 플랫폼, 타이포 블루"
             subtitle="자신의 글을 메일링과 연합우주를 통해 발행하세요!"
             buttonText="글 쓰러 가기 →"
             buttonHref="https://typo.blue"
