@@ -70,39 +70,53 @@ export async function GET() {
           controller.error(err);
         });
 
-        // Start processing files asynchronously
+        // Start processing files asynchronously with concurrency control
         (async () => {
           try {
-            // Add each file to the archive
-            for (const object of allObjects) {
-              if (!object.Key) continue;
-
-              // Get relative path (remove user directory prefix)
+            // Filter valid objects first
+            const validObjects = allObjects.filter((object) => {
+              if (!object.Key) return false;
               const relativePath = object.Key.replace(`${userDirectory}/`, "");
+              return relativePath && relativePath !== object.Key;
+            });
 
-              // Skip if it's just the directory itself
-              if (!relativePath || relativePath === object.Key) continue;
+            // Process files with concurrent downloads (10 at a time)
+            const CONCURRENCY = 10;
+            const queue = [...validObjects];
 
-              try {
-                const getCommand = new GetObjectCommand({
-                  Bucket: bucketName,
-                  Key: object.Key,
-                });
+            // Create worker pool for concurrent processing
+            const workers = Array.from({ length: CONCURRENCY }, async () => {
+              while (queue.length > 0) {
+                const object = queue.shift();
+                if (!object || !object.Key) continue;
 
-                const response = await s3Client.send(getCommand);
+                const relativePath = object.Key.replace(`${userDirectory}/`, "");
 
-                if (response.Body) {
-                  // Convert AWS SDK stream to Node.js Readable stream
-                  const nodeStream = Readable.from(response.Body as any);
+                try {
+                  const getCommand = new GetObjectCommand({
+                    Bucket: bucketName,
+                    Key: object.Key,
+                  });
 
-                  // Append file to archive with streaming
-                  archive.append(nodeStream, { name: relativePath });
+                  const response = await s3Client.send(getCommand);
+
+                  if (response.Body) {
+                    // Convert AWS SDK stream to Node.js Readable stream
+                    const nodeStream = Readable.from(response.Body as any);
+
+                    // Append file to archive with streaming
+                    // archiver handles concurrent appends internally
+                    archive.append(nodeStream, { name: relativePath });
+                  }
+                } catch (error) {
+                  console.error(`Failed to download file ${object.Key}:`, error);
+                  // Continue with other files even if one fails
                 }
-              } catch (error) {
-                console.error(`Failed to download file ${object.Key}:`, error);
-                // Continue with other files even if one fails
               }
-            }
+            });
+
+            // Wait for all workers to complete
+            await Promise.all(workers);
 
             // Finalize the archive (this will trigger the 'end' event)
             await archive.finalize();
