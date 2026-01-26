@@ -123,6 +123,26 @@ fn get_client_ip(req: &Request<hyper::body::Incoming>, socket_ip: IpAddr) -> IpA
         .unwrap_or(socket_ip)
 }
 
+/// Resolve a raw URL path to a file path, appending index.html for directories
+fn resolve_path(raw_path: &str) -> String {
+    // Check if the last path segment has an extension (e.g., "file.html" but not ".hidden" or "about")
+    let last_segment = raw_path.rsplit('/').next().unwrap_or(raw_path);
+    let has_extension = last_segment.contains('.')
+        && !last_segment.starts_with('.')
+        && !last_segment.ends_with('.');
+
+    if raw_path.is_empty() || raw_path == "index.html" {
+        "index.html".to_string()
+    } else if raw_path.ends_with('/') {
+        format!("{}index.html", raw_path)
+    } else if !has_extension {
+        // Paths like /about should serve /about/index.html
+        format!("{}/index.html", raw_path)
+    } else {
+        raw_path.to_string()
+    }
+}
+
 // Record a pageview in the database (fire-and-forget)
 fn record_pageview(db_pool: PgPool, subdomain: String, path: String, client_ip: IpAddr) {
     tokio::spawn(async move {
@@ -187,14 +207,8 @@ async fn handle_request(
         .unwrap_or_default()
         .to_string();
 
-    // Handle directory paths, empty paths, and paths without extensions
-    let path = if raw_path.is_empty() || raw_path == "index.html" {
-        "index.html".to_string()
-    } else if raw_path.ends_with('/') {
-        format!("{}index.html", raw_path)
-    } else {
-        raw_path.clone()
-    };
+    // Resolve the path to a file path
+    let path = resolve_path(&raw_path);
 
     // Store the normalized path for pageview tracking (without index.html suffix)
     let pageview_path = if raw_path.is_empty() {
@@ -259,5 +273,60 @@ async fn handle_request(
                 .body(Full::new(Bytes::from("Not Found")))
                 .unwrap())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_resolve_path_root() {
+        assert_eq!(resolve_path(""), "index.html");
+    }
+
+    #[test]
+    fn test_resolve_path_index_html() {
+        assert_eq!(resolve_path("index.html"), "index.html");
+    }
+
+    #[test]
+    fn test_resolve_path_trailing_slash() {
+        assert_eq!(resolve_path("about/"), "about/index.html");
+        assert_eq!(resolve_path("foo/bar/"), "foo/bar/index.html");
+    }
+
+    #[test]
+    fn test_resolve_path_directory_without_slash() {
+        assert_eq!(resolve_path("about"), "about/index.html");
+        assert_eq!(resolve_path("foo/bar"), "foo/bar/index.html");
+    }
+
+    #[test]
+    fn test_resolve_path_with_extension() {
+        assert_eq!(resolve_path("file.html"), "file.html");
+        assert_eq!(resolve_path("script.js"), "script.js");
+        assert_eq!(resolve_path("data.json"), "data.json");
+        assert_eq!(resolve_path("path/to/file.html"), "path/to/file.html");
+    }
+
+    #[test]
+    fn test_resolve_path_dot_in_directory() {
+        // Dot in directory name, but last segment has no extension
+        assert_eq!(resolve_path("my.site/about"), "my.site/about/index.html");
+        assert_eq!(resolve_path("v1.0/docs"), "v1.0/docs/index.html");
+    }
+
+    #[test]
+    fn test_resolve_path_hidden_files() {
+        // Hidden files (starting with dot) should be treated as no extension
+        assert_eq!(resolve_path(".hidden"), ".hidden/index.html");
+        assert_eq!(resolve_path("path/.env"), "path/.env/index.html");
+    }
+
+    #[test]
+    fn test_resolve_path_trailing_dot() {
+        // Trailing dot should be treated as no extension
+        assert_eq!(resolve_path("file."), "file./index.html");
     }
 }
