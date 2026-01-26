@@ -86,11 +86,11 @@ async function getTotalPageviewsData() {
   const results = await db
     .selectFrom("pageviews")
     .select([
-      sql<string>`DATE(timestamp AT TIME ZONE 'UTC')`.as("date"),
+      sql<string>`TO_CHAR(timestamp AT TIME ZONE 'UTC', 'YYYY-MM-DD')`.as("date"),
       sql<number>`COUNT(*)`.as("views"),
     ])
     .where("timestamp", ">=", thirtyDaysAgo)
-    .groupBy(sql`DATE(timestamp AT TIME ZONE 'UTC')`)
+    .groupBy(sql`TO_CHAR(timestamp AT TIME ZONE 'UTC', 'YYYY-MM-DD')`)
     .orderBy("date", "asc")
     .execute();
 
