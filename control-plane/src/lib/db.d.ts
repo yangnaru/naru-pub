@@ -37,6 +37,14 @@ export interface HomeDirectorySizeHistory {
   user_id: number | null;
 }
 
+export interface Pageviews {
+  id: Generated<number>;
+  user_id: number;
+  timestamp: Generated<Timestamp>;
+  path: Generated<string>;
+  ip: string;
+}
+
 export interface Sessions {
   expires_at: Timestamp;
   id: string;
@@ -61,6 +69,7 @@ export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
   email_verification_tokens: EmailVerificationTokens;
   home_directory_size_history: HomeDirectorySizeHistory;
+  pageviews: Pageviews;
   password_reset_tokens: PasswordResetTokens;
   sessions: Sessions;
   users: Users;

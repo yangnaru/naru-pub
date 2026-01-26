@@ -1,7 +1,9 @@
 import { db } from "@/lib/database";
+import { sql } from "kysely";
 import UserGrowthChart from "./user-growth-chart";
 import ActiveSessionsChart from "./active-sessions-chart";
 import HomeDirectorySizeDistributionChart from "./home-directory-size-distribution-chart";
+import TotalPageviewsChart from "./total-pageviews-chart";
 // import HomeDirectorySizesChart from "./home-directory-sizes-chart";
 // import AverageHomeDirectorySizesChart from "./average-home-directory-sizes-chart";
 import {
@@ -112,6 +114,58 @@ async function getHomeDirectorySizeDistributionData() {
   }));
 }
 
+async function getTotalPageviewsData() {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const results = await db
+    .selectFrom("pageviews")
+    .select([
+      sql<string>`DATE(timestamp)`.as("date"),
+      sql<number>`COUNT(*)`.as("views"),
+    ])
+    .where("timestamp", ">=", thirtyDaysAgo)
+    .groupBy(sql`DATE(timestamp)`)
+    .orderBy("date", "asc")
+    .execute();
+
+  // Fill in missing dates with zero values
+  const chartData = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toISOString().slice(0, 10);
+    const found = results.find((r) => r.date === dateStr);
+    chartData.push({
+      date: dateStr,
+      views: found ? Number(found.views) : 0,
+    });
+  }
+
+  return chartData;
+}
+
+async function getPageviewStats() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const todayViews = await db
+    .selectFrom("pageviews")
+    .select(sql<number>`COUNT(*)`.as("count"))
+    .where("timestamp", ">=", todayStart)
+    .executeTakeFirst();
+
+  const allTimeViews = await db
+    .selectFrom("pageviews")
+    .select(sql<number>`COUNT(*)`.as("count"))
+    .executeTakeFirst();
+
+  return {
+    todayViews: Number(todayViews?.count ?? 0),
+    allTimeViews: Number(allTimeViews?.count ?? 0),
+  };
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -121,11 +175,21 @@ function formatBytes(bytes: number): string {
 }
 
 export default async function OpenPage() {
-  const userGrowthData = await getUserGrowthData();
-  const activeSessionsData = await getActiveSessionsData();
-  const currentStats = await getCurrentStorageStats();
-  const homeDirectorySizeDistributionData =
-    await getHomeDirectorySizeDistributionData();
+  const [
+    userGrowthData,
+    activeSessionsData,
+    currentStats,
+    homeDirectorySizeDistributionData,
+    totalPageviewsData,
+    pageviewStats,
+  ] = await Promise.all([
+    getUserGrowthData(),
+    getActiveSessionsData(),
+    getCurrentStorageStats(),
+    getHomeDirectorySizeDistributionData(),
+    getTotalPageviewsData(),
+    getPageviewStats(),
+  ]);
 
   return (
     <div className="w-full p-6 space-y-8">
@@ -135,7 +199,7 @@ export default async function OpenPage() {
       </div>
 
       {/* Current Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="bg-card border-2 border-border shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
             <CardTitle className="text-sm font-medium text-foreground">
@@ -190,10 +254,37 @@ export default async function OpenPage() {
             <p className="text-xs text-muted-foreground">저장 용량이 계산된 사용자</p>
           </CardContent>
         </Card>
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
+            <CardTitle className="text-sm font-medium text-foreground">
+              오늘 페이지뷰
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-foreground">
+              {pageviewStats.todayViews}
+            </div>
+            <p className="text-xs text-muted-foreground">전체 사이트 페이지뷰</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
+            <CardTitle className="text-sm font-medium text-foreground">
+              전체 페이지뷰
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-foreground">
+              {pageviewStats.allTimeViews}
+            </div>
+            <p className="text-xs text-muted-foreground">누적 페이지뷰</p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <UserGrowthChart data={userGrowthData} />
+        <TotalPageviewsChart data={totalPageviewsData} />
         <ActiveSessionsChart data={activeSessionsData} />
         <HomeDirectorySizeDistributionChart
           data={homeDirectorySizeDistributionData}
