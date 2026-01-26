@@ -1,7 +1,6 @@
 import { db } from "@/lib/database";
 import { sql } from "kysely";
 import UserGrowthChart from "./user-growth-chart";
-import ActiveSessionsChart from "./active-sessions-chart";
 import HomeDirectorySizeDistributionChart from "./home-directory-size-distribution-chart";
 import TotalPageviewsChart from "./total-pageviews-chart";
 // import HomeDirectorySizesChart from "./home-directory-sizes-chart";
@@ -40,40 +39,6 @@ async function getUserGrowthData() {
 
   return chartData;
 }
-
-async function getActiveSessionsData() {
-  const now = new Date();
-
-  // Get all currently active sessions (not expired)
-  const sessions = await db
-    .selectFrom("sessions")
-    .select(["expires_at"])
-    .where("expires_at", ">", now)
-    .execute();
-
-  // Generate data for the last 30 days showing active session count per day
-  const chartData = [];
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    const dateStr = date.toISOString().slice(0, 10);
-
-    // Count sessions that were active on this date (created before this date and expire after)
-    const activeCount = sessions.filter(session => {
-      const expiresAt = new Date(session.expires_at);
-      // Assume session duration is about what we see in the data (estimate based on expires_at)
-      // For this chart, we'll count sessions that expire after the given date
-      return expiresAt >= date;
-    }).length;
-
-    chartData.push({
-      date: dateStr,
-      sessions: activeCount,
-    });
-  }
-
-  return chartData;
-}
-
 
 async function getCurrentStorageStats() {
   const users = await db
@@ -177,14 +142,12 @@ function formatBytes(bytes: number): string {
 export default async function OpenPage() {
   const [
     userGrowthData,
-    activeSessionsData,
     currentStats,
     homeDirectorySizeDistributionData,
     totalPageviewsData,
     pageviewStats,
   ] = await Promise.all([
     getUserGrowthData(),
-    getActiveSessionsData(),
     getCurrentStorageStats(),
     getHomeDirectorySizeDistributionData(),
     getTotalPageviewsData(),
@@ -285,12 +248,9 @@ export default async function OpenPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <UserGrowthChart data={userGrowthData} />
         <TotalPageviewsChart data={totalPageviewsData} />
-        <ActiveSessionsChart data={activeSessionsData} />
         <HomeDirectorySizeDistributionChart
           data={homeDirectorySizeDistributionData}
         />
-        {/* <HomeDirectorySizesChart data={homeDirectorySizesData} />
-        <AverageHomeDirectorySizesChart data={averageHomeDirectorySizesData} /> */}
       </div>
     </div>
   );
