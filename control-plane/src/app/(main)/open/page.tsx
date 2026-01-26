@@ -245,7 +245,7 @@ export default async function OpenPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <UserGrowthChart data={userGrowthData} />
         <TotalPageviewsChart data={totalPageviewsData} />
         <HomeDirectorySizeDistributionChart
