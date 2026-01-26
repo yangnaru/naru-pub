@@ -105,13 +105,21 @@ async fn main() -> Result<()> {
     }
 }
 
-// Extract client IP from X-Forwarded-For header or socket address
+// Extract client IP from Cloudflare header, X-Forwarded-For, or socket address
 fn get_client_ip(req: &Request<hyper::body::Incoming>, socket_ip: IpAddr) -> IpAddr {
+    // Cloudflare sets CF-Connecting-IP to the real client IP
     req.headers()
-        .get("x-forwarded-for")
+        .get("cf-connecting-ip")
         .and_then(|h| h.to_str().ok())
-        .and_then(|s| s.split(',').next())
         .and_then(|s| s.trim().parse().ok())
+        // Fallback to X-Forwarded-For
+        .or_else(|| {
+            req.headers()
+                .get("x-forwarded-for")
+                .and_then(|h| h.to_str().ok())
+                .and_then(|s| s.split(',').next())
+                .and_then(|s| s.trim().parse().ok())
+        })
         .unwrap_or(socket_ip)
 }
 
