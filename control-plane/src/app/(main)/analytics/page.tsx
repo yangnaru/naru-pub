@@ -14,13 +14,13 @@ async function getDailyPageviews(userId: number) {
   const results = await db
     .selectFrom("pageviews")
     .select([
-      sql<string>`DATE(timestamp)`.as("date"),
+      sql<string>`DATE(timestamp AT TIME ZONE 'UTC')`.as("date"),
       sql<number>`COUNT(*)`.as("views"),
       sql<number>`COUNT(DISTINCT ip)`.as("unique_visitors"),
     ])
     .where("user_id", "=", userId)
     .where("timestamp", ">=", thirtyDaysAgo)
-    .groupBy(sql`DATE(timestamp)`)
+    .groupBy(sql`DATE(timestamp AT TIME ZONE 'UTC')`)
     .orderBy("date", "asc")
     .execute();
 
