@@ -111,23 +111,30 @@ async function getTotalPageviewsData() {
 }
 
 async function getPageviewStats() {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  const todayViews = await db
-    .selectFrom("pageview_daily_stats")
-    .select(sql<number>`SUM(views)`.as("count"))
-    .where("date", "=", today)
-    .executeTakeFirst();
-
   const allTimeViews = await db
     .selectFrom("pageview_daily_stats")
     .select(sql<number>`SUM(views)`.as("count"))
     .executeTakeFirst();
 
+  const allTimeUniqueVisitors = await db
+    .selectFrom("pageview_daily_stats")
+    .select(sql<number>`SUM(unique_visitors)`.as("count"))
+    .executeTakeFirst();
+
   return {
-    todayViews: Number(todayViews?.count ?? 0),
     allTimeViews: Number(allTimeViews?.count ?? 0),
+    allTimeUniqueVisitors: Number(allTimeUniqueVisitors?.count ?? 0),
+  };
+}
+
+async function getEditStats() {
+  const allTimeEdits = await db
+    .selectFrom("edit_daily_stats")
+    .select(sql<number>`SUM(edit_count)`.as("count"))
+    .executeTakeFirst();
+
+  return {
+    allTimeEdits: Number(allTimeEdits?.count ?? 0),
   };
 }
 
@@ -146,12 +153,14 @@ export default async function OpenPage() {
     homeDirectorySizeDistributionData,
     totalPageviewsData,
     pageviewStats,
+    editStats,
   ] = await Promise.all([
     getUserGrowthData(),
     getCurrentStorageStats(),
     getHomeDirectorySizeDistributionData(),
     getTotalPageviewsData(),
     getPageviewStats(),
+    getEditStats(),
   ]);
 
   return (
@@ -162,7 +171,7 @@ export default async function OpenPage() {
       </div>
 
       {/* Current Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <Card className="bg-card border-2 border-border shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
             <CardTitle className="text-sm font-medium text-foreground">
@@ -220,27 +229,40 @@ export default async function OpenPage() {
         <Card className="bg-card border-2 border-border shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
             <CardTitle className="text-sm font-medium text-foreground">
-              오늘 페이지뷰
+              전체 조회수
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
-              {pageviewStats.todayViews}
+              {pageviewStats.allTimeViews.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">전체 사이트 페이지뷰</p>
+            <p className="text-xs text-muted-foreground">누적 페이지뷰</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-2 border-border shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
             <CardTitle className="text-sm font-medium text-foreground">
-              전체 페이지뷰
+              전체 순방문자
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-foreground">
-              {pageviewStats.allTimeViews}
+              {pageviewStats.allTimeUniqueVisitors.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">누적 페이지뷰</p>
+            <p className="text-xs text-muted-foreground">누적 순방문자</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-2 border-border shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-secondary border-b-2 border-border">
+            <CardTitle className="text-sm font-medium text-foreground">
+              전체 편집
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-foreground">
+              {editStats.allTimeEdits.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">누적 파일 편집</p>
           </CardContent>
         </Card>
       </div>
