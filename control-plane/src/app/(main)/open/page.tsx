@@ -84,13 +84,13 @@ async function getTotalPageviewsData() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   const results = await db
-    .selectFrom("pageviews")
+    .selectFrom("pageview_daily_stats")
     .select([
-      sql<string>`TO_CHAR(timestamp AT TIME ZONE 'UTC', 'YYYY-MM-DD')`.as("date"),
-      sql<number>`COUNT(*)`.as("views"),
+      sql<string>`TO_CHAR(date, 'YYYY-MM-DD')`.as("date"),
+      sql<number>`SUM(views)`.as("views"),
     ])
-    .where("timestamp", ">=", thirtyDaysAgo)
-    .groupBy(sql`TO_CHAR(timestamp AT TIME ZONE 'UTC', 'YYYY-MM-DD')`)
+    .where("date", ">=", thirtyDaysAgo)
+    .groupBy("date")
     .orderBy("date", "asc")
     .execute();
 
@@ -112,17 +112,17 @@ async function getTotalPageviewsData() {
 
 async function getPageviewStats() {
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const todayViews = await db
-    .selectFrom("pageviews")
-    .select(sql<number>`COUNT(*)`.as("count"))
-    .where("timestamp", ">=", todayStart)
+    .selectFrom("pageview_daily_stats")
+    .select(sql<number>`SUM(views)`.as("count"))
+    .where("date", "=", today)
     .executeTakeFirst();
 
   const allTimeViews = await db
-    .selectFrom("pageviews")
-    .select(sql<number>`COUNT(*)`.as("count"))
+    .selectFrom("pageview_daily_stats")
+    .select(sql<number>`SUM(views)`.as("count"))
     .executeTakeFirst();
 
   return {

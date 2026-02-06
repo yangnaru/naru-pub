@@ -12,15 +12,14 @@ async function getDailyPageviews(userId: number) {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   const results = await db
-    .selectFrom("pageviews")
+    .selectFrom("pageview_daily_stats")
     .select([
-      sql<string>`TO_CHAR(timestamp AT TIME ZONE 'UTC', 'YYYY-MM-DD')`.as("date"),
-      sql<number>`COUNT(*)`.as("views"),
-      sql<number>`COUNT(DISTINCT ip)`.as("unique_visitors"),
+      sql<string>`TO_CHAR(date, 'YYYY-MM-DD')`.as("date"),
+      "views",
+      "unique_visitors",
     ])
     .where("user_id", "=", userId)
-    .where("timestamp", ">=", thirtyDaysAgo)
-    .groupBy(sql`TO_CHAR(timestamp AT TIME ZONE 'UTC', 'YYYY-MM-DD')`)
+    .where("date", ">=", thirtyDaysAgo)
     .orderBy("date", "asc")
     .execute();
 
@@ -68,49 +67,46 @@ async function getTopPages(userId: number) {
 
 async function getStats(userId: number) {
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Today's stats
+  // Today's stats (from daily stats table, updated in real-time by proxy)
   const todayStats = await db
-    .selectFrom("pageviews")
-    .select([
-      sql<number>`COUNT(*)`.as("views"),
-      sql<number>`COUNT(DISTINCT ip)`.as("unique_visitors"),
-    ])
+    .selectFrom("pageview_daily_stats")
+    .select(["views", "unique_visitors"])
     .where("user_id", "=", userId)
-    .where("timestamp", ">=", todayStart)
+    .where("date", "=", today)
     .executeTakeFirst();
 
   // Last 7 days stats
   const weekStats = await db
-    .selectFrom("pageviews")
+    .selectFrom("pageview_daily_stats")
     .select([
-      sql<number>`COUNT(*)`.as("views"),
-      sql<number>`COUNT(DISTINCT ip)`.as("unique_visitors"),
+      sql<number>`SUM(views)`.as("views"),
+      sql<number>`SUM(unique_visitors)`.as("unique_visitors"),
     ])
     .where("user_id", "=", userId)
-    .where("timestamp", ">=", sevenDaysAgo)
+    .where("date", ">=", sevenDaysAgo)
     .executeTakeFirst();
 
   // Last 30 days stats
   const monthStats = await db
-    .selectFrom("pageviews")
+    .selectFrom("pageview_daily_stats")
     .select([
-      sql<number>`COUNT(*)`.as("views"),
-      sql<number>`COUNT(DISTINCT ip)`.as("unique_visitors"),
+      sql<number>`SUM(views)`.as("views"),
+      sql<number>`SUM(unique_visitors)`.as("unique_visitors"),
     ])
     .where("user_id", "=", userId)
-    .where("timestamp", ">=", thirtyDaysAgo)
+    .where("date", ">=", thirtyDaysAgo)
     .executeTakeFirst();
 
   // All time stats
   const allTimeStats = await db
-    .selectFrom("pageviews")
+    .selectFrom("pageview_daily_stats")
     .select([
-      sql<number>`COUNT(*)`.as("views"),
-      sql<number>`COUNT(DISTINCT ip)`.as("unique_visitors"),
+      sql<number>`SUM(views)`.as("views"),
+      sql<number>`SUM(unique_visitors)`.as("unique_visitors"),
     ])
     .where("user_id", "=", userId)
     .executeTakeFirst();

@@ -45,6 +45,13 @@ export interface Pageviews {
   ip: string;
 }
 
+export interface PageviewDailyStats {
+  user_id: number;
+  date: ColumnType<Date, Date | string, Date | string>;
+  views: Generated<number>;
+  unique_visitors: Generated<number>;
+}
+
 export interface Sessions {
   expires_at: Timestamp;
   id: string;
@@ -69,6 +76,7 @@ export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
   email_verification_tokens: EmailVerificationTokens;
   home_directory_size_history: HomeDirectorySizeHistory;
+  pageview_daily_stats: PageviewDailyStats;
   pageviews: Pageviews;
   password_reset_tokens: PasswordResetTokens;
   sessions: Sessions;

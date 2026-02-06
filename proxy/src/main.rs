@@ -158,6 +158,21 @@ fn record_pageview(db_pool: PgPool, subdomain: String, path: String, client_ip: 
             // Convert IpAddr to IpNetwork for PostgreSQL inet type
             let ip_network = IpNetwork::from(client_ip);
 
+            // Check if this IP has already been seen today for this user
+            let is_new_visitor: bool = sqlx::query_scalar(
+                "SELECT NOT EXISTS (
+                    SELECT 1 FROM pageviews
+                    WHERE user_id = $1
+                    AND ip = $2
+                    AND timestamp >= CURRENT_DATE
+                )"
+            )
+            .bind(user_id)
+            .bind(ip_network)
+            .fetch_one(&db_pool)
+            .await
+            .unwrap_or(false);
+
             // Insert pageview record
             let insert_result = sqlx::query(
                 "INSERT INTO pageviews (user_id, path, ip) VALUES ($1, $2, $3)"
@@ -170,6 +185,25 @@ fn record_pageview(db_pool: PgPool, subdomain: String, path: String, client_ip: 
 
             if let Err(e) = insert_result {
                 eprintln!("Error recording pageview: {}", e);
+                return;
+            }
+
+            // Update daily stats (upsert)
+            let unique_increment = if is_new_visitor { 1 } else { 0 };
+            let stats_result = sqlx::query(
+                "INSERT INTO pageview_daily_stats (user_id, date, views, unique_visitors)
+                VALUES ($1, CURRENT_DATE, 1, $2)
+                ON CONFLICT (user_id, date) DO UPDATE SET
+                    views = pageview_daily_stats.views + 1,
+                    unique_visitors = pageview_daily_stats.unique_visitors + $2"
+            )
+            .bind(user_id)
+            .bind(unique_increment)
+            .execute(&db_pool)
+            .await;
+
+            if let Err(e) = stats_result {
+                eprintln!("Error updating daily stats: {}", e);
             }
         }
     });
