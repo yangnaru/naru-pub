@@ -9,7 +9,7 @@ import {
   ALLOWED_FILE_EXTENSIONS,
   FILE_EXTENSION_MIMETYPE_MAP,
 } from "@/lib/const";
-import { db } from "@/lib/database";
+import { recordSiteEdit } from "@/lib/database";
 
 function validateFilename(filename: string) {
   // Length validation
@@ -84,14 +84,6 @@ async function invalidateCloudflareCacheSingleFile(user: User, filename: string)
   if (!response.ok) {
     Sentry.captureException(response);
   }
-}
-
-async function updateSiteUpdatedAt(user: User) {
-  await db
-    .updateTable("users")
-    .set("site_updated_at", new Date())
-    .where("id", "=", user.id)
-    .execute();
 }
 
 async function uploadSingleFile(user: User, directory: string, file: File) {
@@ -176,7 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     revalidatePath("/files", "layout");
-    await updateSiteUpdatedAt(user);
+    await recordSiteEdit(user.id);
 
     return NextResponse.json({
       success: true,

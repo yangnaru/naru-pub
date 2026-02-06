@@ -8,7 +8,7 @@ import {
   EDITABLE_FILE_EXTENSIONS,
   FILE_EXTENSION_MIMETYPE_MAP,
 } from "@/lib/const";
-import { db } from "@/lib/database";
+import { recordSiteEdit } from "@/lib/database";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -50,14 +50,6 @@ async function invalidateCloudflareCacheSingleFile(user: User, filename: string)
   if (!response.ok) {
     Sentry.captureException(response);
   }
-}
-
-async function updateSiteUpdatedAt(user: User) {
-  await db
-    .updateTable("users")
-    .set("site_updated_at", new Date())
-    .where("id", "=", user.id)
-    .execute();
 }
 
 export async function POST(request: NextRequest) {
@@ -107,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await updateSiteUpdatedAt(user);
+      await recordSiteEdit(user.id);
     } catch (e) {
       Sentry.captureException(e);
     }

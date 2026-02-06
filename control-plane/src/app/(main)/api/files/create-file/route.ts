@@ -13,7 +13,7 @@ import {
   EDITABLE_FILE_EXTENSIONS,
   FILE_EXTENSION_MIMETYPE_MAP,
 } from "@/lib/const";
-import { db } from "@/lib/database";
+import { recordSiteEdit } from "@/lib/database";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -29,14 +29,6 @@ function assertEditableFilename(filename: string) {
   if (!extension || !EDITABLE_FILE_EXTENSIONS.includes(extension)) {
     throw new Error(`File type ${extension} is not editable.`);
   }
-}
-
-async function updateSiteUpdatedAt(user: User) {
-  await db
-    .updateTable("users")
-    .set("site_updated_at", new Date())
-    .where("id", "=", user.id)
-    .execute();
 }
 
 export async function POST(request: NextRequest) {
@@ -107,7 +99,7 @@ export async function POST(request: NextRequest) {
           );
 
           revalidatePath("/files", "layout");
-          await updateSiteUpdatedAt(user);
+          await recordSiteEdit(user.id);
 
           return NextResponse.json({
             success: true,

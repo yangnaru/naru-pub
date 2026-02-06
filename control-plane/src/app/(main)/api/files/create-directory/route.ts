@@ -12,7 +12,7 @@ import {
   DEFAULT_INDEX_HTML,
   FILE_EXTENSION_MIMETYPE_MAP,
 } from "@/lib/const";
-import { db } from "@/lib/database";
+import { recordSiteEdit } from "@/lib/database";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -21,14 +21,6 @@ function assertNoPathTraversal(filename: string) {
   if (filename.startsWith("/")) {
     throw new Error("Absolute path detected in filename.");
   }
-}
-
-async function updateSiteUpdatedAt(user: User) {
-  await db
-    .updateTable("users")
-    .set("site_updated_at", new Date())
-    .where("id", "=", user.id)
-    .execute();
 }
 
 export async function POST(request: NextRequest) {
@@ -95,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     revalidatePath("/files", "layout");
-    await updateSiteUpdatedAt(user);
+    await recordSiteEdit(user.id);
 
     return NextResponse.json({
       success: true,

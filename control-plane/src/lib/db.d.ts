@@ -52,6 +52,12 @@ export interface PageviewDailyStats {
   unique_visitors: Generated<number>;
 }
 
+export interface EditDailyStats {
+  user_id: number;
+  date: ColumnType<Date, Date | string, Date | string>;
+  edit_count: Generated<number>;
+}
+
 export interface Sessions {
   expires_at: Timestamp;
   id: string;
@@ -74,6 +80,7 @@ export interface Users {
 
 export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
+  edit_daily_stats: EditDailyStats;
   email_verification_tokens: EmailVerificationTokens;
   home_directory_size_history: HomeDirectorySizeHistory;
   pageview_daily_stats: PageviewDailyStats;

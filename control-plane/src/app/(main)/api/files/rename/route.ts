@@ -8,7 +8,7 @@ import { getUserHomeDirectory, s3Client } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { User } from "lucia";
 import * as Sentry from "@sentry/nextjs";
-import { db } from "@/lib/database";
+import { recordSiteEdit } from "@/lib/database";
 
 function validateFilename(filename: string) {
   // Length validation
@@ -61,14 +61,6 @@ async function invalidateCloudflareCacheSingleFile(user: User, filename: string)
   if (!response.ok) {
     Sentry.captureException(response);
   }
-}
-
-async function updateSiteUpdatedAt(user: User) {
-  await db
-    .updateTable("users")
-    .set("site_updated_at", new Date())
-    .where("id", "=", user.id)
-    .execute();
 }
 
 export async function POST(request: NextRequest) {
@@ -138,7 +130,7 @@ export async function POST(request: NextRequest) {
       await invalidateCloudflareCacheSingleFile(user, newPath);
 
       revalidatePath("/files", "layout");
-      await updateSiteUpdatedAt(user);
+      await recordSiteEdit(user.id);
 
       return NextResponse.json({
         success: true,
