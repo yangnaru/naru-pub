@@ -17,7 +17,8 @@
     "migrate-down": "tsx src/cli/migrate-down.ts",
     "update-screenshots": "tsx src/cli/update-screenshots.tsx",
     "update-home-directory-sizes": "tsx src/cli/update-home-directory-sizes.ts",
-    "fix-multiple-slashes": "tsx src/cli/fix-multiple-slashes.ts"
+    "fix-multiple-slashes": "tsx src/cli/fix-multiple-slashes.ts",
+    "cron": "tsx src/cli/cron.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.892.0",
