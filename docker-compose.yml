@@ -1,0 +1,29 @@
+services:
+  proxy:
+    build: ./proxy
+    container_name: naru-pub-proxy
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  control-plane:
+    build: ./control-plane
+    container_name: naru-pub-control-plane
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  cron:
+    build: ./control-plane
+    container_name: naru-pub-cron
+    restart: always
+    command: ["pnpm", "run", "cron"]
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
