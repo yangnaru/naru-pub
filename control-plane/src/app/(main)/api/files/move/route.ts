@@ -37,15 +37,6 @@ async function invalidateCloudflareCacheSingleFile(user: User, filename: string)
   }
 }
 
-function assertNoPathTraversal(path: string) {
-  if (path.includes("..")) {
-    throw new Error("Path traversal detected in path.");
-  }
-  if (path.startsWith("/")) {
-    throw new Error("Absolute path detected in path.");
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -54,19 +45,6 @@ export async function POST(request: NextRequest) {
     if (!sourcePath) {
       return NextResponse.json(
         { success: false, message: "소스 파일 경로가 필요합니다." },
-        { status: 400 }
-      );
-    }
-
-    // Validate paths for traversal attacks
-    try {
-      assertNoPathTraversal(sourcePath);
-      if (targetDirectory) {
-        assertNoPathTraversal(targetDirectory);
-      }
-    } catch (e: any) {
-      return NextResponse.json(
-        { success: false, message: e.message },
         { status: 400 }
       );
     }
