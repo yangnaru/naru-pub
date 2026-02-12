@@ -13,10 +13,11 @@ export function cn(...inputs: ClassValue[]) {
  *
  * 1. Content-Type check: Forms can only send application/x-www-form-urlencoded,
  *    multipart/form-data, or text/plain - not application/json.
+ *    This blocks same-origin form attacks.
  *
- * 2. Sec-Fetch-* headers: Automatically set by browsers, cannot be forged.
- *    Normal API call (fetch): Sec-Fetch-Dest: empty, Sec-Fetch-Mode: cors
- *    Form submission:         Sec-Fetch-Dest: document, Sec-Fetch-Mode: navigate
+ * 2. Sec-Fetch-Site header: Automatically set by browsers, cannot be forged.
+ *    Only allows same-origin requests, blocking cross-subdomain attacks
+ *    (e.g., attacker.naru.pub -> naru.pub/api).
  */
 export function assertJsonContentType(request: NextRequest): void {
   // Check 1: Content-Type must be application/json
@@ -25,15 +26,11 @@ export function assertJsonContentType(request: NextRequest): void {
     throw new Error("Content-Type must be application/json");
   }
 
-  // Check 2: Sec-Fetch-* headers (if present) must indicate API call
-  const secFetchDest = request.headers.get("sec-fetch-dest");
-  const secFetchMode = request.headers.get("sec-fetch-mode");
-
-  if (secFetchDest && secFetchDest !== "empty") {
-    throw new Error("Invalid request: not an API call");
-  }
-  if (secFetchMode && secFetchMode === "navigate") {
-    throw new Error("Invalid request: form submissions not allowed");
+  // Check 2: Sec-Fetch-Site must be same-origin (if header present)
+  // Blocks: same-site (subdomain attacks), cross-site (external attacks)
+  const secFetchSite = request.headers.get("sec-fetch-site");
+  if (secFetchSite && secFetchSite !== "same-origin") {
+    throw new Error("Invalid request: cross-origin requests not allowed");
   }
 }
 
