@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
+import { assertJsonContentType } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      assertJsonContentType(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
     const { user } = await validateRequest();
     if (!user) {
       return NextResponse.json(

@@ -8,7 +8,7 @@ import {
   PutObjectCommand,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
-import { getUserHomeDirectory, s3Client } from "@/lib/utils";
+import { assertJsonContentType, getUserHomeDirectory, s3Client } from "@/lib/utils";
 
 async function prepareUserHomeDirectory(userName: string) {
   const bucketName = process.env.S3_BUCKET_NAME!;
@@ -46,6 +46,15 @@ async function prepareUserHomeDirectory(userName: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      assertJsonContentType(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
     const { login_name, password } = await request.json();
 
     if (!login_name || !password) {

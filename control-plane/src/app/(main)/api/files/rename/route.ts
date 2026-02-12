@@ -4,7 +4,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { validateRequest } from "@/lib/auth";
-import { getUserHomeDirectory, s3Client } from "@/lib/utils";
+import { assertJsonContentType, getUserHomeDirectory, s3Client } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { User } from "lucia";
 import * as Sentry from "@sentry/nextjs";
@@ -65,6 +65,15 @@ async function invalidateCloudflareCacheSingleFile(user: User, filename: string)
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      assertJsonContentType(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
     const { user } = await validateRequest();
     if (!user) {
       return NextResponse.json(

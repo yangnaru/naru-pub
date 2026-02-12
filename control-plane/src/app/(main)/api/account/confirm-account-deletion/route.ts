@@ -6,10 +6,19 @@ import {
   ListObjectsV2Command,
   DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
-import { getUserHomeDirectory, s3Client } from "@/lib/utils";
+import { assertJsonContentType, getUserHomeDirectory, s3Client } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      assertJsonContentType(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
     const { token } = await request.json();
 
     if (!token) {

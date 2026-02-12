@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/database";
 import { sendPasswordResetEmail, generatePasswordResetToken } from "@/lib/email";
+import { assertJsonContentType } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      assertJsonContentType(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
     const { email } = await request.json();
 
     if (!email) {

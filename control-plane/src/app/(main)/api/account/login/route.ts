@@ -3,9 +3,19 @@ import { cookies } from "next/headers";
 import { lucia, validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { verify } from "@node-rs/argon2";
+import { assertJsonContentType } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      assertJsonContentType(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
     const { user } = await validateRequest();
 
     if (user) {

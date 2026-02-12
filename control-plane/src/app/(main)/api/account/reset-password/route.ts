@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/database";
 import { hash } from "@node-rs/argon2";
+import { assertJsonContentType } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      assertJsonContentType(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
     const { token, newPassword } = await request.json();
 
     if (!token || !newPassword) {

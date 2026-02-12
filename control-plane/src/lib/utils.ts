@@ -1,9 +1,22 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { S3Client } from "@aws-sdk/client-s3";
+import { NextRequest } from "next/server";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Validates that the request has Content-Type: application/json.
+ * This prevents CSRF attacks via HTML forms (which can only send
+ * application/x-www-form-urlencoded, multipart/form-data, or text/plain).
+ */
+export function assertJsonContentType(request: NextRequest): void {
+  const contentType = request.headers.get("content-type");
+  if (!contentType?.includes("application/json")) {
+    throw new Error("Content-Type must be application/json");
+  }
 }
 
 export function getPublicAssetUrl(username: string, filename: string) {
