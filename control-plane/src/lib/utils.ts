@@ -8,14 +8,32 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Validates that the request has Content-Type: application/json.
- * This prevents CSRF attacks via HTML forms (which can only send
- * application/x-www-form-urlencoded, multipart/form-data, or text/plain).
+ * Validates that the request is a legitimate JSON API call, not a form submission.
+ * Uses two layers of defense:
+ *
+ * 1. Content-Type check: Forms can only send application/x-www-form-urlencoded,
+ *    multipart/form-data, or text/plain - not application/json.
+ *
+ * 2. Sec-Fetch-* headers: Automatically set by browsers, cannot be forged.
+ *    Normal API call (fetch): Sec-Fetch-Dest: empty, Sec-Fetch-Mode: cors
+ *    Form submission:         Sec-Fetch-Dest: document, Sec-Fetch-Mode: navigate
  */
 export function assertJsonContentType(request: NextRequest): void {
+  // Check 1: Content-Type must be application/json
   const contentType = request.headers.get("content-type");
   if (!contentType?.includes("application/json")) {
     throw new Error("Content-Type must be application/json");
+  }
+
+  // Check 2: Sec-Fetch-* headers (if present) must indicate API call
+  const secFetchDest = request.headers.get("sec-fetch-dest");
+  const secFetchMode = request.headers.get("sec-fetch-mode");
+
+  if (secFetchDest && secFetchDest !== "empty") {
+    throw new Error("Invalid request: not an API call");
+  }
+  if (secFetchMode && secFetchMode === "navigate") {
+    throw new Error("Invalid request: form submissions not allowed");
   }
 }
 
