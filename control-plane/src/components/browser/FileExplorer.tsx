@@ -321,14 +321,31 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
   return (
     <div
-      className="flex flex-col h-full bg-card overflow-hidden relative"
+      className="flex h-full bg-card border-2 border-border shadow-lg rounded-lg overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <div className="shrink-0 p-3 border-b border-border bg-secondary">
-        {selectedFile ? (
+      {/* Left Sidebar - Directory Tree */}
+      <div className="w-80 border-r border-border bg-muted overflow-auto">
+        <div className="h-12 flex items-center px-3 border-b border-border bg-secondary">
+          <h3 className="font-medium text-foreground">📁 파일 탐색기</h3>
+        </div>
+        <DirectoryTree
+          files={files}
+          selectedFile={selectedFile}
+          expandedFolders={expandedFolders}
+          onFileSelect={handleFileSelect}
+          onFolderToggle={handleFolderToggle}
+          onRefresh={handleRefresh}
+        />
+      </div>
+
+      {/* Right Main Area - File Viewer */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="shrink-0 h-12 flex items-center px-3 border-b border-border bg-secondary">
+          {selectedFile ? (
             <div className="flex items-center justify-between">
               {isRenaming ? (
                 <div className="flex items-center space-x-2 flex-1">
@@ -416,18 +433,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
             <h3 className="font-medium text-foreground">파일을 선택하세요</h3>
           )}
         </div>
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        <div className="w-80 border-r border-border bg-muted overflow-auto">
-          <DirectoryTree
-            files={files}
-            selectedFile={selectedFile}
-            expandedFolders={expandedFolders}
-            onFileSelect={handleFileSelect}
-            onFolderToggle={handleFolderToggle}
-            onRefresh={handleRefresh}
-          />
-        </div>
-        <div className="flex-1 min-w-0 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-auto">
           {selectedFile ? (
             (() => {
               // Check if selected item is a directory
