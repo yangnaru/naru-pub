@@ -126,18 +126,18 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
   if (isEditable) {
     return (
       <EditorContext.Provider value={{ value: editorValue, setValue: setEditorValue }}>
-        <div className="min-h-full flex flex-col">
-          <div className="flex-1 p-4">
-            <Editor 
-              filename={filePath} 
-              contents={fileContent} 
+        <div>
+          <div className="sticky top-0 z-10 p-2 border-b border-border bg-muted">
+            <SaveButton filename={filePath} />
+          </div>
+          <div className="p-4">
+            <Editor
+              filename={filePath}
+              contents={fileContent}
               showSaveButton={false}
               value={editorValue}
               onChange={setEditorValue}
             />
-          </div>
-          <div className="sticky bottom-0 p-4 border-t border-border bg-muted">
-            <SaveButton filename={filePath} />
           </div>
         </div>
       </EditorContext.Provider>
