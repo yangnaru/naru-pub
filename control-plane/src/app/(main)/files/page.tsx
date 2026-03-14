@@ -19,7 +19,7 @@ export default async function File() {
   const fileTree = await buildFileTree(user.loginName);
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full">
       <FileExplorer initialFiles={fileTree} userLoginName={user.loginName} />
     </div>
   );
