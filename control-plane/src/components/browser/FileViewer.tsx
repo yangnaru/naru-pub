@@ -60,29 +60,6 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-muted-foreground">파일을 불러오는 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="text-4xl mb-4">❌</div>
-          <p className="text-red-600 mb-2">파일을 불러올 수 없습니다</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   const handleSave = async () => {
     try {
       const response = await fetch("/api/files/save", {
@@ -107,6 +84,29 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
   useImperativeHandle(ref, () => ({
     save: handleSave,
   }), [editorValue, filePath]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <p className="text-muted-foreground">파일을 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="text-4xl mb-4">❌</div>
+          <p className="text-red-600 mb-2">파일을 불러올 수 없습니다</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Handle different file types
   if (isEditable) {
