@@ -59,6 +59,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
   const [newFileName, setNewFileName] = useState("");
   const dragCounterRef = useRef(0);
   const fileViewerRef = useRef<FileViewerRef>(null);
+  const [showDiff, setShowDiff] = useState(false);
 
   const handleFileSelect = (filePath: string, isDirectory: boolean) => {
     if (isDirectory) {
@@ -68,6 +69,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       // For files, set as selected file
       setSelectedFile(filePath);
     }
+    setShowDiff(false);
   };
 
   const handleFolderToggle = (folderPath: string) => {
@@ -427,9 +429,14 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                     const ext = selectedFile.split('.').pop()?.toLowerCase() || '';
                     if (EDITABLE_FILE_EXTENSIONS.includes(ext)) {
                       return (
-                        <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
-                          저장
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setShowDiff((v) => !v)}>
+                            {showDiff ? "편집" : "변경 사항"}
+                          </Button>
+                          <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
+                            저장
+                          </Button>
+                        </div>
                       );
                     }
                     if (IMAGE_FILE_EXTENSIONS.includes(ext)) {
@@ -478,7 +485,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                   </div>
                 );
               } else {
-                return <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} />;
+                return <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} showDiff={showDiff} onSave={() => setShowDiff(false)} />;
               }
             })()
           ) : (

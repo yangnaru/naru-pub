@@ -17,14 +17,19 @@ export interface FileViewerRef {
   zoomOut: () => void;
   resetZoom: () => void;
   getZoom: () => number;
+  toggleDiff: () => void;
+  getShowDiff: () => boolean;
+  getHasChanges: () => boolean;
 }
 
 interface FileViewerProps {
   filePath: string;
   userLoginName: string;
+  showDiff?: boolean;
+  onSave?: () => void;
 }
 
-const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewer({ filePath, userLoginName }, ref) {
+const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewer({ filePath, userLoginName, showDiff: showDiffProp = false, onSave }, ref) {
   const [fileContent, setFileContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +86,8 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
       const res = await response.json();
       if (res.success) {
         toast.success(`${res.message}: ${filePath}`);
+        setFileContent(editorValue);
+        onSave?.();
       } else {
         toast.error(`저장 실패: ${res.message}`);
       }
@@ -98,7 +105,10 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
     zoomOut: () => imageViewerRef.current?.zoomOut(),
     resetZoom: () => imageViewerRef.current?.resetZoom(),
     getZoom: () => imageViewerRef.current?.getZoom() ?? 1,
-  }), [editorValue, filePath, fileType]);
+    toggleDiff: () => {},
+    getShowDiff: () => showDiffProp,
+    getHasChanges: () => editorValue !== fileContent,
+  }), [editorValue, fileContent, filePath, fileType, showDiffProp]);
 
   if (loading) {
     return (
@@ -131,6 +141,7 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
           filename={filePath}
           contents={fileContent}
           showSaveButton={false}
+          showDiff={showDiffProp}
           value={editorValue}
           onChange={setEditorValue}
         />

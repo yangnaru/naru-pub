@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import MonacoEditor from "@monaco-editor/react";
+import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ export default function Editor({
   filename,
   contents,
   showSaveButton = true,
+  showDiff: showDiffProp = false,
   onlyShowSaveButton = false,
   value: externalValue,
   onChange: externalOnChange,
@@ -18,12 +19,15 @@ export default function Editor({
   filename: string;
   contents: string;
   showSaveButton?: boolean;
+  showDiff?: boolean;
   onlyShowSaveButton?: boolean;
   value?: string;
   onChange?: (value: string) => void;
 }) {
   const { resolvedTheme } = useTheme();
   const [internalValue, setInternalValue] = useState(contents);
+  const [internalShowDiff, setInternalShowDiff] = useState(false);
+  const showDiff = showDiffProp || internalShowDiff;
   const value = externalValue !== undefined ? externalValue : internalValue;
   const setValue = externalOnChange || setInternalValue;
   const onChange = useCallback(
@@ -36,6 +40,8 @@ export default function Editor({
   const isDark = resolvedTheme === "dark";
   const ext = filename.split(".").pop() as string;
   const language = EDITABLE_FILE_EXTENSION_MAP[ext] ?? "plaintext";
+  const theme = isDark ? "vs-dark" : "light";
+  const hasChanges = value !== contents;
 
   const handleSave = async () => {
     try {
@@ -73,30 +79,67 @@ export default function Editor({
 
   return (
     <div className={`flex flex-col h-full ${showSaveButton ? 'gap-4' : ''}`}>
-      <div className="flex-1 min-h-0">
-        <MonacoEditor
-          value={value}
-          height="100%"
-          language={language}
-          theme={isDark ? "vs-dark" : "light"}
-          onChange={onChange}
-          options={{
-            minimap: { enabled: true },
-            lineNumbers: "on",
-            folding: true,
-            wordWrap: "on",
-            scrollBeyondLastLine: false,
-          }}
-        />
+      <div className="flex-1 min-h-0 relative">
+        <div className={showDiff ? "absolute inset-0" : "hidden"}>
+          <DiffEditor
+            original={contents}
+            modified={value}
+            language={language}
+            theme={theme}
+            height="100%"
+            onMount={(editor) => {
+              const modifiedEditor = editor.getModifiedEditor();
+              modifiedEditor.onDidChangeModelContent(() => {
+                onChange(modifiedEditor.getValue());
+              });
+            }}
+            options={{
+              minimap: { enabled: true },
+              lineNumbers: "on",
+              folding: true,
+              wordWrap: "on",
+              scrollBeyondLastLine: false,
+              renderSideBySide: true,
+              readOnly: true,
+            }}
+          />
+        </div>
+        <div className={showDiff ? "hidden" : "h-full"}>
+          <MonacoEditor
+            value={value}
+            height="100%"
+            language={language}
+            theme={theme}
+            onChange={onChange}
+            options={{
+              minimap: { enabled: true },
+              lineNumbers: "on",
+              folding: true,
+              wordWrap: "on",
+              scrollBeyondLastLine: false,
+            }}
+          />
+        </div>
       </div>
       {showSaveButton && (
-        <Button
-          type="button"
-          value="저장"
-          onClick={handleSave}
-        >
-          저장
-        </Button>
+        <div className="flex gap-2">
+          {hasChanges && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setInternalShowDiff((v) => !v)}
+            >
+              {showDiff ? "편집" : "변경 사항"}
+            </Button>
+          )}
+          <Button
+            type="button"
+            value="저장"
+            onClick={handleSave}
+          >
+            저장
+          </Button>
+        </div>
       )}
     </div>
   );

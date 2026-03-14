@@ -20,6 +20,7 @@ export default function FileExplorerWithSelected({
 }: FileExplorerWithSelectedProps) {
   const [files, setFiles] = useState<FileNode[]>(initialFiles);
   const [selectedFile, setSelectedFile] = useState<string | null>(initialSelectedFile);
+  const [showDiff, setShowDiff] = useState(false);
   const fileViewerRef = useRef<FileViewerRef>(null);
 
   // Build expanded folders set based on the initially selected file
@@ -46,6 +47,7 @@ export default function FileExplorerWithSelected({
   const handleFileSelect = (filePath: string, isDirectory: boolean) => {
     if (!isDirectory) {
       setSelectedFile(filePath);
+      setShowDiff(false);
       // Update URL without page reload
       const newUrl = `/files/edit/${filePath}`;
       window.history.pushState({}, '', newUrl);
@@ -104,9 +106,14 @@ export default function FileExplorerWithSelected({
             const ext = selectedFile.split('.').pop()?.toLowerCase() || '';
             if (EDITABLE_FILE_EXTENSIONS.includes(ext)) {
               return (
-                <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
-                  저장
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setShowDiff((v) => !v)}>
+                    {showDiff ? "편집" : "변경 사항"}
+                  </Button>
+                  <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
+                    저장
+                  </Button>
+                </div>
               );
             }
             if (IMAGE_FILE_EXTENSIONS.includes(ext)) {
@@ -123,7 +130,7 @@ export default function FileExplorerWithSelected({
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           {selectedFile ? (
-            <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} />
+            <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} showDiff={showDiff} onSave={() => setShowDiff(false)} />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
