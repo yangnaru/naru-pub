@@ -2,10 +2,11 @@
 
 import { useState, useRef } from "react";
 import DirectoryTree from "./DirectoryTree";
-import FileViewer from "./FileViewer";
+import FileViewer, { FileViewerRef } from "./FileViewer";
 import { FileNode } from "@/lib/fileUtils";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface FileExplorerProps {
   initialFiles: FileNode[];
@@ -57,6 +58,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
   const [isRenaming, setIsRenaming] = useState(false);
   const [newFileName, setNewFileName] = useState("");
   const dragCounterRef = useRef(0);
+  const fileViewerRef = useRef<FileViewerRef>(null);
 
   const handleFileSelect = (filePath: string, isDirectory: boolean) => {
     if (isDirectory) {
@@ -384,49 +386,54 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2 flex-1">
-                  {(() => {
-                    // Check if selected item is a directory
-                    const findNode = (nodes: FileNode[], path: string): FileNode | null => {
-                      for (const node of nodes) {
-                        if (node.path === path) return node;
-                        if (node.children) {
-                          const found = findNode(node.children, path);
-                          if (found) return found;
+                <>
+                  <div className="flex items-center space-x-2 flex-1">
+                    {(() => {
+                      // Check if selected item is a directory
+                      const findNode = (nodes: FileNode[], path: string): FileNode | null => {
+                        for (const node of nodes) {
+                          if (node.path === path) return node;
+                          if (node.children) {
+                            const found = findNode(node.children, path);
+                            if (found) return found;
+                          }
                         }
+                        return null;
+                      };
+
+                      const selectedNode = findNode(files, selectedFile);
+                      const isDirectory = selectedNode?.isDirectory;
+
+                      if (isDirectory) {
+                        return (
+                          <h3 className="font-medium text-foreground truncate">
+                            {getFileIcon(selectedFile.split('/').pop() || "", true)} {selectedFile.split('/').pop() || "루트"} (작업 폴더)
+                          </h3>
+                        );
+                      } else {
+                        return (
+                          <h3
+                            className="font-medium text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                            onClick={handleStartRename}
+                            title="클릭하여 이름 변경"
+                          >
+                            {getFileIcon(selectedFile.split('/').pop() || "", false)} {selectedFile.split('/').pop()}
+                          </h3>
+                        );
                       }
-                      return null;
-                    };
-
-                    const selectedNode = findNode(files, selectedFile);
-                    const isDirectory = selectedNode?.isDirectory;
-
-                    if (isDirectory) {
-                      return (
-                        <h3 className="font-medium text-foreground truncate">
-                          {getFileIcon(selectedFile.split('/').pop() || "", true)} {selectedFile.split('/').pop() || "루트"} (작업 폴더)
-                        </h3>
-                      );
-                    } else {
-                      return (
-                        <h3
-                          className="font-medium text-foreground truncate cursor-pointer hover:text-primary transition-colors"
-                          onClick={handleStartRename}
-                          title="클릭하여 이름 변경"
-                        >
-                          {getFileIcon(selectedFile.split('/').pop() || "", false)} {selectedFile.split('/').pop()}
-                        </h3>
-                      );
-                    }
-                  })()}
-                </div>
+                    })()}
+                  </div>
+                  <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
+                    저장
+                  </Button>
+                </>
               )}
             </div>
           ) : (
             <h3 className="font-medium text-foreground">파일을 선택하세요</h3>
           )}
         </div>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-auto">
           {selectedFile ? (
             (() => {
               // Check if selected item is a directory
@@ -454,7 +461,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                   </div>
                 );
               } else {
-                return <FileViewer filePath={selectedFile} userLoginName={userLoginName} />;
+                return <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} />;
               }
             })()
           ) : (

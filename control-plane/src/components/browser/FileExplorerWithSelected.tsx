@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import DirectoryTree from "./DirectoryTree";
-import FileViewer from "./FileViewer";
+import FileViewer, { FileViewerRef } from "./FileViewer";
 import { FileNode } from "@/lib/fileUtils";
+import { Button } from "@/components/ui/button";
 
 interface FileExplorerWithSelectedProps {
   initialFiles: FileNode[];
@@ -18,7 +19,8 @@ export default function FileExplorerWithSelected({
 }: FileExplorerWithSelectedProps) {
   const [files, setFiles] = useState<FileNode[]>(initialFiles);
   const [selectedFile, setSelectedFile] = useState<string | null>(initialSelectedFile);
-  
+  const fileViewerRef = useRef<FileViewerRef>(null);
+
   // Build expanded folders set based on the initially selected file
   const buildInitialExpandedFolders = (selectedFilePath: string | null): Set<string> => {
     const expanded = new Set<string>([""]); // Always expand root
@@ -93,14 +95,19 @@ export default function FileExplorerWithSelected({
 
       {/* Right Main Area - File Viewer */}
       <div className="flex-1 flex flex-col">
-        <div className="p-3 border-b border-border bg-secondary">
+        <div className="p-3 border-b border-border bg-secondary flex items-center justify-between">
           <h3 className="font-medium text-foreground">
             {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
           </h3>
+          {selectedFile && (
+            <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
+              저장
+            </Button>
+          )}
         </div>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-auto">
           {selectedFile ? (
-            <FileViewer filePath={selectedFile} userLoginName={userLoginName} />
+            <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { getPublicAssetUrl } from "@/lib/utils";
 import Editor from "@/components/Editor";
@@ -8,47 +8,8 @@ import ImageViewer from "./ImageViewer";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const EditorContext = createContext<{
-  value: string;
-  setValue: (value: string) => void;
-} | null>(null);
-
-function SaveButton({ filename }: { filename: string }) {
-  const context = useContext(EditorContext);
-  if (!context) return null;
-
-  const { value } = context;
-
-  const handleSave = async () => {
-    try {
-      const response = await fetch("/api/files/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ filename, contents: value }),
-      });
-
-      const res = await response.json();
-      if (res.success) {
-        toast.success(`${res.message}: ${filename}`);
-      } else {
-        toast.error(`저장 실패: ${res.message}`);
-      }
-    } catch (error) {
-      toast.error(`파일 저장에 실패했습니다: ${filename}`);
-    }
-  };
-
-  return (
-    <Button
-      type="button"
-      onClick={handleSave}
-      className="w-full"
-    >
-      저장
-    </Button>
-  );
+export interface FileViewerRef {
+  save: () => Promise<void>;
 }
 
 interface FileViewerProps {
@@ -56,7 +17,7 @@ interface FileViewerProps {
   userLoginName: string;
 }
 
-export default function FileViewer({ filePath, userLoginName }: FileViewerProps) {
+const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewer({ filePath, userLoginName }, ref) {
   const [fileContent, setFileContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,25 +83,43 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
     );
   }
 
+  const handleSave = async () => {
+    try {
+      const response = await fetch("/api/files/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ filename: filePath, contents: editorValue }),
+      });
+
+      const res = await response.json();
+      if (res.success) {
+        toast.success(`${res.message}: ${filePath}`);
+      } else {
+        toast.error(`저장 실패: ${res.message}`);
+      }
+    } catch (error) {
+      toast.error(`파일 저장에 실패했습니다: ${filePath}`);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    save: handleSave,
+  }), [editorValue, filePath]);
+
   // Handle different file types
   if (isEditable) {
     return (
-      <EditorContext.Provider value={{ value: editorValue, setValue: setEditorValue }}>
-        <div className="h-full flex flex-col">
-          <div className="shrink-0 p-2 border-b border-border bg-muted">
-            <SaveButton filename={filePath} />
-          </div>
-          <div className="flex-1 min-h-0 overflow-auto p-4">
-            <Editor
-              filename={filePath}
-              contents={fileContent}
-              showSaveButton={false}
-              value={editorValue}
-              onChange={setEditorValue}
-            />
-          </div>
-        </div>
-      </EditorContext.Provider>
+      <div className="h-full overflow-auto p-4">
+        <Editor
+          filename={filePath}
+          contents={fileContent}
+          showSaveButton={false}
+          value={editorValue}
+          onChange={setEditorValue}
+        />
+      </div>
     );
   }
 
@@ -205,4 +184,6 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
       </div>
     </div>
   );
-}
+});
+
+export default FileViewer;
