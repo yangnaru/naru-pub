@@ -426,7 +426,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
             <h3 className="font-medium text-foreground">파일을 선택하세요</h3>
           )}
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-hidden">
           {selectedFile ? (
             (() => {
               // Check if selected item is a directory

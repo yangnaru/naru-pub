@@ -98,7 +98,7 @@ export default function FileExplorerWithSelected({
             {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
           </h3>
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-hidden">
           {selectedFile ? (
             <FileViewer filePath={selectedFile} userLoginName={userLoginName} />
           ) : (

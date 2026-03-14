@@ -126,11 +126,11 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
   if (isEditable) {
     return (
       <EditorContext.Provider value={{ value: editorValue, setValue: setEditorValue }}>
-        <div>
-          <div className="sticky top-0 z-10 p-2 border-b border-border bg-muted">
+        <div className="h-full flex flex-col">
+          <div className="shrink-0 p-2 border-b border-border bg-muted">
             <SaveButton filename={filePath} />
           </div>
-          <div className="p-4">
+          <div className="flex-1 min-h-0 overflow-auto p-4">
             <Editor
               filename={filePath}
               contents={fileContent}
