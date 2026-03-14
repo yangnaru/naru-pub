@@ -344,7 +344,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
       {/* Right Main Area - File Viewer */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="p-3 border-b border-border bg-secondary">
+        <div className="sticky top-0 z-10 p-3 border-b border-border bg-secondary">
           {selectedFile ? (
             <div className="flex items-center justify-between">
               {isRenaming ? (

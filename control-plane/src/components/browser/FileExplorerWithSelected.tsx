@@ -95,7 +95,7 @@ export default function FileExplorerWithSelected({
 
       {/* Right Main Area - File Viewer */}
       <div className="flex-1 flex flex-col">
-        <div className="p-3 border-b border-border bg-secondary flex items-center justify-between">
+        <div className="sticky top-0 z-10 p-3 border-b border-border bg-secondary flex items-center justify-between">
           <h3 className="font-medium text-foreground">
             {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
           </h3>
