@@ -111,7 +111,7 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
   // Handle different file types
   if (isEditable) {
     return (
-      <div className="h-full overflow-auto p-4">
+      <div className="h-full overflow-auto">
         <Editor
           filename={filePath}
           contents={fileContent}
