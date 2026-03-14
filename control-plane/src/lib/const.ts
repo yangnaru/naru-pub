@@ -1,24 +1,18 @@
-import { html } from "@codemirror/lang-html";
-import { javascript } from "@codemirror/lang-javascript";
-import { json } from "@codemirror/lang-json";
-import { less } from "@codemirror/lang-less";
-import { markdown } from "@codemirror/lang-markdown";
-
 export const LOGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
-export const EDITABLE_FILE_EXTENSION_MAP: Record<string, any> = {
-  html: html,
-  htm: html,
-  xml: html,
-  xhtml: html,
-  svg: html,
-  md: markdown,
-  markdown: markdown,
-  mdx: markdown,
-  css: less,
+export const EDITABLE_FILE_EXTENSION_MAP: Record<string, string | null> = {
+  html: "html",
+  htm: "html",
+  xml: "xml",
+  xhtml: "html",
+  svg: "xml",
+  md: "markdown",
+  markdown: "markdown",
+  mdx: "markdown",
+  css: "css",
   txt: null,
-  js: javascript,
-  json: json,
+  js: "javascript",
+  json: "json",
 };
 
 export const FILE_EXTENSION_MIMETYPE_MAP: Record<

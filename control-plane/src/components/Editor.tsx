@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { javascript } from "@codemirror/lang-javascript";
-import { oneDark } from "@codemirror/theme-one-dark";
-import { EditorView } from "@codemirror/view";
+import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { Button } from "@/components/ui/button";
@@ -30,19 +27,15 @@ export default function Editor({
   const value = externalValue !== undefined ? externalValue : internalValue;
   const setValue = externalOnChange || setInternalValue;
   const onChange = useCallback(
-    (val: string) => {
-      setValue(val);
+    (val: string | undefined) => {
+      setValue(val ?? "");
     },
     [setValue]
   );
 
   const isDark = resolvedTheme === "dark";
-
-  const extensions = [
-    EDITABLE_FILE_EXTENSION_MAP[filename.split(".").pop() as string]?.() ??
-      javascript(),
-    ...(isDark ? [oneDark] : []),
-  ];
+  const ext = filename.split(".").pop() as string;
+  const language = EDITABLE_FILE_EXTENSION_MAP[ext] ?? "plaintext";
 
   const handleSave = async () => {
     try {
@@ -81,18 +74,18 @@ export default function Editor({
   return (
     <div className={`flex flex-col h-full ${showSaveButton ? 'gap-4' : ''}`}>
       <div className="flex-1 min-h-0">
-        <CodeMirror
+        <MonacoEditor
           value={value}
           height="100%"
-          extensions={extensions}
+          language={language}
+          theme={isDark ? "vs-dark" : "light"}
           onChange={onChange}
-          theme={isDark ? "dark" : "light"}
-          basicSetup={{
-            lineNumbers: true,
-            foldGutter: true,
-            dropCursor: false,
-            allowMultipleSelections: false,
-            highlightSelectionMatches: false,
+          options={{
+            minimap: { enabled: true },
+            lineNumbers: "on",
+            folding: true,
+            wordWrap: "on",
+            scrollBeyondLastLine: false,
           }}
         />
       </div>
