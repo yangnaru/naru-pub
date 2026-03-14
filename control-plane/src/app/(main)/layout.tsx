@@ -35,7 +35,7 @@ export default async function RootLayout({
         enableSystem
         disableTransitionOnChange
       >
-        <div className="bg-background min-h-screen">
+        <div className="bg-background h-screen flex flex-col">
           <nav className="bg-card border-b border-border">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16">
@@ -133,7 +133,7 @@ export default async function RootLayout({
             )}
           </nav>
 
-          <main>{children}</main>
+          <main className="flex-1 min-h-0">{children}</main>
         </div>
         <Toaster />
       </ThemeProvider>

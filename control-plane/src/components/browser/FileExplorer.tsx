@@ -321,7 +321,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
   return (
     <div
-      className="flex h-[calc(100vh-200px)] bg-card border-2 border-border shadow-lg rounded-lg overflow-hidden relative"
+      className="flex h-full bg-card border-2 border-border shadow-lg rounded-lg overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
