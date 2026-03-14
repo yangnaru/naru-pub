@@ -53,7 +53,7 @@ export default async function EditPage(
   const fileTree = await buildFileTree(user.loginName);
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <FileExplorerWithSelected 
         initialFiles={fileTree} 
         userLoginName={user.loginName}
