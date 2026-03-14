@@ -5,6 +5,7 @@ import DirectoryTree from "./DirectoryTree";
 import FileViewer, { FileViewerRef } from "./FileViewer";
 import { FileNode } from "@/lib/fileUtils";
 import { Button } from "@/components/ui/button";
+import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS } from "@/lib/const";
 
 interface FileExplorerWithSelectedProps {
   initialFiles: FileNode[];
@@ -99,11 +100,26 @@ export default function FileExplorerWithSelected({
           <h3 className="font-medium text-foreground">
             {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
           </h3>
-          {selectedFile && (
-            <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
-              저장
-            </Button>
-          )}
+          {selectedFile && (() => {
+            const ext = selectedFile.split('.').pop()?.toLowerCase() || '';
+            if (EDITABLE_FILE_EXTENSIONS.includes(ext)) {
+              return (
+                <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
+                  저장
+                </Button>
+              );
+            }
+            if (IMAGE_FILE_EXTENSIONS.includes(ext)) {
+              return (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => fileViewerRef.current?.zoomOut()}>축소</Button>
+                  <Button variant="outline" size="sm" onClick={() => fileViewerRef.current?.resetZoom()}>원본</Button>
+                  <Button variant="outline" size="sm" onClick={() => fileViewerRef.current?.zoomIn()}>확대</Button>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           {selectedFile ? (

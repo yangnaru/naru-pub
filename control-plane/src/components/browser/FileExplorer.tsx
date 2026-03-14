@@ -423,9 +423,26 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                       }
                     })()}
                   </div>
-                  <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
-                    저장
-                  </Button>
+                  {(() => {
+                    const ext = selectedFile.split('.').pop()?.toLowerCase() || '';
+                    if (EDITABLE_FILE_EXTENSIONS.includes(ext)) {
+                      return (
+                        <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
+                          저장
+                        </Button>
+                      );
+                    }
+                    if (IMAGE_FILE_EXTENSIONS.includes(ext)) {
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => fileViewerRef.current?.zoomOut()}>축소</Button>
+                          <Button variant="outline" size="sm" onClick={() => fileViewerRef.current?.resetZoom()}>원본</Button>
+                          <Button variant="outline" size="sm" onClick={() => fileViewerRef.current?.zoomIn()}>확대</Button>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </>
               )}
             </div>

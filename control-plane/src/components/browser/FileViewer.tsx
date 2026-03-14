@@ -1,15 +1,22 @@
 "use client";
 
-import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef, useRef } from "react";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { getPublicAssetUrl } from "@/lib/utils";
 import Editor from "@/components/Editor";
-import ImageViewer from "./ImageViewer";
+import ImageViewer, { ImageViewerRef } from "./ImageViewer";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+export type FileType = "editable" | "image" | "audio" | "other";
+
 export interface FileViewerRef {
+  fileType: FileType;
   save: () => Promise<void>;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetZoom: () => void;
+  getZoom: () => number;
 }
 
 interface FileViewerProps {
@@ -22,6 +29,7 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editorValue, setEditorValue] = useState<string>("");
+  const imageViewerRef = useRef<ImageViewerRef>(null);
   
   const fileName = filePath.split('/').pop() || '';
   const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
@@ -81,9 +89,16 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
     }
   };
 
+  const fileType: FileType = isEditable ? "editable" : isImage ? "image" : isAudio ? "audio" : "other";
+
   useImperativeHandle(ref, () => ({
+    fileType,
     save: handleSave,
-  }), [editorValue, filePath]);
+    zoomIn: () => imageViewerRef.current?.zoomIn(),
+    zoomOut: () => imageViewerRef.current?.zoomOut(),
+    resetZoom: () => imageViewerRef.current?.resetZoom(),
+    getZoom: () => imageViewerRef.current?.getZoom() ?? 1,
+  }), [editorValue, filePath, fileType]);
 
   if (loading) {
     return (
@@ -127,6 +142,7 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
     const imageSrc = getPublicAssetUrl(userLoginName, filePath);
     return (
       <ImageViewer
+        ref={imageViewerRef}
         src={imageSrc}
         alt={fileName}
         filename={fileName}
