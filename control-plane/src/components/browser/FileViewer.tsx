@@ -126,8 +126,8 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
   if (isEditable) {
     return (
       <EditorContext.Provider value={{ value: editorValue, setValue: setEditorValue }}>
-        <div className="h-full flex flex-col">
-          <div className="flex-1 p-4 overflow-auto min-h-0">
+        <div className="min-h-full flex flex-col">
+          <div className="flex-1 p-4">
             <Editor 
               filename={filePath} 
               contents={fileContent} 
