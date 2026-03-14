@@ -136,7 +136,7 @@ export default function FileViewer({ filePath, userLoginName }: FileViewerProps)
               onChange={setEditorValue}
             />
           </div>
-          <div className="p-4 border-t border-border bg-muted">
+          <div className="sticky bottom-0 p-4 border-t border-border bg-muted">
             <SaveButton filename={filePath} />
           </div>
         </div>
