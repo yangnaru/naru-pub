@@ -77,35 +77,29 @@ export default function FileExplorerWithSelected({
   };
 
   return (
-    <div className="flex h-full bg-card overflow-hidden">
-      {/* Left Sidebar - Directory Tree */}
-      <div className="w-80 border-r border-border bg-muted overflow-auto">
-        <div className="p-3 border-b border-border bg-secondary">
-          <h3 className="font-medium text-foreground">📁 파일 탐색기</h3>
-        </div>
-        <DirectoryTree
-          files={files}
-          selectedFile={selectedFile}
-          expandedFolders={expandedFolders}
-          onFileSelect={handleFileSelect}
-          onFolderToggle={handleFolderToggle}
-          onRefresh={handleRefresh}
-        />
+    <div className="flex flex-col h-full bg-card overflow-hidden">
+      <div className="shrink-0 p-3 border-b border-border bg-secondary flex items-center justify-between">
+        <h3 className="font-medium text-foreground">
+          {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
+        </h3>
+        {selectedFile && (
+          <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
+            저장
+          </Button>
+        )}
       </div>
-
-      {/* Right Main Area - File Viewer */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="shrink-0 p-3 border-b border-border bg-secondary flex items-center justify-between">
-          <h3 className="font-medium text-foreground">
-            {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
-          </h3>
-          {selectedFile && (
-            <Button size="sm" onClick={() => fileViewerRef.current?.save()}>
-              저장
-            </Button>
-          )}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div className="w-80 border-r border-border bg-muted overflow-auto">
+          <DirectoryTree
+            files={files}
+            selectedFile={selectedFile}
+            expandedFolders={expandedFolders}
+            onFileSelect={handleFileSelect}
+            onFolderToggle={handleFolderToggle}
+            onRefresh={handleRefresh}
+          />
         </div>
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div className="flex-1 min-w-0 overflow-auto">
           {selectedFile ? (
             <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} />
           ) : (
