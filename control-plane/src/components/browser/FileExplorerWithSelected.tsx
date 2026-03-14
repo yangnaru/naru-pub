@@ -77,7 +77,7 @@ export default function FileExplorerWithSelected({
   };
 
   return (
-    <div className="flex h-full bg-card border-2 border-border shadow-lg rounded-lg overflow-hidden">
+    <div className="flex h-full bg-card overflow-hidden">
       {/* Left Sidebar - Directory Tree */}
       <div className="w-80 border-r border-border bg-muted overflow-auto">
         <div className="p-3 border-b border-border bg-secondary">
