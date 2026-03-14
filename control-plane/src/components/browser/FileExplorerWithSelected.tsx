@@ -94,8 +94,8 @@ export default function FileExplorerWithSelected({
       </div>
 
       {/* Right Main Area - File Viewer */}
-      <div className="flex-1 flex flex-col">
-        <div className="sticky top-0 z-10 p-3 border-b border-border bg-secondary flex items-center justify-between">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="shrink-0 p-3 border-b border-border bg-secondary flex items-center justify-between">
           <h3 className="font-medium text-foreground">
             {selectedFile ? `📄 ${selectedFile.split('/').pop()}` : "파일을 선택하세요"}
           </h3>
@@ -105,7 +105,7 @@ export default function FileExplorerWithSelected({
             </Button>
           )}
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-auto">
           {selectedFile ? (
             <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} />
           ) : (

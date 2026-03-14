@@ -321,7 +321,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
 
   return (
     <div
-      className="flex min-h-[calc(100vh-200px)] bg-card border-2 border-border shadow-lg rounded-lg overflow-hidden relative"
+      className="flex h-[calc(100vh-200px)] bg-card border-2 border-border shadow-lg rounded-lg overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -343,8 +343,8 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       </div>
 
       {/* Right Main Area - File Viewer */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="sticky top-0 z-10 p-3 border-b border-border bg-secondary">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="shrink-0 p-3 border-b border-border bg-secondary">
           {selectedFile ? (
             <div className="flex items-center justify-between">
               {isRenaming ? (
@@ -433,7 +433,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
             <h3 className="font-medium text-foreground">파일을 선택하세요</h3>
           )}
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-auto">
           {selectedFile ? (
             (() => {
               // Check if selected item is a directory
