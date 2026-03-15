@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,8 @@ export default function Editor({
     [setValue]
   );
 
-  const diffEditorRef = useRef<editor.IStandaloneDiffEditor | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const diffEditorRef = useRef<any>(null);
 
   useEffect(() => {
     return () => {
