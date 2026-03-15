@@ -7,12 +7,19 @@ import Editor from "@/components/Editor";
 import ImageViewer, { ImageViewerRef } from "./ImageViewer";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { format as prettierFormat } from "prettier/standalone";
+import prettierPluginHtml from "prettier/plugins/html";
+import prettierPluginCss from "prettier/plugins/postcss";
+import prettierPluginBabel from "prettier/plugins/babel";
+import prettierPluginEstree from "prettier/plugins/estree";
+import prettierPluginMarkdown from "prettier/plugins/markdown";
 
 export type FileType = "editable" | "image" | "audio" | "other";
 
 export interface FileViewerRef {
   fileType: FileType;
   save: () => Promise<void>;
+  format: () => Promise<void>;
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
@@ -28,6 +35,21 @@ interface FileViewerProps {
   showDiff?: boolean;
   onSave?: () => void;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PRETTIER_PARSER_MAP: Record<string, { parser: string; plugins: any[] } | null> = {
+  html: { parser: "html", plugins: [prettierPluginHtml] },
+  htm: { parser: "html", plugins: [prettierPluginHtml] },
+  xhtml: { parser: "html", plugins: [prettierPluginHtml] },
+  xml: { parser: "html", plugins: [prettierPluginHtml] },
+  svg: { parser: "html", plugins: [prettierPluginHtml] },
+  css: { parser: "css", plugins: [prettierPluginCss] },
+  js: { parser: "babel", plugins: [prettierPluginBabel, prettierPluginEstree] },
+  json: { parser: "json", plugins: [prettierPluginBabel, prettierPluginEstree] },
+  md: { parser: "markdown", plugins: [prettierPluginMarkdown] },
+  markdown: { parser: "markdown", plugins: [prettierPluginMarkdown] },
+  mdx: { parser: "mdx", plugins: [prettierPluginMarkdown] },
+};
 
 const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewer({ filePath, userLoginName, showDiff: showDiffProp = false, onSave }, ref) {
   const [fileContent, setFileContent] = useState<string>("");
@@ -96,11 +118,29 @@ const FileViewer = forwardRef<FileViewerRef, FileViewerProps>(function FileViewe
     }
   };
 
+  const handleFormat = async () => {
+    const config = PRETTIER_PARSER_MAP[fileExtension];
+    if (!config) {
+      toast.error("이 파일 형식은 포맷을 지원하지 않습니다");
+      return;
+    }
+    try {
+      const formatted = await prettierFormat(editorValue, {
+        parser: config.parser,
+        plugins: config.plugins,
+      });
+      setEditorValue(formatted);
+    } catch (e) {
+      toast.error(`포맷 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+    }
+  };
+
   const fileType: FileType = isEditable ? "editable" : isImage ? "image" : isAudio ? "audio" : "other";
 
   useImperativeHandle(ref, () => ({
     fileType,
     save: handleSave,
+    format: handleFormat,
     zoomIn: () => imageViewerRef.current?.zoomIn(),
     zoomOut: () => imageViewerRef.current?.zoomOut(),
     resetZoom: () => imageViewerRef.current?.resetZoom(),

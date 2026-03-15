@@ -142,6 +142,9 @@ export default function FileExplorerWithSelected({
             if (EDITABLE_FILE_EXTENSIONS.includes(ext)) {
               return (
                 <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => fileViewerRef.current?.format()}>
+                    포맷
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => setShowDiff((v) => !v)}>
                     {showDiff ? "편집" : "변경 사항"}
                   </Button>
