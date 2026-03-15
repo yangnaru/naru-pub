@@ -18,7 +18,8 @@ export const EDITABLE_FILE_EXTENSION_MAP: Record<string, string | null> = {
 export const FILE_EXTENSION_MIMETYPE_MAP: Record<
   | keyof typeof EDITABLE_FILE_EXTENSION_MAP
   | (typeof AUDIO_FILE_EXTENSIONS)[number]
-  | (typeof IMAGE_FILE_EXTENSIONS)[number],
+  | (typeof IMAGE_FILE_EXTENSIONS)[number]
+  | (typeof FONT_FILE_EXTENSIONS)[number],
   string
 > = {
   html: "text/html",
@@ -45,6 +46,11 @@ export const FILE_EXTENSION_MIMETYPE_MAP: Record<
   opus: "audio/opus",
   mid: "audio/midi",
   midi: "audio/midi",
+  woff: "font/woff",
+  woff2: "font/woff2",
+  ttf: "font/ttf",
+  otf: "font/otf",
+  eot: "application/vnd.ms-fontobject",
 };
 
 export const EDITABLE_FILE_EXTENSIONS = Object.keys(
@@ -69,10 +75,19 @@ export const IMAGE_FILE_EXTENSIONS = [
   "ico",
 ];
 
+export const FONT_FILE_EXTENSIONS = [
+  "woff",
+  "woff2",
+  "ttf",
+  "otf",
+  "eot",
+];
+
 export const ALLOWED_FILE_EXTENSIONS = [
   ...EDITABLE_FILE_EXTENSIONS,
   ...AUDIO_FILE_EXTENSIONS,
   ...IMAGE_FILE_EXTENSIONS,
+  ...FONT_FILE_EXTENSIONS,
 ];
 
 export const DEFAULT_INDEX_HTML = `<!DOCTYPE html>
