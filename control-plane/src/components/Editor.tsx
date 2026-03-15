@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { EDITABLE_FILE_EXTENSION_MAP } from "@/lib/const";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,15 @@ export default function Editor({
     },
     [setValue]
   );
+
+  const diffEditorRef = useRef<editor.IStandaloneDiffEditor | null>(null);
+
+  useEffect(() => {
+    return () => {
+      diffEditorRef.current?.dispose();
+      diffEditorRef.current = null;
+    };
+  }, []);
 
   const isDark = resolvedTheme === "dark";
   const ext = filename.split(".").pop() as string;
@@ -87,8 +97,9 @@ export default function Editor({
             language={language}
             theme={theme}
             height="100%"
-            onMount={(editor) => {
-              const modifiedEditor = editor.getModifiedEditor();
+            onMount={(diffEditor) => {
+              diffEditorRef.current = diffEditor;
+              const modifiedEditor = diffEditor.getModifiedEditor();
               modifiedEditor.onDidChangeModelContent(() => {
                 onChange(modifiedEditor.getValue());
               });
