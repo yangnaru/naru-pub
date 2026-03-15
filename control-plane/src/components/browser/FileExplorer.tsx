@@ -520,7 +520,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                   </div>
                 );
               } else {
-                return <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} showDiff={showDiff} onSave={() => setShowDiff(false)} />;
+                return <FileViewer key={selectedFile} ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} showDiff={showDiff} onSave={() => setShowDiff(false)} />;
               }
             })()
           ) : (

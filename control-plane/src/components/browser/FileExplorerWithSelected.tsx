@@ -165,7 +165,7 @@ export default function FileExplorerWithSelected({
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           {selectedFile ? (
-            <FileViewer ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} showDiff={showDiff} onSave={() => setShowDiff(false)} />
+            <FileViewer key={selectedFile} ref={fileViewerRef} filePath={selectedFile} userLoginName={userLoginName} showDiff={showDiff} onSave={() => setShowDiff(false)} />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
