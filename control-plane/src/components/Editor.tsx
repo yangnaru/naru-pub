@@ -79,8 +79,8 @@ export default function Editor({
 
   return (
     <div className={`flex flex-col h-full ${showSaveButton ? 'gap-4' : ''}`}>
-      <div className="flex-1 min-h-0 relative">
-        <div className={showDiff ? "absolute inset-0" : "hidden"}>
+      <div className="flex-1 min-h-0">
+        {showDiff ? (
           <DiffEditor
             original={contents}
             modified={value}
@@ -103,8 +103,7 @@ export default function Editor({
               readOnly: true,
             }}
           />
-        </div>
-        <div className={showDiff ? "hidden" : "h-full"}>
+        ) : (
           <MonacoEditor
             value={value}
             height="100%"
@@ -119,7 +118,7 @@ export default function Editor({
               scrollBeyondLastLine: false,
             }}
           />
-        </div>
+        )}
       </div>
       {showSaveButton && (
         <div className="flex gap-2">
