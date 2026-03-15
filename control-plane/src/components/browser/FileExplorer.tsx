@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import DirectoryTree from "./DirectoryTree";
 import FileViewer, { FileViewerRef } from "./FileViewer";
 import { FileNode } from "@/lib/fileUtils";
@@ -60,6 +60,35 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
   const dragCounterRef = useRef(0);
   const fileViewerRef = useRef<FileViewerRef>(null);
   const [showDiff, setShowDiff] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const isResizing = useRef(false);
+
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const newWidth = Math.min(Math.max(e.clientX, 200), 600);
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      if (!isResizing.current) return;
+      isResizing.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
 
   const handleFileSelect = (filePath: string, isDirectory: boolean) => {
     if (isDirectory) {
@@ -330,7 +359,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       onDrop={handleDrop}
     >
       {/* Left Sidebar - Directory Tree */}
-      <div className="w-80 border-r border-border bg-muted overflow-auto">
+      <div className="bg-muted overflow-auto shrink-0" style={{ width: sidebarWidth }}>
         <div className="h-12 flex items-center px-3 border-b border-border bg-secondary">
           <h3 className="font-medium text-foreground">📁 파일 탐색기</h3>
         </div>
@@ -343,6 +372,12 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
           onRefresh={handleRefresh}
         />
       </div>
+
+      {/* Resize Handle */}
+      <div
+        className="w-1 cursor-col-resize bg-border hover:bg-primary/40 active:bg-primary/60 transition-colors shrink-0"
+        onMouseDown={handleResizeMouseDown}
+      />
 
       {/* Right Main Area - File Viewer */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
