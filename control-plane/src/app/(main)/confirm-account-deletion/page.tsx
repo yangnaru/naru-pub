@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
 export default function ConfirmAccountDeletionPage() {
@@ -11,6 +12,7 @@ export default function ConfirmAccountDeletionPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (!token) {
@@ -32,7 +34,7 @@ export default function ConfirmAccountDeletionPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, password }),
       });
 
       const result = await response.json();
@@ -91,6 +93,22 @@ export default function ConfirmAccountDeletionPage() {
                   </div>
                 </div>
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  비밀번호 확인
+                </label>
+                <Input
+                  type="password"
+                  placeholder="비밀번호를 입력해주세요"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleConfirmDeletion();
+                  }}
+                  disabled={isProcessing}
+                />
+              </div>
               <div className="flex space-x-4">
                 <Button
                   variant="outline"
@@ -104,7 +122,7 @@ export default function ConfirmAccountDeletionPage() {
                   variant="destructive"
                   className="flex-1"
                   onClick={handleConfirmDeletion}
-                  disabled={isProcessing}
+                  disabled={isProcessing || !password}
                 >
                   {isProcessing ? "삭제 중..." : "계정 삭제"}
                 </Button>

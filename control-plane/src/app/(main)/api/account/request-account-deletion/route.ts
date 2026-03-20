@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { sendAccountDeletionEmail, generateAccountDeletionToken } from "@/lib/email";
+import { verify } from "@node-rs/argon2";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +11,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
         { status: 401 }
+      );
+    }
+
+    const { password } = await request.json();
+    if (!password) {
+      return NextResponse.json(
+        { success: false, message: "비밀번호를 입력해주세요." },
+        { status: 400 }
+      );
+    }
+
+    const databaseUser = await db
+      .selectFrom("users")
+      .select("password_hash")
+      .where("id", "=", user.id)
+      .executeTakeFirst();
+
+    if (!databaseUser) {
+      return NextResponse.json(
+        { success: false, message: "사용자가 존재하지 않습니다." },
+        { status: 404 }
+      );
+    }
+
+    const passwordVerified = await verify(databaseUser.password_hash, password);
+    if (!passwordVerified) {
+      return NextResponse.json(
+        { success: false, message: "비밀번호가 일치하지 않습니다." },
+        { status: 400 }
       );
     }
 

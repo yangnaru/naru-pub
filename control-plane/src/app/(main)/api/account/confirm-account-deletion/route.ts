@@ -7,6 +7,7 @@ import {
   DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
 import { assertJsonContentType, getUserHomeDirectory, s3Client } from "@/lib/utils";
+import { verify } from "@node-rs/argon2";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { token } = await request.json();
+    const { token, password } = await request.json();
 
     if (!token) {
       return NextResponse.json(
@@ -47,6 +48,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "계정 삭제 권한이 없습니다." },
         { status: 403 }
+      );
+    }
+
+    if (!password) {
+      return NextResponse.json(
+        { success: false, message: "비밀번호를 입력해주세요." },
+        { status: 400 }
+      );
+    }
+
+    const databaseUser = await db
+      .selectFrom("users")
+      .select("password_hash")
+      .where("id", "=", user.id)
+      .executeTakeFirst();
+
+    if (!databaseUser) {
+      return NextResponse.json(
+        { success: false, message: "사용자가 존재하지 않습니다." },
+        { status: 404 }
+      );
+    }
+
+    const passwordVerified = await verify(databaseUser.password_hash, password);
+    if (!passwordVerified) {
+      return NextResponse.json(
+        { success: false, message: "비밀번호가 일치하지 않습니다." },
+        { status: 400 }
       );
     }
 
