@@ -37,8 +37,10 @@ RUN npm install --global corepack@latest && \
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies (this layer will be cached unless package files change)
-RUN pnpm install --frozen-lockfile && \
-    npx playwright install chromium
+RUN pnpm install --frozen-lockfile
+
+# Download headless Chromium in separate layer for better caching
+RUN npx playwright install chromium
 
 # Set build arguments and environment early
 ARG NEXT_PUBLIC_DOMAIN=naru.pub
