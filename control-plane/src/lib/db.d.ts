@@ -44,6 +44,7 @@ export interface Pageviews {
   path: Generated<string>;
   ip: string;
   referrer: string | null;
+  user_agent: string | null;
 }
 
 export interface PageviewDailyStats {

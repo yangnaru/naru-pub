@@ -144,7 +144,7 @@ fn resolve_path(raw_path: &str) -> String {
 }
 
 // Record a pageview in the database (fire-and-forget)
-fn record_pageview(db_pool: PgPool, subdomain: String, path: String, client_ip: IpAddr, referrer: Option<String>) {
+fn record_pageview(db_pool: PgPool, subdomain: String, path: String, client_ip: IpAddr, referrer: Option<String>, user_agent: Option<String>) {
     tokio::spawn(async move {
         // Look up user_id from login_name (subdomain)
         let user_result: Result<Option<(i32,)>, _> = sqlx::query_as(
@@ -175,12 +175,13 @@ fn record_pageview(db_pool: PgPool, subdomain: String, path: String, client_ip: 
 
             // Insert pageview record
             let insert_result = sqlx::query(
-                "INSERT INTO pageviews (user_id, path, ip, referrer) VALUES ($1, $2, $3, $4)"
+                "INSERT INTO pageviews (user_id, path, ip, referrer, user_agent) VALUES ($1, $2, $3, $4, $5)"
             )
             .bind(user_id)
             .bind(&path)
             .bind(ip_network)
             .bind(&referrer)
+            .bind(&user_agent)
             .execute(&db_pool)
             .await;
 
@@ -242,6 +243,13 @@ async fn handle_request(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string());
 
+    // Extract the User-Agent header
+    let user_agent = req
+        .headers()
+        .get("user-agent")
+        .and_then(|h| h.to_str().ok())
+        .map(|s| s.to_string());
+
     let raw_path = req.uri().path().trim_start_matches('/');
     // URL decode the path
     let raw_path = percent_decode_str(raw_path)
@@ -300,6 +308,7 @@ async fn handle_request(
                     pageview_path,
                     client_ip,
                     referrer,
+                    user_agent,
                 );
             }
 
