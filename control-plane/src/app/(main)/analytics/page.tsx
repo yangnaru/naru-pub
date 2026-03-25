@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Users, Eye, TrendingUp } from "lucide-react";
 import PageviewsChart from "./pageviews-chart";
 import TopPagesTable from "./top-pages-table";
+import TopReferrersTable from "./top-referrers-table";
 
 async function getDailyPageviews(userId: number) {
   const thirtyDaysAgo = new Date();
@@ -62,6 +63,29 @@ async function getTopPages(userId: number) {
     path: r.path,
     views: Number(r.views),
     uniqueVisitors: Number(r.unique_visitors),
+  }));
+}
+
+async function getTopReferrers(userId: number) {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const results = await db
+    .selectFrom("pageviews")
+    .select([
+      sql<string>`COALESCE(referrer, '(직접 방문)')`.as("referrer"),
+      sql<number>`COUNT(*)`.as("views"),
+    ])
+    .where("user_id", "=", userId)
+    .where("timestamp", ">=", thirtyDaysAgo)
+    .groupBy(sql`COALESCE(referrer, '(직접 방문)')`)
+    .orderBy(sql`COUNT(*)`, "desc")
+    .limit(10)
+    .execute();
+
+  return results.map((r) => ({
+    referrer: r.referrer,
+    views: Number(r.views),
   }));
 }
 
@@ -138,9 +162,10 @@ export default async function AnalyticsPage() {
     redirect("/login");
   }
 
-  const [dailyPageviews, topPages, stats] = await Promise.all([
+  const [dailyPageviews, topPages, topReferrers, stats] = await Promise.all([
     getDailyPageviews(user.id),
     getTopPages(user.id),
+    getTopReferrers(user.id),
     getStats(user.id),
   ]);
 
@@ -234,6 +259,9 @@ export default async function AnalyticsPage() {
           <PageviewsChart data={dailyPageviews} />
           <TopPagesTable data={topPages} />
         </div>
+
+        {/* Referrers */}
+        <TopReferrersTable data={topReferrers} />
       </div>
     </div>
   );

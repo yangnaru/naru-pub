@@ -43,6 +43,7 @@ export interface Pageviews {
   timestamp: Generated<Timestamp>;
   path: Generated<string>;
   ip: string;
+  referrer: string | null;
 }
 
 export interface PageviewDailyStats {
