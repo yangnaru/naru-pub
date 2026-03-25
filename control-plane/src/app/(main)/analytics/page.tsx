@@ -7,6 +7,7 @@ import { BarChart3, Users, Eye, TrendingUp } from "lucide-react";
 import PageviewsChart from "./pageviews-chart";
 import TopPagesTable from "./top-pages-table";
 import TopReferrersTable from "./top-referrers-table";
+import UserAgentsTable from "./user-agents-table";
 
 async function getDailyPageviews(userId: number) {
   const thirtyDaysAgo = new Date();
@@ -89,6 +90,50 @@ async function getTopReferrers(userId: number) {
   }));
 }
 
+function parseBrowserName(ua: string): string {
+  // Order matters: check more specific strings first
+  if (ua.includes("Firefox/") && !ua.includes("Seamonkey/")) return "Firefox";
+  if (ua.includes("Edg/")) return "Edge";
+  if (ua.includes("OPR/") || ua.includes("Opera/")) return "Opera";
+  if (ua.includes("SamsungBrowser/")) return "Samsung Internet";
+  if (ua.includes("Chrome/") && !ua.includes("Edg/") && !ua.includes("OPR/"))
+    return "Chrome";
+  if (ua.includes("Safari/") && !ua.includes("Chrome/") && !ua.includes("Chromium/"))
+    return "Safari";
+  if (ua.includes("bot") || ua.includes("Bot") || ua.includes("crawl") || ua.includes("Crawl") || ua.includes("spider") || ua.includes("Spider"))
+    return "Bot";
+  if (ua.includes("curl/")) return "curl";
+  return "(기타)";
+}
+
+async function getUserAgentBreakdown(userId: number) {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const results = await db
+    .selectFrom("pageviews")
+    .select([
+      sql<string>`COALESCE(user_agent, '')`.as("user_agent"),
+      sql<number>`COUNT(*)`.as("views"),
+    ])
+    .where("user_id", "=", userId)
+    .where("timestamp", ">=", thirtyDaysAgo)
+    .groupBy("user_agent")
+    .execute();
+
+  // Aggregate by parsed browser name
+  const browserMap = new Map<string, number>();
+  for (const r of results) {
+    const browser = r.user_agent ? parseBrowserName(r.user_agent) : "(알 수 없음)";
+    browserMap.set(browser, (browserMap.get(browser) ?? 0) + Number(r.views));
+  }
+
+  return Array.from(browserMap.entries())
+    .map(([userAgent, views]) => ({ userAgent, views }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 10);
+}
+
 async function getStats(userId: number) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -162,12 +207,14 @@ export default async function AnalyticsPage() {
     redirect("/login");
   }
 
-  const [dailyPageviews, topPages, topReferrers, stats] = await Promise.all([
-    getDailyPageviews(user.id),
-    getTopPages(user.id),
-    getTopReferrers(user.id),
-    getStats(user.id),
-  ]);
+  const [dailyPageviews, topPages, topReferrers, userAgents, stats] =
+    await Promise.all([
+      getDailyPageviews(user.id),
+      getTopPages(user.id),
+      getTopReferrers(user.id),
+      getUserAgentBreakdown(user.id),
+      getStats(user.id),
+    ]);
 
   return (
     <div className="bg-background min-h-screen">
@@ -260,8 +307,11 @@ export default async function AnalyticsPage() {
           <TopPagesTable data={topPages} />
         </div>
 
-        {/* Referrers */}
-        <TopReferrersTable data={topReferrers} />
+        {/* Referrers & User Agents */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TopReferrersTable data={topReferrers} />
+          <UserAgentsTable data={userAgents} />
+        </div>
       </div>
     </div>
   );
