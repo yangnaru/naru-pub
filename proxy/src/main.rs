@@ -284,6 +284,7 @@ async fn handle_request(
         return Ok(Response::builder()
             .status(302) // HTTP status code for redirection
             .header("Location", redirect_url)
+            .header("Cache-Control", "public, max-age=3600")
             .body(Full::new(Bytes::from("Redirecting...")))
             .unwrap());
     }
@@ -315,6 +316,7 @@ async fn handle_request(
             Ok(Response::builder()
                 .status(200)
                 .header("content-type", content_type)
+                .header("Cache-Control", "public, max-age=3600")
                 .body(Full::new(data))
                 .unwrap())
         }
