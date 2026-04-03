@@ -80,43 +80,27 @@ export async function GET() {
               return relativePath && relativePath !== object.Key;
             });
 
-            // Process files with concurrent downloads (10 at a time)
-            const CONCURRENCY = 10;
-            const queue = [...validObjects];
+            for (const object of validObjects) {
+              if (!object.Key) continue;
 
-            // Create worker pool for concurrent processing
-            const workers = Array.from({ length: CONCURRENCY }, async () => {
-              while (queue.length > 0) {
-                const object = queue.shift();
-                if (!object || !object.Key) continue;
+              const relativePath = object.Key.replace(`${userDirectory}/`, "");
 
-                const relativePath = object.Key.replace(`${userDirectory}/`, "");
+              try {
+                const getCommand = new GetObjectCommand({
+                  Bucket: bucketName,
+                  Key: object.Key,
+                });
 
-                try {
-                  const getCommand = new GetObjectCommand({
-                    Bucket: bucketName,
-                    Key: object.Key,
-                  });
+                const response = await s3Client.send(getCommand);
 
-                  const response = await s3Client.send(getCommand);
-
-                  if (response.Body) {
-                    // Convert AWS SDK stream to Node.js Readable stream
-                    const nodeStream = Readable.from(response.Body as any);
-
-                    // Append file to archive with streaming
-                    // archiver handles concurrent appends internally
-                    archive.append(nodeStream, { name: relativePath });
-                  }
-                } catch (error) {
-                  console.error(`Failed to download file ${object.Key}:`, error);
-                  // Continue with other files even if one fails
+                if (response.Body) {
+                  const nodeStream = Readable.from(response.Body as any);
+                  archive.append(nodeStream, { name: relativePath });
                 }
+              } catch (error) {
+                console.error(`Failed to download file ${object.Key}:`, error);
               }
-            });
-
-            // Wait for all workers to complete
-            await Promise.all(workers);
+            }
 
             // Finalize the archive (this will trigger the 'end' event)
             await archive.finalize();
