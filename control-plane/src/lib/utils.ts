@@ -68,6 +68,6 @@ export const s3Client = new S3Client({
   },
   requestHandler: new NodeHttpHandler({
     requestTimeout: 30_000,
-    connectionTimeout: 5_000,
+    connectionTimeout: 30_000,
   }),
 });
