@@ -52,11 +52,11 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
       '@upyo/core':
-        specifier: ^0.1.1
-        version: 0.1.1
-      '@upyo/mailgun':
-        specifier: ^0.1.1
-        version: 0.1.1(@upyo/core@0.1.1)
+        specifier: ^0.4.0
+        version: 0.4.0
+      '@upyo/resend':
+        specifier: ^0.4.0
+        version: 0.4.0(@upyo/core@0.4.0)
       '@zip.js/zip.js':
         specifier: ^2.8.2
         version: 2.8.2
@@ -2840,15 +2840,15 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@upyo/core@0.1.1':
-    resolution: {integrity: sha512-uyI6U9Zk56XgVLV3rWQsdJRE2RzCIHBAmHbFkHB3cNqyW0yNnBj18aQZp9SP0GhfrQ60K+uAAsl6eX81wp8vIw==}
+  '@upyo/core@0.4.0':
+    resolution: {integrity: sha512-JQtwxI095eTkfdJQCaZfRskpPuTUcU1FRbqEinf+sLhP8Z0MW+9UsPGmJvFV9uSjMxfl9hhCUe6I4W4R1TqUjA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
-  '@upyo/mailgun@0.1.1':
-    resolution: {integrity: sha512-n0/OcPoTDrSFPGj+NRVa6EkXz+NyrzOCrr+mSk2WKLXfJe2B8zoNfftW2ZasajZwhpeq+Nw5VcubcrrTV8W38w==}
+  '@upyo/resend@0.4.0':
+    resolution: {integrity: sha512-LBexRGzAiRd0XjpsalSAPqvf2NRGEEj01fEvuPYTfGtG+wY1OwBrbjtmHuUIQKhTF9B4Q/2gO7NjzQE3Jj8wNA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     peerDependencies:
-      '@upyo/core': 0.1.1
+      '@upyo/core': 0.4.0
 
   '@webassemblyjs/ast@1.14.1':
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}
@@ -9300,11 +9300,11 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@upyo/core@0.1.1': {}
+  '@upyo/core@0.4.0': {}
 
-  '@upyo/mailgun@0.1.1(@upyo/core@0.1.1)':
+  '@upyo/resend@0.4.0(@upyo/core@0.4.0)':
     dependencies:
-      '@upyo/core': 0.1.1
+      '@upyo/core': 0.4.0
 
   '@webassemblyjs/ast@1.14.1':
     dependencies:

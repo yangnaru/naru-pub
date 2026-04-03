@@ -1,10 +1,9 @@
 import { createMessage } from "@upyo/core";
-import { MailgunTransport } from "@upyo/mailgun";
+import { ResendTransport } from "@upyo/resend";
 import { generateId } from "lucia";
 
-const transport = new MailgunTransport({
-  domain: process.env.MAILGUN_DOMAIN || "naru.pub",
-  apiKey: process.env.MAILGUN_API_KEY!,
+const transport = new ResendTransport({
+  apiKey: process.env.RESEND_API_KEY!,
 });
 
 export async function sendVerificationEmail(email: string, token: string) {
