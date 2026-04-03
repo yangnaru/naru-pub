@@ -55,7 +55,7 @@ export default async function AccountPage() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex flex-row gap-4 flex-wrap">
-              <DownloadDirectoryButton />
+              <DownloadDirectoryButton hasVerifiedEmail={!!user.email && !!user.emailVerifiedAt} />
               <LogoutButton />
               <DeleteAccountButton />
             </div>

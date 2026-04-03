@@ -4,6 +4,8 @@ import { resolve } from "path";
 const SCREENSHOT_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const SCREENSHOT_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 const HOME_DIR_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const EXPORT_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const EXPORT_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 function runWithTimeout(
   script: string,
@@ -47,6 +49,10 @@ async function runHomeDirectoryUpdater() {
   await runWithTimeout("update-home-directory-sizes.ts", HOME_DIR_TIMEOUT);
 }
 
+async function runExportProcessor() {
+  await runWithTimeout("process-exports.ts", EXPORT_TIMEOUT);
+}
+
 function scheduleDaily(hour: number, minute: number, fn: () => Promise<void>) {
   const runIfTime = () => {
     const now = new Date();
@@ -71,6 +77,10 @@ async function main() {
 
   // Run on startup after a short delay
   setTimeout(runScreenshotUpdater, 10 * 1000);
+
+  // Run export processor every 2 minutes
+  console.log("[cron] Scheduling export processor every 2 minutes");
+  setInterval(runExportProcessor, EXPORT_INTERVAL);
 
   // Run home directory updater daily at 22:00
   console.log("[cron] Scheduling home directory updater daily at 22:00");

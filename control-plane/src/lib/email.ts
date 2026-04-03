@@ -152,3 +152,47 @@ export async function sendAccountDeletionEmail(email: string, token: string) {
 export function generateAccountDeletionToken(): string {
   return generateId(32);
 }
+
+export async function sendExportReadyEmail(
+  email: string,
+  downloadUrl: string,
+  loginName: string
+) {
+  const message = createMessage({
+    from: process.env.FROM_EMAIL || "noreply@naru.pub",
+    to: email,
+    subject: "갠홈 내보내기가 완료되었습니다",
+    content: {
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>갠홈 내보내기 완료</h2>
+          <p>${loginName}님의 갠홈 내보내기 파일이 준비되었습니다.</p>
+          <p>
+            <a href="${downloadUrl}" style="background-color: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              다운로드
+            </a>
+          </p>
+          <p>이 링크는 72시간 후에 만료됩니다.</p>
+        </div>
+      `,
+      text: `
+        갠홈 내보내기 완료
+
+        ${loginName}님의 갠홈 내보내기 파일이 준비되었습니다.
+
+        다운로드 링크: ${downloadUrl}
+
+        이 링크는 72시간 후에 만료됩니다.
+      `,
+    },
+    tags: ["export", "home-directory"],
+  });
+
+  const receipt = await transport.send(message);
+  if (!receipt.successful) {
+    throw new Error(
+      `Failed to send export ready email: ${receipt.errorMessages?.join(", ")}`
+    );
+  }
+  return receipt;
+}

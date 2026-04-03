@@ -30,6 +30,19 @@ export interface AccountDeletionTokens {
   user_id: number;
 }
 
+export interface HomeDirectoryExports {
+  id: Generated<number>;
+  user_id: number;
+  status: Generated<string>;
+  r2_key: string | null;
+  size_bytes: number | null;
+  download_expires_at: Timestamp | null;
+  error_message: string | null;
+  created_at: Generated<Timestamp>;
+  started_at: Timestamp | null;
+  completed_at: Timestamp | null;
+}
+
 export interface HomeDirectorySizeHistory {
   id: Generated<number>;
   recorded_at: Generated<Timestamp>;
@@ -84,6 +97,7 @@ export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
   edit_daily_stats: EditDailyStats;
   email_verification_tokens: EmailVerificationTokens;
+  home_directory_exports: HomeDirectoryExports;
   home_directory_size_history: HomeDirectorySizeHistory;
   pageview_daily_stats: PageviewDailyStats;
   pageviews: Pageviews;
