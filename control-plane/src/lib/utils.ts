@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { S3Client } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
+import { Agent as HttpsAgent } from "https";
 import { NextRequest } from "next/server";
 
 export function cn(...inputs: ClassValue[]) {
@@ -67,7 +68,11 @@ export const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
   requestHandler: new NodeHttpHandler({
-    requestTimeout: 30_000,
-    connectionTimeout: 30_000,
+    requestTimeout: 60_000,
+    connectionTimeout: 60_000,
+    httpsAgent: new HttpsAgent({
+      maxSockets: 200,
+      keepAlive: true,
+    }),
   }),
 });
