@@ -8,21 +8,26 @@ async function calculateUserHomeDirectorySize(
   const prefix = `${getUserHomeDirectory(loginName)}/`;
 
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      Prefix: prefix,
-    });
+    let totalSize = 0;
+    let continuationToken: string | undefined;
 
-    const response = await s3Client.send(command);
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: process.env.S3_BUCKET_NAME!,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      });
 
-    if (!response.Contents) {
-      return 0;
-    }
+      const response = await s3Client.send(command);
 
-    // Sum up the size of all objects in the user's home directory
-    const totalSize = response.Contents.reduce((sum, object) => {
-      return sum + (object.Size || 0);
-    }, 0);
+      if (response.Contents) {
+        totalSize += response.Contents.reduce((sum, object) => {
+          return sum + (object.Size || 0);
+        }, 0);
+      }
+
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
 
     return totalSize;
   } catch (error) {
