@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_KR } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { validateRequest } from "@/lib/auth";
@@ -8,11 +7,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { getHomepageUrl } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/ModeToggle";
-
-const korean = IBM_Plex_Sans_KR({
-  subsets: ["latin"],
-  weight: "400",
-});
 
 export const metadata: Metadata = {
   title: "나루",
@@ -28,7 +22,7 @@ export default async function RootLayout({
 
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={korean.className}>
+      <body className="font-mono">
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
