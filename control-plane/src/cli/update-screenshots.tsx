@@ -1,5 +1,6 @@
 import { parseArgs } from "node:util";
 import { db } from "@/lib/database";
+import { dispatchActorUpdate } from "@/lib/federation";
 import { getHomepageUrl, getRenderedSiteUrl, s3Client } from "@/lib/utils";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { Browser, BrowserContext, chromium } from "playwright";
@@ -107,6 +108,7 @@ async function renderUser(
     .executeTakeFirst();
 
   await purgeCloudflareCache(getRenderedSiteUrl(user.login_name));
+  await dispatchActorUpdate(user.id);
 }
 
 async function main() {

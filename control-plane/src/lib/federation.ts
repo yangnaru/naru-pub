@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  Context,
   createFederation,
   exportJwk,
   generateCryptoKeyPair,
@@ -21,6 +22,7 @@ import {
   Person,
   PUBLIC_COLLECTION,
   Undo,
+  Update,
 } from "@fedify/fedify/vocab";
 import { Temporal } from "@js-temporal/polyfill";
 import { sql } from "kysely";
@@ -60,44 +62,51 @@ export const federation = createFederation<void>({
   origin: federationOrigin,
 });
 
+async function buildPerson(
+  ctx: Context<void>,
+  identifier: string
+): Promise<Person | null> {
+  const user = await db
+    .selectFrom("users")
+    .select(["id", "login_name", "site_rendered_at"])
+    .where("login_name", "=", identifier)
+    .executeTakeFirst();
+  if (!user) return null;
+
+  // KEY_ALGORITHMS[0] is RSA, so keys[0] is always the RSA pair used for
+  // legacy HTTP/Linked Data Signatures exposed via `publicKey`.
+  const keys = await ctx.getActorKeyPairs(identifier);
+  const siteDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
+
+  // Viewport is 640x480 @ deviceScaleFactor 2 — see cli/update-screenshots.tsx.
+  const icon = user.site_rendered_at
+    ? new Image({
+        url: new URL(getRenderedSiteUrl(identifier)),
+        mediaType: "image/png",
+        width: 1280,
+        height: 960,
+      })
+    : undefined;
+
+  return new Person({
+    id: ctx.getActorUri(identifier),
+    preferredUsername: identifier,
+    name: identifier,
+    url: new URL(`https://${identifier}.${siteDomain}/`),
+    inbox: ctx.getInboxUri(identifier),
+    outbox: ctx.getOutboxUri(identifier),
+    followers: ctx.getFollowersUri(identifier),
+    endpoints: new Endpoints({ sharedInbox: ctx.getInboxUri() }),
+    publicKey: keys[0]?.cryptographicKey,
+    assertionMethods: keys.map((k) => k.multikey),
+    icon,
+  });
+}
+
 federation
-  .setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
-    const user = await db
-      .selectFrom("users")
-      .select(["id", "login_name", "site_rendered_at"])
-      .where("login_name", "=", identifier)
-      .executeTakeFirst();
-    if (!user) return null;
-
-    // KEY_ALGORITHMS[0] is RSA, so keys[0] is always the RSA pair used for
-    // legacy HTTP/Linked Data Signatures exposed via `publicKey`.
-    const keys = await ctx.getActorKeyPairs(identifier);
-    const siteDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
-
-    // Viewport is 640x480 @ deviceScaleFactor 2 — see cli/update-screenshots.tsx.
-    const icon = user.site_rendered_at
-      ? new Image({
-          url: new URL(getRenderedSiteUrl(identifier)),
-          mediaType: "image/png",
-          width: 1280,
-          height: 960,
-        })
-      : undefined;
-
-    return new Person({
-      id: ctx.getActorUri(identifier),
-      preferredUsername: identifier,
-      name: identifier,
-      url: new URL(`https://${identifier}.${siteDomain}/`),
-      inbox: ctx.getInboxUri(identifier),
-      outbox: ctx.getOutboxUri(identifier),
-      followers: ctx.getFollowersUri(identifier),
-      endpoints: new Endpoints({ sharedInbox: ctx.getInboxUri() }),
-      publicKey: keys[0]?.cryptographicKey,
-      assertionMethods: keys.map((k) => k.multikey),
-      icon,
-    });
-  })
+  .setActorDispatcher("/users/{identifier}", (ctx, identifier) =>
+    buildPerson(ctx, identifier)
+  )
   .setKeyPairsDispatcher(async (_ctx, identifier) => {
     const user = await db
       .selectFrom("users")
@@ -540,6 +549,42 @@ export async function dispatchSiteUpdate(userId: number): Promise<void> {
     await ctx.sendActivity({ identifier }, "followers", create);
   } catch (err) {
     console.error("[federation] sendActivity failed", err);
+  }
+}
+
+/**
+ * Fire an Update(Person) to the user's followers so remote instances refresh
+ * their cached actor — most notably, the icon that points at the rendered
+ * site screenshot. Safe to call on users with zero followers (no-op).
+ */
+export async function dispatchActorUpdate(userId: number): Promise<void> {
+  const user = await db
+    .selectFrom("users")
+    .select(["login_name"])
+    .where("id", "=", userId)
+    .executeTakeFirst();
+  if (!user) return;
+
+  const identifier = user.login_name;
+  const baseUrl = new URL(process.env.BASE_URL ?? "http://localhost:3000");
+  const ctx = federation.createContext(baseUrl, undefined);
+
+  const person = await buildPerson(ctx, identifier);
+  if (!person) return;
+
+  const update = new Update({
+    id: new URL(`/users/${identifier}/activities/${randomUUID()}`, baseUrl),
+    actor: ctx.getActorUri(identifier),
+    object: person,
+    published: Temporal.Now.instant(),
+    to: PUBLIC_COLLECTION,
+    cc: ctx.getFollowersUri(identifier),
+  });
+
+  try {
+    await ctx.sendActivity({ identifier }, "followers", update);
+  } catch (err) {
+    console.error("[federation] dispatchActorUpdate failed", err);
   }
 }
 
