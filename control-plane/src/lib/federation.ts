@@ -68,7 +68,7 @@ async function buildPerson(
 ): Promise<Person | null> {
   const user = await db
     .selectFrom("users")
-    .select(["id", "login_name", "site_rendered_at"])
+    .select(["id", "login_name", "site_rendered_at", "site_title"])
     .where("login_name", "=", identifier)
     .executeTakeFirst();
   if (!user) return null;
@@ -91,7 +91,7 @@ async function buildPerson(
   return new Person({
     id: ctx.getActorUri(identifier),
     preferredUsername: identifier,
-    name: identifier,
+    name: user.site_title ?? identifier,
     url: new URL(`https://${identifier}.${siteDomain}/`),
     inbox: ctx.getInboxUri(identifier),
     outbox: ctx.getOutboxUri(identifier),
