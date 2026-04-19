@@ -55,7 +55,7 @@ export default function TopReferrersTable({ data }: TopReferrersTableProps) {
                   <TableCell className="font-mono text-sm">
                     {referrer.referrer}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right tabular-nums">
                     {referrer.views}
                   </TableCell>
                 </TableRow>

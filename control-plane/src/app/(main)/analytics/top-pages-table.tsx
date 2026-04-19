@@ -59,8 +59,8 @@ export default function TopPagesTable({ data }: TopPagesTableProps) {
                   <TableCell className="font-mono text-sm">
                     {page.path}
                   </TableCell>
-                  <TableCell className="text-right">{page.views}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right tabular-nums">{page.views}</TableCell>
+                  <TableCell className="text-right tabular-nums">
                     {page.uniqueVisitors}
                   </TableCell>
                 </TableRow>

@@ -55,7 +55,7 @@ export default function UserAgentsTable({ data }: UserAgentsTableProps) {
                   <TableCell className="font-mono text-sm">
                     {entry.userAgent}
                   </TableCell>
-                  <TableCell className="text-right">{entry.views}</TableCell>
+                  <TableCell className="text-right tabular-nums">{entry.views}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
