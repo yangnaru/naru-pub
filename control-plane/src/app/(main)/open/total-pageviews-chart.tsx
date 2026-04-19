@@ -91,8 +91,8 @@ export default function TotalPageviewsChart({ data }: TotalPageviewsChartProps) 
             <Area
               type="monotone"
               dataKey="views"
-              stroke="hsl(var(--chart-3))"
-              fill="hsl(var(--chart-3))"
+              stroke="hsl(var(--primary))"
+              fill="hsl(var(--primary))"
               fillOpacity={0.4}
               strokeWidth={2}
             />

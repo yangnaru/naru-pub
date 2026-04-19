@@ -83,7 +83,7 @@ export default function UserGrowthChart({ data }: UserGrowthChartProps) {
             <Line
               type="monotone"
               dataKey="users"
-              stroke="hsl(var(--chart-1))"
+              stroke="hsl(var(--primary))"
               strokeWidth={2}
               dot={false}
             />

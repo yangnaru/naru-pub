@@ -150,7 +150,7 @@ export default function HomeDirectorySizeDistributionChart({
                 return null;
               }}
             />
-            <Bar dataKey="count" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
