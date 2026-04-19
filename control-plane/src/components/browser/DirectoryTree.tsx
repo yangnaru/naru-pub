@@ -5,6 +5,22 @@ import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS 
 import { FileNode } from "@/lib/fileUtils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Folder,
+  FolderOpen,
+  Globe,
+  Palette,
+  FileCode,
+  Braces,
+  FileText,
+  Image as ImageIcon,
+  Music,
+  File as FileIcon,
+  Upload,
+  FolderPlus,
+  FilePlus,
+  Trash2,
+} from "lucide-react";
 
 interface DirectoryTreeProps {
   files: FileNode[];
@@ -15,39 +31,41 @@ interface DirectoryTreeProps {
   onRefresh: () => void;
 }
 
-function getFileIcon(fileName: string, isDirectory: boolean): string {
-  if (isDirectory) return "📁";
-  
+function getFileIcon(fileName: string, isDirectory: boolean): React.ReactNode {
+  const cls = "inline-block align-middle shrink-0";
+  const size = 16;
+  if (isDirectory) return <Folder size={size} className={cls} />;
+
   const extension = fileName.split('.').pop()?.toLowerCase() || "";
-  
+
   if (EDITABLE_FILE_EXTENSIONS.includes(extension)) {
     switch (extension) {
       case "html":
       case "htm":
-        return "🌐";
+        return <Globe size={size} className={cls} />;
       case "css":
-        return "🎨";
+        return <Palette size={size} className={cls} />;
       case "js":
-        return "⚡";
+        return <FileCode size={size} className={cls} />;
       case "json":
-        return "📋";
+        return <Braces size={size} className={cls} />;
       case "md":
       case "markdown":
-        return "📝";
+        return <FileText size={size} className={cls} />;
       default:
-        return "📄";
+        return <FileIcon size={size} className={cls} />;
     }
   }
-  
+
   if (IMAGE_FILE_EXTENSIONS.includes(extension)) {
-    return "🖼️";
+    return <ImageIcon size={size} className={cls} />;
   }
-  
+
   if (AUDIO_FILE_EXTENSIONS.includes(extension)) {
-    return "🎵";
+    return <Music size={size} className={cls} />;
   }
-  
-  return "📄";
+
+  return <FileIcon size={size} className={cls} />;
 }
 
 function TreeNode({
@@ -256,10 +274,10 @@ function TreeNode({
             style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
           >
             <button
-              className="block w-full text-left px-3 py-1 text-sm hover:bg-accent text-destructive"
+              className="flex items-center gap-2 w-full text-left px-3 py-1 text-sm hover:bg-accent text-destructive"
               onClick={handleDelete}
             >
-              🗑️ 삭제
+              <Trash2 size={14} className="shrink-0" /> 삭제
             </button>
           </div>
         </>
@@ -579,8 +597,9 @@ export default function DirectoryTree({
       {/* Toolbar */}
       <div className="p-2 border-b border-border bg-secondary">
         <div className="space-y-2">
-          <div className="text-xs text-muted-foreground mb-1">
-            현재 위치: {targetDirectory || "루트"}
+          <div className="text-xs mb-1 truncate">
+            <span className="text-muted-foreground select-none">$ cd </span>
+            <span className="text-muted-foreground">~/{targetDirectory}</span>
           </div>
           <div className="flex space-x-1">
             <Button
@@ -588,25 +607,26 @@ export default function DirectoryTree({
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="text-xs"
+              className="text-xs gap-1"
             >
-              {uploading ? "업로드중..." : "📁 업로드"}
+              <Upload size={12} className="shrink-0" />
+              {uploading ? "업로드중..." : "업로드"}
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowNewDirectoryInput(!showNewDirectoryInput)}
-              className="text-xs"
+              className="text-xs gap-1"
             >
-              📂 폴더
+              <FolderPlus size={12} className="shrink-0" /> 폴더
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowNewFileInput(!showNewFileInput)}
-              className="text-xs"
+              className="text-xs gap-1"
             >
-              📄 파일
+              <FilePlus size={12} className="shrink-0" /> 파일
             </Button>
           </div>
 
@@ -672,7 +692,7 @@ export default function DirectoryTree({
 
         {files.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
-            <div className="text-4xl mb-2">📂</div>
+            <FolderOpen size={40} className="mx-auto mb-2" strokeWidth={1.25} />
             <p className="text-sm">파일이 없습니다</p>
           </div>
         )}
@@ -689,7 +709,7 @@ export default function DirectoryTree({
           onDragLeave={handleRootDragLeave}
           onDrop={handleRootDrop}
         >
-          <div className="text-2xl mb-2">📁</div>
+          <Folder size={24} className="mx-auto mb-2" strokeWidth={1.25} />
           <div className="text-sm font-medium">
             {isRootDropZone ? "루트 폴더로 이동" : "루트 폴더"}
           </div>

@@ -7,14 +7,30 @@ import { FileNode } from "@/lib/fileUtils";
 import { EDITABLE_FILE_EXTENSIONS, IMAGE_FILE_EXTENSIONS, AUDIO_FILE_EXTENSIONS } from "@/lib/const";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Folder,
+  FolderOpen,
+  Globe,
+  Palette,
+  FileCode,
+  Braces,
+  FileText,
+  Image as ImageIcon,
+  Music,
+  File as FileIcon,
+  Upload,
+  ArrowUpToLine,
+} from "lucide-react";
 
 interface FileExplorerProps {
   initialFiles: FileNode[];
   userLoginName: string;
 }
 
-function getFileIcon(fileName: string, isDirectory: boolean): string {
-  if (isDirectory) return "📁";
+function getFileIcon(fileName: string, isDirectory: boolean): React.ReactNode {
+  const cls = "inline-block align-middle shrink-0";
+  const size = 16;
+  if (isDirectory) return <Folder size={size} className={cls} />;
 
   const extension = fileName.split('.').pop()?.toLowerCase() || "";
 
@@ -22,30 +38,30 @@ function getFileIcon(fileName: string, isDirectory: boolean): string {
     switch (extension) {
       case "html":
       case "htm":
-        return "🌐";
+        return <Globe size={size} className={cls} />;
       case "css":
-        return "🎨";
+        return <Palette size={size} className={cls} />;
       case "js":
-        return "⚡";
+        return <FileCode size={size} className={cls} />;
       case "json":
-        return "📋";
+        return <Braces size={size} className={cls} />;
       case "md":
       case "markdown":
-        return "📝";
+        return <FileText size={size} className={cls} />;
       default:
-        return "📄";
+        return <FileIcon size={size} className={cls} />;
     }
   }
 
   if (IMAGE_FILE_EXTENSIONS.includes(extension)) {
-    return "🖼️";
+    return <ImageIcon size={size} className={cls} />;
   }
 
   if (AUDIO_FILE_EXTENSIONS.includes(extension)) {
-    return "🎵";
+    return <Music size={size} className={cls} />;
   }
 
-  return "📄";
+  return <FileIcon size={size} className={cls} />;
 }
 
 export default function FileExplorer({ initialFiles, userLoginName }: FileExplorerProps) {
@@ -361,7 +377,10 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       {/* Left Sidebar - Directory Tree */}
       <div className="bg-muted overflow-auto shrink-0" style={{ width: sidebarWidth }}>
         <div className="h-12 flex items-center px-3 border-b border-border bg-secondary">
-          <h3 className="font-medium text-foreground">📁 파일 탐색기</h3>
+          <h3 className="font-medium text-foreground truncate">
+            <span className="text-muted-foreground select-none">~/</span>
+            {userLoginName}
+          </h3>
         </div>
         <DirectoryTree
           files={files}
@@ -516,7 +535,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
                 return (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
                     <div className="text-center">
-                      <div className="text-6xl mb-4">📁</div>
+                      <FolderOpen size={60} className="mx-auto mb-4" strokeWidth={1.25} />
                       <p className="text-lg font-medium mb-2">현재 작업 폴더: {selectedFile || "루트"}</p>
                       <p>이 폴더에서 파일을 생성하거나 업로드할 수 있습니다</p>
                     </div>
@@ -529,7 +548,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
-                <div className="text-6xl mb-4">📂</div>
+                <FolderOpen size={60} className="mx-auto mb-4" strokeWidth={1.25} />
                 <p>왼쪽에서 파일을 선택하여 내용을 확인하세요</p>
               </div>
             </div>
@@ -541,7 +560,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       {isDragOver && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-card p-6 rounded-lg border-2 border-border shadow-lg text-center border-4 border-dashed border-primary">
-            <div className="text-6xl mb-4">📁</div>
+            <Upload size={60} className="mx-auto mb-4 text-primary" strokeWidth={1.25} />
             <p className="text-xl font-semibold text-primary">파일을 여기에 드롭하세요</p>
             <p className="text-sm mt-2 text-muted-foreground">
               {getCurrentDirectory() || "루트 폴더"}에 업로드됩니다
@@ -554,7 +573,7 @@ export default function FileExplorer({ initialFiles, userLoginName }: FileExplor
       {uploading && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-card p-6 rounded-lg border-2 border-border shadow-lg text-center">
-            <div className="text-2xl mb-2">⬆️</div>
+            <ArrowUpToLine size={28} className="mx-auto mb-2" />
             <p className="text-lg font-semibold mb-2">파일 업로드 중...</p>
             <div className="w-64 bg-secondary rounded-full h-2">
               <div
