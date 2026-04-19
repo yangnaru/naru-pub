@@ -41,9 +41,16 @@ const DB_KEY_TYPE: Record<KeyAlgorithm, string> = {
   Ed25519: "ed25519",
 };
 
+// Pin the origin so URIs in actor/activity/collection docs always use the
+// public hostname — not whatever Host header the reverse proxy forwards
+// (which behind Cloudflare often ends up as the container's localhost:3000).
+const federationOrigin =
+  process.env.BASE_URL ?? "http://localhost:3000";
+
 export const federation = createFederation<void>({
   kv: new PostgresKvStore(fedifySql),
   queue: new PostgresMessageQueue(fedifySql),
+  origin: federationOrigin,
 });
 
 federation

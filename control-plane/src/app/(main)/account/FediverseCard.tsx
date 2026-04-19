@@ -30,7 +30,7 @@ export default function FediverseCard({
       <CardHeader className="bg-secondary border-b-2 border-border">
         <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
           <AtSign size={20} />
-          페디버스
+          연합우주
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
@@ -48,7 +48,7 @@ export default function FediverseCard({
           </Button>
         </div>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          마스토돈을 비롯한 페디버스 서버에서 위 핸들로 팔로우할 수 있습니다.
+          마스토돈을 비롯한 연합우주 서버에서 위 핸들로 팔로우할 수 있습니다.
           사이트를 수정하면 팔로워들에게 하루 한 번까지 업데이트 알림이
           전송됩니다.
         </p>
