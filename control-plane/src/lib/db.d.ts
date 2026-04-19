@@ -87,6 +87,7 @@ export interface Users {
   home_directory_size_bytes: Generated<number | null>;
   home_directory_size_bytes_updated_at: Timestamp | null;
   id: Generated<number>;
+  last_activity_sent_at: Timestamp | null;
   login_name: string;
   password_hash: string;
   site_rendered_at: Timestamp | null;

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   createFederation,
   exportJwk,
@@ -8,11 +9,16 @@ import {
 import {
   Accept,
   Activity,
+  Create,
   Endpoints,
   Follow,
+  Note,
   Person,
+  PUBLIC_COLLECTION,
   Undo,
 } from "@fedify/fedify/vocab";
+import { Temporal } from "@js-temporal/polyfill";
+import { sql } from "kysely";
 import { db } from "./database";
 
 const KEY_ALGORITHMS = ["RSASSA-PKCS1-v1_5", "Ed25519"] as const;
@@ -287,3 +293,86 @@ federation
     return BigInt(result.count);
   })
   .setFirstCursor(() => "0");
+
+/**
+ * Fire a Create(Note) to the user's followers announcing a site update,
+ * at most once per 24h per user. The first edit after the window rolls
+ * over dispatches immediately; edits inside the window are dropped.
+ */
+export async function dispatchSiteUpdate(userId: number): Promise<void> {
+  const claimed = await db
+    .updateTable("users")
+    .set({ last_activity_sent_at: sql`now()` })
+    .where("id", "=", userId)
+    .where((eb) =>
+      eb.or([
+        eb("last_activity_sent_at", "is", null),
+        eb(
+          "last_activity_sent_at",
+          "<",
+          sql<Date>`now() - interval '24 hours'`
+        ),
+      ])
+    )
+    .returning("login_name")
+    .executeTakeFirst();
+
+  if (!claimed) return;
+
+  const identifier = claimed.login_name;
+  const siteDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
+  const baseUrl = new URL(process.env.BASE_URL ?? "http://localhost:3000");
+  const ctx = federation.createContext(baseUrl, undefined);
+
+  const siteUrl = new URL(`https://${identifier}.${siteDomain}/`);
+  const actorUri = ctx.getActorUri(identifier);
+  const followersUri = ctx.getFollowersUri(identifier);
+  const noteId = new URL(
+    `/users/${identifier}/notes/${randomUUID()}`,
+    baseUrl
+  );
+  const activityId = new URL(
+    `/users/${identifier}/activities/${randomUUID()}`,
+    baseUrl
+  );
+  const now = Temporal.Now.instant();
+
+  const note = new Note({
+    id: noteId,
+    attribution: actorUri,
+    content: `<p>Updated <a href="${siteUrl.href}">${siteUrl.href}</a></p>`,
+    url: siteUrl,
+    published: now,
+    to: PUBLIC_COLLECTION,
+    cc: followersUri,
+  });
+
+  const create = new Create({
+    id: activityId,
+    actor: actorUri,
+    object: note,
+    published: now,
+    to: PUBLIC_COLLECTION,
+    cc: followersUri,
+  });
+
+  const payload = await create.toJsonLd({
+    contextLoader: ctx.contextLoader,
+  });
+
+  await db
+    .insertInto("activities")
+    .values({
+      id: activityId.href,
+      user_id: userId,
+      type: "Create",
+      payload,
+    })
+    .execute();
+
+  void ctx
+    .sendActivity({ identifier }, "followers", create)
+    .catch((err) =>
+      console.error("[federation] sendActivity failed", err)
+    );
+}
