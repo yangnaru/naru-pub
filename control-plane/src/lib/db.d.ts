@@ -93,6 +93,14 @@ export interface Users {
   site_updated_at: Timestamp | null;
 }
 
+export interface UserKeys {
+  user_id: number;
+  key_type: string;
+  private_key: unknown;
+  public_key: unknown;
+  created_at: Generated<Timestamp>;
+}
+
 export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
   edit_daily_stats: EditDailyStats;
@@ -103,5 +111,6 @@ export interface DB {
   pageviews: Pageviews;
   password_reset_tokens: PasswordResetTokens;
   sessions: Sessions;
+  user_keys: UserKeys;
   users: Users;
 }
