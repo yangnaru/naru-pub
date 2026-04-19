@@ -18,12 +18,27 @@ export default async function AccountPage() {
     redirect("/");
   }
 
-  const followerRow = await db
+  const followerRows = await db
     .selectFrom("followers")
-    .select((eb) => eb.fn.countAll<string>().as("count"))
+    .select("actor_iri")
     .where("user_id", "=", user.id)
-    .executeTakeFirst();
-  const followerCount = followerRow ? Number(followerRow.count) : 0;
+    .orderBy("id", "desc")
+    .limit(200)
+    .execute();
+
+  const followers = followerRows.map((row) => {
+    try {
+      const url = new URL(row.actor_iri);
+      const segments = url.pathname.split("/").filter(Boolean);
+      const username = segments[segments.length - 1] ?? url.host;
+      return {
+        handle: `@${username}@${url.host}`,
+        url: row.actor_iri,
+      };
+    } catch {
+      return { handle: row.actor_iri, url: row.actor_iri };
+    }
+  });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
 
   return (
@@ -57,7 +72,7 @@ export default async function AccountPage() {
         <FediverseCard
           loginName={user.loginName}
           domain={fediverseDomain}
-          followerCount={followerCount}
+          followers={followers}
         />
         <DiscoverabilityForm discoverable={user.discoverable} />
         <ChangePasswordForm />

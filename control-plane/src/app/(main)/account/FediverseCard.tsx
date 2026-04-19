@@ -5,14 +5,19 @@ import { Button } from "@/components/ui/button";
 import { AtSign, Copy } from "lucide-react";
 import { toast } from "sonner";
 
+export interface FediverseFollower {
+  handle: string;
+  url: string;
+}
+
 export default function FediverseCard({
   loginName,
   domain,
-  followerCount,
+  followers,
 }: {
   loginName: string;
   domain: string;
-  followerCount: number;
+  followers: FediverseFollower[];
 }) {
   const handle = `@${loginName}@${domain}`;
 
@@ -52,10 +57,27 @@ export default function FediverseCard({
           사이트를 수정하면 팔로워들에게 하루 한 번까지 업데이트 알림이
           전송됩니다.
         </p>
-        <div className="bg-background border border-border rounded p-3">
+        <div className="bg-background border border-border rounded p-3 space-y-3">
           <p className="text-muted-foreground text-sm">
-            팔로워 <strong className="text-primary">{followerCount}</strong>명
+            팔로워 <strong className="text-primary">{followers.length}</strong>
+            명
           </p>
+          {followers.length > 0 && (
+            <ul className="space-y-1 text-sm font-mono">
+              {followers.map((f) => (
+                <li key={f.url}>
+                  <a
+                    href={f.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline break-all"
+                  >
+                    {f.handle}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </CardContent>
     </Card>
