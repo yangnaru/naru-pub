@@ -5,7 +5,13 @@ import {
   importJwk,
   MemoryKvStore,
 } from "@fedify/fedify";
-import { Endpoints, Person } from "@fedify/fedify/vocab";
+import {
+  Accept,
+  Endpoints,
+  Follow,
+  Person,
+  Undo,
+} from "@fedify/fedify/vocab";
 import { db } from "./database";
 
 const KEY_ALGORITHMS = ["RSASSA-PKCS1-v1_5", "Ed25519"] as const;
@@ -41,6 +47,7 @@ federation
       name: identifier,
       url: new URL(`https://${identifier}.${siteDomain}/`),
       inbox: ctx.getInboxUri(identifier),
+      followers: ctx.getFollowersUri(identifier),
       endpoints: new Endpoints({ sharedInbox: ctx.getInboxUri() }),
       publicKey: keys[0]?.cryptographicKey,
       assertionMethods: keys.map((k) => k.multikey),
@@ -98,6 +105,123 @@ federation
     return user?.login_name ?? null;
   });
 
-// Register inbox route so ctx.getInboxUri() resolves on the actor document.
-// Handlers (Follow/Undo/etc.) are wired up in a later step.
-federation.setInboxListeners("/users/{identifier}/inbox", "/inbox");
+federation
+  .setInboxListeners("/users/{identifier}/inbox", "/inbox")
+  .on(Follow, async (ctx, follow) => {
+    const parsed = ctx.parseUri(follow.objectId);
+    if (parsed?.type !== "actor") return;
+    const identifier = parsed.identifier;
+
+    const user = await db
+      .selectFrom("users")
+      .select("id")
+      .where("login_name", "=", identifier)
+      .executeTakeFirst();
+    if (!user) return;
+
+    const follower = await follow.getActor(ctx);
+    if (!follower?.id || !follower.inboxId) return;
+
+    await db
+      .insertInto("followers")
+      .values({
+        user_id: user.id,
+        actor_iri: follower.id.href,
+        inbox_iri: follower.inboxId.href,
+        shared_inbox_iri:
+          follower.endpoints?.sharedInbox?.href ?? null,
+      })
+      .onConflict((oc) =>
+        oc.columns(["user_id", "actor_iri"]).doUpdateSet({
+          inbox_iri: follower.inboxId!.href,
+          shared_inbox_iri:
+            follower.endpoints?.sharedInbox?.href ?? null,
+        })
+      )
+      .execute();
+
+    await ctx.sendActivity(
+      { identifier },
+      follower,
+      new Accept({
+        actor: ctx.getActorUri(identifier),
+        object: follow,
+      })
+    );
+  })
+  .on(Undo, async (ctx, undo) => {
+    const object = await undo.getObject(ctx);
+    if (!(object instanceof Follow)) return;
+
+    const parsed = ctx.parseUri(object.objectId);
+    if (parsed?.type !== "actor") return;
+    const actorId = undo.actorId;
+    if (!actorId) return;
+
+    const user = await db
+      .selectFrom("users")
+      .select("id")
+      .where("login_name", "=", parsed.identifier)
+      .executeTakeFirst();
+    if (!user) return;
+
+    await db
+      .deleteFrom("followers")
+      .where("user_id", "=", user.id)
+      .where("actor_iri", "=", actorId.href)
+      .execute();
+  });
+
+federation.setFollowersDispatcher(
+  "/users/{identifier}/followers",
+  async (_ctx, identifier, cursor) => {
+    const user = await db
+      .selectFrom("users")
+      .select("id")
+      .where("login_name", "=", identifier)
+      .executeTakeFirst();
+    if (!user) return null;
+
+    const pageSize = 50;
+    const offset = cursor ? Number.parseInt(cursor, 10) : 0;
+    if (Number.isNaN(offset) || offset < 0) return null;
+
+    const rows = await db
+      .selectFrom("followers")
+      .select(["actor_iri", "inbox_iri", "shared_inbox_iri"])
+      .where("user_id", "=", user.id)
+      .orderBy("id", "asc")
+      .limit(pageSize + 1)
+      .offset(offset)
+      .execute();
+
+    const hasMore = rows.length > pageSize;
+    const items = rows.slice(0, pageSize).map((r) => ({
+      id: new URL(r.actor_iri),
+      inboxId: new URL(r.inbox_iri),
+      endpoints: r.shared_inbox_iri
+        ? { sharedInbox: new URL(r.shared_inbox_iri) }
+        : null,
+    }));
+
+    return {
+      items,
+      nextCursor: hasMore ? String(offset + pageSize) : null,
+    };
+  }
+).setCounter(async (_ctx, identifier) => {
+  const user = await db
+    .selectFrom("users")
+    .select("id")
+    .where("login_name", "=", identifier)
+    .executeTakeFirst();
+  if (!user) return null;
+
+  const result = await db
+    .selectFrom("followers")
+    .select((eb) => eb.fn.countAll<string>().as("count"))
+    .where("user_id", "=", user.id)
+    .executeTakeFirstOrThrow();
+
+  return BigInt(result.count);
+}).setFirstCursor(() => "0");

@@ -101,10 +101,20 @@ export interface UserKeys {
   created_at: Generated<Timestamp>;
 }
 
+export interface Followers {
+  id: Generated<number>;
+  user_id: number;
+  actor_iri: string;
+  inbox_iri: string;
+  shared_inbox_iri: string | null;
+  created_at: Generated<Timestamp>;
+}
+
 export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
   edit_daily_stats: EditDailyStats;
   email_verification_tokens: EmailVerificationTokens;
+  followers: Followers;
   home_directory_exports: HomeDirectoryExports;
   home_directory_size_history: HomeDirectorySizeHistory;
   pageview_daily_stats: PageviewDailyStats;
