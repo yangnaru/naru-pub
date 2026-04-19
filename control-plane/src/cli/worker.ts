@@ -1,6 +1,8 @@
 import { federation } from "@/lib/federation";
+import { configureLogging } from "@/lib/logging";
 
 async function main() {
+  await configureLogging();
   console.log("[worker] Starting Fedify queue listener");
   const abort = new AbortController();
 

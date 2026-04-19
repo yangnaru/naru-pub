@@ -33,6 +33,9 @@ importers:
       '@js-temporal/polyfill':
         specifier: ^0.5.1
         version: 0.5.1
+      '@logtape/logtape':
+        specifier: ^2.0.5
+        version: 2.0.5
       '@lucia-auth/adapter-postgresql':
         specifier: ^3.1.2
         version: 3.1.2(lucia@3.2.2)(pg@8.16.3)(postgres@3.4.9)

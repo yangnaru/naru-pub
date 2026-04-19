@@ -25,6 +25,11 @@ import { Temporal } from "@js-temporal/polyfill";
 import { sql } from "kysely";
 import postgres from "postgres";
 import { db } from "./database";
+import { configureLogging } from "./logging";
+
+// Fire the logtape config eagerly so control-plane requests also get Fedify's
+// internal logs routed to the console.
+void configureLogging();
 
 // Separate postgres.js client for Fedify's KV + queue. Kysely uses `pg`;
 // @fedify/postgres uses `postgres`. Two small pools in one process is fine.
