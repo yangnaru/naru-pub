@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdCard } from "@/components/AdCard";
+import { Info, ScrollText, History } from "lucide-react";
 
 export default async function Home() {
   const recentlyRenderedUsers = await db
@@ -21,7 +22,7 @@ export default async function Home() {
         <Card className="bg-card border-2 border-border shadow-lg">
           <CardHeader className="bg-secondary border-b-2 border-border">
             <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
-              📖 소개
+              <Info size={20} /> 소개
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -39,7 +40,7 @@ export default async function Home() {
         <Card className="bg-card border-2 border-border shadow-lg">
           <CardHeader className="bg-secondary border-b-2 border-border">
             <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
-              📋 사용 안내
+              <ScrollText size={20} /> 사용 안내
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -130,7 +131,7 @@ export default async function Home() {
           <Card className="bg-card border-2 border-border shadow-lg">
             <CardHeader className="bg-secondary border-b-2 border-border">
               <CardTitle className="text-foreground text-xl font-bold flex items-center gap-2">
-                🔄 최근 업데이트된
+                <History size={20} /> 최근 업데이트된
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">

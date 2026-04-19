@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { BarChart3 } from "lucide-react";
 
 async function getUserGrowthData() {
   const users = await db
@@ -166,7 +167,9 @@ export default async function OpenPage() {
   return (
     <div className="w-full p-6 space-y-8">
       <div className="bg-card border-2 border-border shadow-lg rounded-lg p-6">
-        <h2 className="text-3xl font-bold text-foreground mb-2">📊 지표</h2>
+        <h2 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+          <BarChart3 size={28} /> 지표
+        </h2>
         <p className="text-muted-foreground">나루의 사용 현황과 통계를 확인해보세요.</p>
       </div>
 
@@ -179,7 +182,7 @@ export default async function OpenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {formatBytes(currentStats.totalSize)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -194,7 +197,7 @@ export default async function OpenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {formatBytes(currentStats.averageSize)}
             </div>
             <p className="text-xs text-muted-foreground">사용자당 평균</p>
@@ -207,7 +210,7 @@ export default async function OpenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {formatBytes(currentStats.maxSize)}
             </div>
             <p className="text-xs text-muted-foreground">가장 큰 갠홈</p>
@@ -220,7 +223,7 @@ export default async function OpenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {currentStats.userCount}명
             </div>
             <p className="text-xs text-muted-foreground">저장 용량이 계산된 사용자</p>
@@ -233,7 +236,7 @@ export default async function OpenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {pageviewStats.allTimeViews.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">누적 페이지뷰</p>
@@ -246,7 +249,7 @@ export default async function OpenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {pageviewStats.allTimeUniqueVisitors.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">누적 순방문자</p>
@@ -259,7 +262,7 @@ export default async function OpenPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground tabular-nums">
               {editStats.allTimeEdits.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">누적 파일 편집</p>

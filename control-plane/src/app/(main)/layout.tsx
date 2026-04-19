@@ -109,19 +109,23 @@ export default async function RootLayout({
             {user && (
               <div className="border-t border-border bg-primary/5">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <span className="text-primary">🏠</span>
-                      <span className="font-medium">당신만의 갠홈 주소:</span>
-                      <Link
-                        href={getHomepageUrl(user.loginName)}
-                        target="_blank"
-                        className="text-primary hover:text-primary/80 font-medium hover:underline transition-colors duration-200"
-                      >
-                        {getHomepageUrl(user.loginName)}
-                      </Link>
-                    </p>
-                  </div>
+                  <p className="text-sm flex items-center gap-2 whitespace-nowrap overflow-x-auto">
+                    <span className="text-muted-foreground select-none">
+                      {user.loginName}@naru:~$
+                    </span>
+                    <span className="text-muted-foreground select-none">open</span>
+                    <Link
+                      href={getHomepageUrl(user.loginName)}
+                      target="_blank"
+                      className="text-primary font-medium hover:underline transition-colors duration-200"
+                    >
+                      {getHomepageUrl(user.loginName)}
+                    </Link>
+                    <span
+                      aria-hidden="true"
+                      className="inline-block w-2 h-4 bg-primary/70 animate-pulse"
+                    />
+                  </p>
                 </div>
               </div>
             )}

@@ -243,7 +243,7 @@ export default async function AnalyticsPage() {
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-foreground tabular-nums">
                 {stats.today.views}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -259,7 +259,7 @@ export default async function AnalyticsPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-foreground tabular-nums">
                 {stats.week.views}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -275,7 +275,7 @@ export default async function AnalyticsPage() {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-foreground tabular-nums">
                 {stats.month.views}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -291,7 +291,7 @@ export default async function AnalyticsPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-foreground tabular-nums">
                 {stats.allTime.views}
               </div>
               <p className="text-xs text-muted-foreground">
