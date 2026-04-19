@@ -15,6 +15,10 @@ import { Browser, BrowserContext, chromium } from "playwright";
 //     → render every discoverable user, ignoring the predicate
 //   pnpm exec tsx src/cli/update-screenshots.tsx --user <login_name> --force
 //     → render that user, ignoring the predicate
+//   pnpm exec tsx src/cli/update-screenshots.tsx --concurrency 8
+//     → override the default parallel-render worker count (default: 6)
+
+const DEFAULT_CONCURRENCY = 6;
 
 type TargetUser = { id: number; login_name: string };
 
@@ -116,8 +120,13 @@ async function main() {
     options: {
       user: { type: "string" },
       force: { type: "boolean", default: false },
+      concurrency: { type: "string" },
     },
   });
+
+  const concurrency = values.concurrency
+    ? Math.max(1, Number.parseInt(values.concurrency, 10))
+    : DEFAULT_CONCURRENCY;
 
   const targets = await selectTargets(values.user, values.force ?? false);
 
@@ -127,20 +136,31 @@ async function main() {
     return;
   }
 
-  console.log(`[update-screenshots] ${targets.length} target(s)`);
+  console.log(
+    `[update-screenshots] ${targets.length} target(s), concurrency=${concurrency}`
+  );
 
   let browser: Browser | null = null;
   try {
     browser = await chromium.launch();
     const context = await browser.newContext({ deviceScaleFactor: 2 });
 
-    for (const user of targets) {
-      try {
-        await renderUser(context, user);
-      } catch (error) {
-        console.error(`Failed to render ${user.login_name}: ${error}`);
+    let cursor = 0;
+    const worker = async () => {
+      while (true) {
+        const index = cursor++;
+        if (index >= targets.length) return;
+        const user = targets[index];
+        try {
+          await renderUser(context, user);
+        } catch (error) {
+          console.error(`Failed to render ${user.login_name}: ${error}`);
+        }
       }
-    }
+    };
+
+    const workerCount = Math.min(concurrency, targets.length);
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
     await context.close();
   } finally {
