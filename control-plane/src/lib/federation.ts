@@ -4,8 +4,11 @@ import {
   exportJwk,
   generateCryptoKeyPair,
   importJwk,
-  MemoryKvStore,
 } from "@fedify/fedify";
+import {
+  PostgresKvStore,
+  PostgresMessageQueue,
+} from "@fedify/postgres";
 import {
   Accept,
   Activity,
@@ -19,7 +22,16 @@ import {
 } from "@fedify/fedify/vocab";
 import { Temporal } from "@js-temporal/polyfill";
 import { sql } from "kysely";
+import postgres from "postgres";
 import { db } from "./database";
+
+// Separate postgres.js client for Fedify's KV + queue. Kysely uses `pg`;
+// @fedify/postgres uses `postgres`. Two small pools in one process is fine.
+const fedifyPgUrl =
+  process.env.FEDIFY_DATABASE_URL ??
+  process.env.DATABASE_URL ??
+  "postgres://localhost/";
+const fedifySql = postgres(fedifyPgUrl, { max: 4 });
 
 const KEY_ALGORITHMS = ["RSASSA-PKCS1-v1_5", "Ed25519"] as const;
 type KeyAlgorithm = (typeof KEY_ALGORITHMS)[number];
@@ -31,7 +43,8 @@ const DB_KEY_TYPE: Record<KeyAlgorithm, string> = {
 };
 
 export const federation = createFederation<void>({
-  kv: new MemoryKvStore(),
+  kv: new PostgresKvStore(fedifySql),
+  queue: new PostgresMessageQueue(fedifySql),
 });
 
 federation

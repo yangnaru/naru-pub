@@ -24,6 +24,9 @@ importers:
       '@fedify/next':
         specifier: ^2.1.5
         version: 2.1.5(@fedify/fedify@2.1.5)(next@16.2.0(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+      '@fedify/postgres':
+        specifier: ^2.1.5
+        version: 2.1.5(@fedify/fedify@2.1.5)(postgres@3.4.9)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.62.0(react@19.2.4))
@@ -32,7 +35,7 @@ importers:
         version: 0.5.1
       '@lucia-auth/adapter-postgresql':
         specifier: ^3.1.2
-        version: 3.1.2(lucia@3.2.2)(pg@8.16.3)
+        version: 3.1.2(lucia@3.2.2)(pg@8.16.3)(postgres@3.4.9)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -99,6 +102,9 @@ importers:
       playwright:
         specifier: ^1.51.1
         version: 1.55.0
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
@@ -883,6 +889,12 @@ packages:
     peerDependencies:
       '@fedify/fedify': ^2.1.5
       next: ^15.4.6
+
+  '@fedify/postgres@2.1.5':
+    resolution: {integrity: sha512-dwS/7Mntw/HHM3k7z9p68LtJpjxx9/03pxElbVIhnf6T56x3Tb+avidtftebzwyIcJWkfcLA06tDHA9dlqPx/Q==}
+    peerDependencies:
+      '@fedify/fedify': ^2.1.5
+      postgres: ^3.4.7
 
   '@fedify/vocab-runtime@2.1.5':
     resolution: {integrity: sha512-O2eyXAj+z68s9o7FeLxSLz0SUhccyXVPBWd0nzN3/UFQA3deJESeYVghMP0KGYb4B/KCrDQb35wkXcG10FLLUw==}
@@ -5132,6 +5144,10 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
+  postgres@3.4.9:
+    resolution: {integrity: sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==}
+    engines: {node: '>=12'}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -7217,6 +7233,13 @@ snapshots:
       '@fedify/fedify': 2.1.5
       next: 16.2.0(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
+  '@fedify/postgres@2.1.5(@fedify/fedify@2.1.5)(postgres@3.4.9)':
+    dependencies:
+      '@fedify/fedify': 2.1.5
+      '@js-temporal/polyfill': 0.5.1
+      '@logtape/logtape': 2.0.5
+      postgres: 3.4.9
+
   '@fedify/vocab-runtime@2.1.5':
     dependencies:
       '@logtape/logtape': 2.0.5
@@ -7629,11 +7652,12 @@ snapshots:
 
   '@logtape/logtape@2.0.5': {}
 
-  '@lucia-auth/adapter-postgresql@3.1.2(lucia@3.2.2)(pg@8.16.3)':
+  '@lucia-auth/adapter-postgresql@3.1.2(lucia@3.2.2)(pg@8.16.3)(postgres@3.4.9)':
     dependencies:
       lucia: 3.2.2
     optionalDependencies:
       pg: 8.16.3
+      postgres: 3.4.9
 
   '@monaco-editor/loader@1.7.0':
     dependencies:
@@ -12142,6 +12166,8 @@ snapshots:
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+
+  postgres@3.4.9: {}
 
   prelude-ls@1.2.1: {}
 
