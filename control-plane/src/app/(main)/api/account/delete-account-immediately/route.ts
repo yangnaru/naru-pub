@@ -7,6 +7,7 @@ import {
   DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "@/lib/utils";
+import { dispatchActorDelete } from "@/lib/federation";
 import { verify } from "@node-rs/argon2";
 
 export async function POST(request: NextRequest) {
@@ -90,6 +91,14 @@ export async function POST(request: NextRequest) {
           })
         );
       }
+    }
+
+    // Federate the account deletion before the row (and its keys/followers)
+    // cascade away. Failure here must not block deletion.
+    try {
+      await dispatchActorDelete(user.id, user.loginName);
+    } catch (err) {
+      console.error("Failed to federate account deletion:", err);
     }
 
     // Delete user account (this will cascade to all related tables)

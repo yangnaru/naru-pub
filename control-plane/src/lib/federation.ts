@@ -13,6 +13,7 @@ import {
   Accept,
   Activity,
   Create,
+  Delete,
   Endpoints,
   Follow,
   Note,
@@ -444,4 +445,54 @@ export async function dispatchSiteUpdate(userId: number): Promise<void> {
     .catch((err) =>
       console.error("[federation] sendActivity failed", err)
     );
+}
+
+/**
+ * Send a Delete(Person) to the user's followers. Must be called BEFORE the
+ * users row is deleted — we need to read the user's keys and follower list,
+ * both of which cascade away when the row goes.
+ *
+ * Keys are passed inline rather than via the key-pair dispatcher so that
+ * when the worker processes the queued message, it doesn't try to re-fetch
+ * a user that no longer exists.
+ */
+export async function dispatchActorDelete(
+  userId: number,
+  loginName: string
+): Promise<void> {
+  const baseUrl = new URL(process.env.BASE_URL ?? "http://localhost:3000");
+  const ctx = federation.createContext(baseUrl, undefined);
+
+  const followers = await db
+    .selectFrom("followers")
+    .select(["actor_iri", "inbox_iri", "shared_inbox_iri"])
+    .where("user_id", "=", userId)
+    .execute();
+
+  if (followers.length === 0) return;
+
+  const recipients = followers.map((r) => ({
+    id: new URL(r.actor_iri),
+    inboxId: new URL(r.inbox_iri),
+    endpoints: r.shared_inbox_iri
+      ? { sharedInbox: new URL(r.shared_inbox_iri) }
+      : null,
+  }));
+
+  const keyPairs = await ctx.getActorKeyPairs(loginName);
+  if (keyPairs.length === 0) return;
+  const senderKeyPairs = keyPairs.map((kp) => ({
+    keyId: kp.keyId,
+    privateKey: kp.privateKey,
+  }));
+
+  const actorUri = ctx.getActorUri(loginName);
+  const deleteActivity = new Delete({
+    id: new URL(`/users/${loginName}/activities/${randomUUID()}`, baseUrl),
+    actor: actorUri,
+    object: actorUri,
+    to: PUBLIC_COLLECTION,
+  });
+
+  await ctx.sendActivity(senderKeyPairs, recipients, deleteActivity);
 }
