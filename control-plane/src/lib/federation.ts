@@ -16,6 +16,7 @@ import {
   Delete,
   Endpoints,
   Follow,
+  Image,
   Note,
   Person,
   PUBLIC_COLLECTION,
@@ -26,6 +27,7 @@ import { sql } from "kysely";
 import postgres from "postgres";
 import { db } from "./database";
 import { configureLogging } from "./logging";
+import { getRenderedSiteUrl } from "./utils";
 
 // Fire the logtape config eagerly so control-plane requests also get Fedify's
 // internal logs routed to the console.
@@ -62,7 +64,7 @@ federation
   .setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
     const user = await db
       .selectFrom("users")
-      .select(["id", "login_name"])
+      .select(["id", "login_name", "site_rendered_at"])
       .where("login_name", "=", identifier)
       .executeTakeFirst();
     if (!user) return null;
@@ -71,6 +73,16 @@ federation
     // legacy HTTP/Linked Data Signatures exposed via `publicKey`.
     const keys = await ctx.getActorKeyPairs(identifier);
     const siteDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
+
+    // Viewport is 640x480 @ deviceScaleFactor 2 — see cli/update-screenshots.tsx.
+    const icon = user.site_rendered_at
+      ? new Image({
+          url: new URL(getRenderedSiteUrl(identifier)),
+          mediaType: "image/png",
+          width: 1280,
+          height: 960,
+        })
+      : undefined;
 
     return new Person({
       id: ctx.getActorUri(identifier),
@@ -83,6 +95,7 @@ federation
       endpoints: new Endpoints({ sharedInbox: ctx.getInboxUri() }),
       publicKey: keys[0]?.cryptographicKey,
       assertionMethods: keys.map((k) => k.multikey),
+      icon,
     });
   })
   .setKeyPairsDispatcher(async (_ctx, identifier) => {
