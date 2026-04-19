@@ -3,7 +3,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig = {
   serverExternalPackages: ["@node-rs/argon2"],
   images: {
-    remotePatterns: [new URL("https://r2-screenshots.naru.pub/*")],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "r2-screenshots.naru.pub",
+        pathname: "/**",
+      },
+    ],
   },
 };
 
