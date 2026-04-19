@@ -7,6 +7,7 @@ import {
 } from "@fedify/fedify";
 import {
   Accept,
+  Activity,
   Endpoints,
   Follow,
   Person,
@@ -47,6 +48,7 @@ federation
       name: identifier,
       url: new URL(`https://${identifier}.${siteDomain}/`),
       inbox: ctx.getInboxUri(identifier),
+      outbox: ctx.getOutboxUri(identifier),
       followers: ctx.getFollowersUri(identifier),
       endpoints: new Endpoints({ sharedInbox: ctx.getInboxUri() }),
       publicKey: keys[0]?.cryptographicKey,
@@ -209,19 +211,79 @@ federation.setFollowersDispatcher(
       nextCursor: hasMore ? String(offset + pageSize) : null,
     };
   }
-).setCounter(async (_ctx, identifier) => {
-  const user = await db
-    .selectFrom("users")
-    .select("id")
-    .where("login_name", "=", identifier)
-    .executeTakeFirst();
-  if (!user) return null;
+)
+  .setCounter(async (_ctx, identifier) => {
+    const user = await db
+      .selectFrom("users")
+      .select("id")
+      .where("login_name", "=", identifier)
+      .executeTakeFirst();
+    if (!user) return null;
 
-  const result = await db
-    .selectFrom("followers")
-    .select((eb) => eb.fn.countAll<string>().as("count"))
-    .where("user_id", "=", user.id)
-    .executeTakeFirstOrThrow();
+    const result = await db
+      .selectFrom("followers")
+      .select((eb) => eb.fn.countAll<string>().as("count"))
+      .where("user_id", "=", user.id)
+      .executeTakeFirstOrThrow();
 
-  return BigInt(result.count);
-}).setFirstCursor(() => "0");
+    return BigInt(result.count);
+  })
+  .setFirstCursor(() => "0");
+
+federation
+  .setOutboxDispatcher(
+    "/users/{identifier}/outbox",
+    async (ctx, identifier, cursor) => {
+      const user = await db
+        .selectFrom("users")
+        .select("id")
+        .where("login_name", "=", identifier)
+        .executeTakeFirst();
+      if (!user) return null;
+
+      const pageSize = 20;
+      const offset = cursor ? Number.parseInt(cursor, 10) : 0;
+      if (Number.isNaN(offset) || offset < 0) return null;
+
+      const rows = await db
+        .selectFrom("activities")
+        .select("payload")
+        .where("user_id", "=", user.id)
+        .orderBy("created_at", "desc")
+        .limit(pageSize + 1)
+        .offset(offset)
+        .execute();
+
+      const hasMore = rows.length > pageSize;
+      const items = await Promise.all(
+        rows.slice(0, pageSize).map((row) =>
+          Activity.fromJsonLd(row.payload, {
+            contextLoader: ctx.contextLoader,
+            documentLoader: ctx.documentLoader,
+          })
+        )
+      );
+
+      return {
+        items,
+        nextCursor: hasMore ? String(offset + pageSize) : null,
+      };
+    }
+  )
+  .setCounter(async (_ctx, identifier) => {
+    const user = await db
+      .selectFrom("users")
+      .select("id")
+      .where("login_name", "=", identifier)
+      .executeTakeFirst();
+    if (!user) return null;
+
+    const result = await db
+      .selectFrom("activities")
+      .select((eb) => eb.fn.countAll<string>().as("count"))
+      .where("user_id", "=", user.id)
+      .executeTakeFirstOrThrow();
+
+    return BigInt(result.count);
+  })
+  .setFirstCursor(() => "0");

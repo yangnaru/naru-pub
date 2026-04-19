@@ -110,8 +110,17 @@ export interface Followers {
   created_at: Generated<Timestamp>;
 }
 
+export interface Activities {
+  id: string;
+  user_id: number;
+  type: string;
+  payload: unknown;
+  created_at: Generated<Timestamp>;
+}
+
 export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
+  activities: Activities;
   edit_daily_stats: EditDailyStats;
   email_verification_tokens: EmailVerificationTokens;
   followers: Followers;
