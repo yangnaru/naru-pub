@@ -7,6 +7,8 @@ import DownloadDirectoryButton from "./DownloadDirectoryButton";
 import { DiscoverabilityForm } from "./DiscoverabilityForm";
 import ChangePasswordForm from "./ChangePasswordForm";
 import EmailManagement from "./EmailManagement";
+import FediverseCard from "./FediverseCard";
+import { db } from "@/lib/database";
 import { Settings, User } from "lucide-react";
 
 export default async function AccountPage() {
@@ -15,6 +17,14 @@ export default async function AccountPage() {
   if (!user) {
     redirect("/");
   }
+
+  const followerRow = await db
+    .selectFrom("followers")
+    .select((eb) => eb.fn.countAll<string>().as("count"))
+    .where("user_id", "=", user.id)
+    .executeTakeFirst();
+  const followerCount = followerRow ? Number(followerRow.count) : 0;
+  const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
 
   return (
     <div className="bg-background min-h-screen">
@@ -43,6 +53,11 @@ export default async function AccountPage() {
         <EmailManagement
           currentEmail={user.email}
           emailVerifiedAt={user.emailVerifiedAt}
+        />
+        <FediverseCard
+          loginName={user.loginName}
+          domain={fediverseDomain}
+          followerCount={followerCount}
         />
         <DiscoverabilityForm discoverable={user.discoverable} />
         <ChangePasswordForm />
