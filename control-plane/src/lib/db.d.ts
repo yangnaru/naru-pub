@@ -116,6 +116,7 @@ export interface Activities {
   user_id: number;
   type: string;
   payload: unknown;
+  object_iri: string | null;
   created_at: Generated<Timestamp>;
 }
 

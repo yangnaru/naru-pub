@@ -249,6 +249,61 @@ federation.setFollowersDispatcher(
   })
   .setFirstCursor(() => "0");
 
+async function loadActivityByIri<T extends Activity>(
+  cls: { fromJsonLd: (j: unknown, o?: any) => Promise<T> },
+  ctx: Parameters<Parameters<typeof federation.setOutboxDispatcher>[1]>[0],
+  identifier: string,
+  matchColumn: "id" | "object_iri",
+  iri: string
+): Promise<T | null> {
+  const user = await db
+    .selectFrom("users")
+    .select("id")
+    .where("login_name", "=", identifier)
+    .executeTakeFirst();
+  if (!user) return null;
+
+  const row = await db
+    .selectFrom("activities")
+    .select("payload")
+    .where("user_id", "=", user.id)
+    .where(matchColumn, "=", iri)
+    .executeTakeFirst();
+  if (!row) return null;
+
+  return (await cls.fromJsonLd(row.payload, {
+    contextLoader: ctx.contextLoader,
+    documentLoader: ctx.documentLoader,
+  })) as T;
+}
+
+federation.setObjectDispatcher(
+  Create,
+  "/users/{identifier}/activities/{id}",
+  async (ctx, { identifier, id }) => {
+    const iri = ctx.getObjectUri(Create, { identifier, id }).href;
+    return loadActivityByIri(Create, ctx, identifier, "id", iri);
+  }
+);
+
+federation.setObjectDispatcher(
+  Note,
+  "/users/{identifier}/notes/{id}",
+  async (ctx, { identifier, id }) => {
+    const iri = ctx.getObjectUri(Note, { identifier, id }).href;
+    const create = await loadActivityByIri(
+      Create,
+      ctx,
+      identifier,
+      "object_iri",
+      iri
+    );
+    if (!create) return null;
+    const object = await create.getObject(ctx);
+    return object instanceof Note ? object : null;
+  }
+);
+
 federation
   .setOutboxDispatcher(
     "/users/{identifier}/outbox",
@@ -340,14 +395,14 @@ export async function dispatchSiteUpdate(userId: number): Promise<void> {
   const siteUrl = new URL(`https://${identifier}.${siteDomain}/`);
   const actorUri = ctx.getActorUri(identifier);
   const followersUri = ctx.getFollowersUri(identifier);
-  const noteId = new URL(
-    `/users/${identifier}/notes/${randomUUID()}`,
-    baseUrl
-  );
-  const activityId = new URL(
-    `/users/${identifier}/activities/${randomUUID()}`,
-    baseUrl
-  );
+  const noteId = ctx.getObjectUri(Note, {
+    identifier,
+    id: randomUUID(),
+  });
+  const activityId = ctx.getObjectUri(Create, {
+    identifier,
+    id: randomUUID(),
+  });
   const now = Temporal.Now.instant();
 
   const note = new Note({
@@ -380,6 +435,7 @@ export async function dispatchSiteUpdate(userId: number): Promise<void> {
       user_id: userId,
       type: "Create",
       payload,
+      object_iri: noteId.href,
     })
     .execute();
 
