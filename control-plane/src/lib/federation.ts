@@ -137,6 +137,59 @@ federation
     return user?.login_name ?? null;
   });
 
+/**
+ * Upsert a remote actor row from a Fedify Actor object. Returns the internal
+ * id so callers can reference it from followers/activities tables.
+ */
+async function upsertRemoteActor(actor: {
+  id: URL | null;
+  inboxId: URL | null;
+  endpoints?: { sharedInbox: URL | null } | null;
+  preferredUsername?: unknown;
+  name?: unknown;
+  url?: unknown;
+}): Promise<number | null> {
+  if (!actor.id || !actor.inboxId) return null;
+
+  const preferredUsername =
+    typeof actor.preferredUsername === "string"
+      ? actor.preferredUsername
+      : actor.preferredUsername?.toString() ?? null;
+  const name =
+    typeof actor.name === "string" ? actor.name : actor.name?.toString() ?? null;
+  const profileUrl =
+    actor.url instanceof URL
+      ? actor.url.href
+      : typeof actor.url === "string"
+        ? actor.url
+        : null;
+
+  const row = await db
+    .insertInto("remote_actors")
+    .values({
+      iri: actor.id.href,
+      inbox_iri: actor.inboxId.href,
+      shared_inbox_iri: actor.endpoints?.sharedInbox?.href ?? null,
+      preferred_username: preferredUsername,
+      name,
+      profile_url: profileUrl,
+    })
+    .onConflict((oc) =>
+      oc.column("iri").doUpdateSet({
+        inbox_iri: actor.inboxId!.href,
+        shared_inbox_iri: actor.endpoints?.sharedInbox?.href ?? null,
+        preferred_username: preferredUsername,
+        name,
+        profile_url: profileUrl,
+        fetched_at: sql`now()`,
+      })
+    )
+    .returning("id")
+    .executeTakeFirstOrThrow();
+
+  return row.id;
+}
+
 federation
   .setInboxListeners("/users/{identifier}/inbox", "/inbox")
   .on(Follow, async (ctx, follow) => {
@@ -152,23 +205,19 @@ federation
     if (!user) return;
 
     const follower = await follow.getActor(ctx);
-    if (!follower?.id || !follower.inboxId) return;
+    if (!follower) return;
+
+    const remoteActorId = await upsertRemoteActor(follower);
+    if (remoteActorId == null) return;
 
     await db
       .insertInto("followers")
       .values({
         user_id: user.id,
-        actor_iri: follower.id.href,
-        inbox_iri: follower.inboxId.href,
-        shared_inbox_iri:
-          follower.endpoints?.sharedInbox?.href ?? null,
+        remote_actor_id: remoteActorId,
       })
       .onConflict((oc) =>
-        oc.columns(["user_id", "actor_iri"]).doUpdateSet({
-          inbox_iri: follower.inboxId!.href,
-          shared_inbox_iri:
-            follower.endpoints?.sharedInbox?.href ?? null,
-        })
+        oc.columns(["user_id", "remote_actor_id"]).doNothing()
       )
       .execute();
 
@@ -200,7 +249,12 @@ federation
     await db
       .deleteFrom("followers")
       .where("user_id", "=", user.id)
-      .where("actor_iri", "=", actorId.href)
+      .where("remote_actor_id", "in", (eb) =>
+        eb
+          .selectFrom("remote_actors")
+          .select("id")
+          .where("iri", "=", actorId.href)
+      )
       .execute();
   });
 
@@ -220,16 +274,21 @@ federation.setFollowersDispatcher(
 
     const rows = await db
       .selectFrom("followers")
-      .select(["actor_iri", "inbox_iri", "shared_inbox_iri"])
-      .where("user_id", "=", user.id)
-      .orderBy("id", "asc")
+      .innerJoin("remote_actors", "remote_actors.id", "followers.remote_actor_id")
+      .select([
+        "remote_actors.iri as iri",
+        "remote_actors.inbox_iri as inbox_iri",
+        "remote_actors.shared_inbox_iri as shared_inbox_iri",
+      ])
+      .where("followers.user_id", "=", user.id)
+      .orderBy("followers.id", "asc")
       .limit(pageSize + 1)
       .offset(offset)
       .execute();
 
     const hasMore = rows.length > pageSize;
     const items = rows.slice(0, pageSize).map((r) => ({
-      id: new URL(r.actor_iri),
+      id: new URL(r.iri),
       inboxId: new URL(r.inbox_iri),
       endpoints: r.shared_inbox_iri
         ? { sharedInbox: new URL(r.shared_inbox_iri) }
@@ -489,14 +548,19 @@ export async function dispatchActorDelete(
 
   const followers = await db
     .selectFrom("followers")
-    .select(["actor_iri", "inbox_iri", "shared_inbox_iri"])
-    .where("user_id", "=", userId)
+    .innerJoin("remote_actors", "remote_actors.id", "followers.remote_actor_id")
+    .select([
+      "remote_actors.iri as iri",
+      "remote_actors.inbox_iri as inbox_iri",
+      "remote_actors.shared_inbox_iri as shared_inbox_iri",
+    ])
+    .where("followers.user_id", "=", userId)
     .execute();
 
   if (followers.length === 0) return;
 
   const recipients = followers.map((r) => ({
-    id: new URL(r.actor_iri),
+    id: new URL(r.iri),
     inboxId: new URL(r.inbox_iri),
     endpoints: r.shared_inbox_iri
       ? { sharedInbox: new URL(r.shared_inbox_iri) }

@@ -20,24 +20,32 @@ export default async function AccountPage() {
 
   const followerRows = await db
     .selectFrom("followers")
-    .select("actor_iri")
-    .where("user_id", "=", user.id)
-    .orderBy("id", "desc")
+    .innerJoin("remote_actors", "remote_actors.id", "followers.remote_actor_id")
+    .select([
+      "remote_actors.iri as iri",
+      "remote_actors.preferred_username as preferred_username",
+      "remote_actors.profile_url as profile_url",
+    ])
+    .where("followers.user_id", "=", user.id)
+    .orderBy("followers.id", "desc")
     .limit(200)
     .execute();
 
   const followers = followerRows.map((row) => {
+    let host = "";
     try {
-      const url = new URL(row.actor_iri);
-      const segments = url.pathname.split("/").filter(Boolean);
-      const username = segments[segments.length - 1] ?? url.host;
-      return {
-        handle: `@${username}@${url.host}`,
-        url: row.actor_iri,
-      };
+      host = new URL(row.iri).host;
     } catch {
-      return { handle: row.actor_iri, url: row.actor_iri };
+      // fall through
     }
+    const handle =
+      row.preferred_username && host
+        ? `@${row.preferred_username}@${host}`
+        : row.iri;
+    return {
+      handle,
+      url: row.profile_url ?? row.iri,
+    };
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
 

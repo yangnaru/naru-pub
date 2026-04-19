@@ -105,9 +105,19 @@ export interface UserKeys {
 export interface Followers {
   id: Generated<number>;
   user_id: number;
-  actor_iri: string;
+  remote_actor_id: number;
+  created_at: Generated<Timestamp>;
+}
+
+export interface RemoteActors {
+  id: Generated<number>;
+  iri: string;
   inbox_iri: string;
   shared_inbox_iri: string | null;
+  preferred_username: string | null;
+  name: string | null;
+  profile_url: string | null;
+  fetched_at: Generated<Timestamp>;
   created_at: Generated<Timestamp>;
 }
 
@@ -131,6 +141,7 @@ export interface DB {
   pageview_daily_stats: PageviewDailyStats;
   pageviews: Pageviews;
   password_reset_tokens: PasswordResetTokens;
+  remote_actors: RemoteActors;
   sessions: Sessions;
   user_keys: UserKeys;
   users: Users;
