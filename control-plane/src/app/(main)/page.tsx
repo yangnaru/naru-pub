@@ -151,7 +151,10 @@ export default async function Home() {
                       >
                         <div className="border border-border rounded mb-3 overflow-hidden">
                           <Image
-                            src={getRenderedSiteUrl(user.login_name)}
+                            src={getRenderedSiteUrl(
+                              user.login_name,
+                              user.site_rendered_at
+                            )}
                             alt="screenshot"
                             width={320}
                             height={240}

@@ -81,7 +81,7 @@ async function buildPerson(
   // Viewport is 640x480 @ deviceScaleFactor 2 — see cli/update-screenshots.tsx.
   const icon = user.site_rendered_at
     ? new Image({
-        url: new URL(getRenderedSiteUrl(identifier)),
+        url: new URL(getRenderedSiteUrl(identifier, user.site_rendered_at)),
         mediaType: "image/png",
         width: 1280,
         height: 960,

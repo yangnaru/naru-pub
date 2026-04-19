@@ -50,8 +50,17 @@ export function getHomepageUrl(username: string) {
     : `http://${username}.${process.env.NEXT_PUBLIC_DOMAIN}`;
 }
 
-export function getRenderedSiteUrl(username: string) {
-  return `https://r2-screenshots.${process.env.NEXT_PUBLIC_DOMAIN}/${username}.png`;
+export function getRenderedSiteUrl(
+  username: string,
+  version?: Date | string | null
+) {
+  const base = `https://r2-screenshots.${process.env.NEXT_PUBLIC_DOMAIN}/${username}.png`;
+  if (!version) return base;
+  const stamp =
+    version instanceof Date
+      ? version.getTime()
+      : Date.parse(version) || version;
+  return `${base}?v=${stamp}`;
 }
 
 export function getUserHomeDirectory(loginName: string) {
