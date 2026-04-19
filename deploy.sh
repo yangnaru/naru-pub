@@ -9,6 +9,9 @@ git pull
 echo "Building images..."
 docker compose build
 
+echo "Running migrations..."
+docker compose run --rm control-plane pnpm migrate
+
 echo "Restarting services..."
 docker compose up -d
 
