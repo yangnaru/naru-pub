@@ -8,7 +8,8 @@ import {
   EDITABLE_FILE_EXTENSIONS,
   FILE_EXTENSION_MIMETYPE_MAP,
 } from "@/lib/const";
-import { recordSiteEdit } from "@/lib/database";
+import { db, recordSiteEdit } from "@/lib/database";
+import { extractHtmlTitle } from "@/lib/html";
 
 function assertNoPathTraversal(filename: string) {
   if (filename.includes("..")) {
@@ -111,6 +112,20 @@ export async function POST(request: NextRequest) {
       await recordSiteEdit(user.id);
     } catch (e) {
       Sentry.captureException(e);
+    }
+
+    if (filename === "index.html" || filename === "index.htm") {
+      try {
+        const title =
+          typeof contents === "string" ? extractHtmlTitle(contents) : null;
+        await db
+          .updateTable("users")
+          .set({ site_title: title })
+          .where("id", "=", user.id)
+          .execute();
+      } catch (e) {
+        Sentry.captureException(e);
+      }
     }
 
     try {
