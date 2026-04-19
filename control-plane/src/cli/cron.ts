@@ -6,6 +6,8 @@ const SCREENSHOT_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 const HOME_DIR_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 const EXPORT_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const EXPORT_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const SITE_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const SITE_UPDATE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 function runWithTimeout(
   script: string,
@@ -53,6 +55,10 @@ async function runExportProcessor() {
   await runWithTimeout("process-exports.ts", EXPORT_TIMEOUT);
 }
 
+async function runSiteUpdateDispatcher() {
+  await runWithTimeout("dispatch-site-updates.ts", SITE_UPDATE_TIMEOUT);
+}
+
 function scheduleDaily(hour: number, minute: number, fn: () => Promise<void>) {
   const runIfTime = () => {
     const now = new Date();
@@ -81,6 +87,10 @@ async function main() {
   // Run export processor every 2 minutes
   console.log("[cron] Scheduling export processor every 2 minutes");
   setInterval(runExportProcessor, EXPORT_INTERVAL);
+
+  // Run site-update dispatcher every 5 minutes
+  console.log("[cron] Scheduling site-update dispatcher every 5 minutes");
+  setInterval(runSiteUpdateDispatcher, SITE_UPDATE_INTERVAL);
 
   // Run home directory updater daily at 22:00
   console.log("[cron] Scheduling home directory updater daily at 22:00");

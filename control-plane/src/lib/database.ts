@@ -3,7 +3,6 @@ import { NodePostgresAdapter } from "@lucia-auth/adapter-postgresql";
 import { Pool } from "pg";
 import { Kysely, PostgresDialect, sql } from "kysely";
 import { DB } from "./db";
-import { dispatchSiteUpdate } from "./federation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -39,6 +38,4 @@ export async function recordSiteEdit(userId: number): Promise<void> {
     ON CONFLICT (user_id, date) DO UPDATE SET
       edit_count = edit_daily_stats.edit_count + 1
   `.execute(db);
-
-  await dispatchSiteUpdate(userId);
 }

@@ -363,24 +363,38 @@ federation
   })
   .setFirstCursor(() => "0");
 
+const QUIET_PERIOD = sql<Date>`now() - interval '10 minutes'`;
+const COOLDOWN_WINDOW = sql<Date>`now() - interval '24 hours'`;
+
 /**
- * Fire a Create(Note) to the user's followers announcing a site update,
- * at most once per 24h per user. The first edit after the window rolls
- * over dispatches immediately; edits inside the window are dropped.
+ * Fire a Create(Note) to the user's followers announcing a site update.
+ * Called from cron after a trailing-debounce scan. The atomic UPDATE is
+ * the authoritative guard: we claim the slot only if
+ *
+ *   1. there's a new edit since the last activity,
+ *   2. editing has been quiet for at least the trailing window, and
+ *   3. the 24h cooldown has elapsed.
+ *
+ * Calling this on a user that doesn't qualify is a safe no-op.
  */
 export async function dispatchSiteUpdate(userId: number): Promise<void> {
   const claimed = await db
     .updateTable("users")
     .set({ last_activity_sent_at: sql`now()` })
     .where("id", "=", userId)
+    .where("site_updated_at", "is not", null)
+    .where((eb) =>
+      eb(
+        "site_updated_at",
+        ">",
+        eb.fn.coalesce("last_activity_sent_at", sql<Date>`'epoch'::timestamptz`)
+      )
+    )
+    .where("site_updated_at", "<", QUIET_PERIOD)
     .where((eb) =>
       eb.or([
         eb("last_activity_sent_at", "is", null),
-        eb(
-          "last_activity_sent_at",
-          "<",
-          sql<Date>`now() - interval '24 hours'`
-        ),
+        eb("last_activity_sent_at", "<", COOLDOWN_WINDOW),
       ])
     )
     .returning("login_name")
