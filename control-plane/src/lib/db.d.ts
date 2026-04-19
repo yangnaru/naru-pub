@@ -91,6 +91,7 @@ export interface Users {
   login_name: string;
   password_hash: string;
   site_rendered_at: Timestamp | null;
+  site_title: string | null;
   site_updated_at: Timestamp | null;
 }
 
