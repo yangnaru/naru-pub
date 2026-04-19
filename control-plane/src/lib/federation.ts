@@ -28,11 +28,9 @@ import { db } from "./database";
 
 // Separate postgres.js client for Fedify's KV + queue. Kysely uses `pg`;
 // @fedify/postgres uses `postgres`. Two small pools in one process is fine.
-const fedifyPgUrl =
-  process.env.FEDIFY_DATABASE_URL ??
-  process.env.DATABASE_URL ??
-  "postgres://localhost/";
-const fedifySql = postgres(fedifyPgUrl, { max: 4 });
+const fedifySql = postgres(process.env.DATABASE_URL ?? "postgres://localhost/", {
+  max: 4,
+});
 
 const KEY_ALGORITHMS = ["RSASSA-PKCS1-v1_5", "Ed25519"] as const;
 type KeyAlgorithm = (typeof KEY_ALGORITHMS)[number];

@@ -27,3 +27,12 @@ services:
     env_file: .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  worker:
+    build: ./control-plane
+    container_name: naru-pub-worker
+    restart: always
+    command: ["pnpm", "run", "worker"]
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
