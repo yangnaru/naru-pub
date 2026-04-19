@@ -523,11 +523,11 @@ export async function dispatchSiteUpdate(userId: number): Promise<void> {
     })
     .execute();
 
-  void ctx
-    .sendActivity({ identifier }, "followers", create)
-    .catch((err) =>
-      console.error("[federation] sendActivity failed", err)
-    );
+  try {
+    await ctx.sendActivity({ identifier }, "followers", create);
+  } catch (err) {
+    console.error("[federation] sendActivity failed", err);
+  }
 }
 
 /**
