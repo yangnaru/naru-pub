@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 import { db } from "@/lib/database";
-import { getHomepageUrl, s3Client } from "@/lib/utils";
+import { getHomepageUrl, getRenderedSiteUrl, s3Client } from "@/lib/utils";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { Browser, BrowserContext, chromium } from "playwright";
 
@@ -43,6 +43,35 @@ async function selectTargets(
   return await query.execute();
 }
 
+async function purgeCloudflareCache(url: string): Promise<void> {
+  const zoneId = process.env.CLOUDFLARE_ZONE_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  if (!zoneId || !apiToken) return;
+
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ files: [url] }),
+      }
+    );
+    if (!res.ok) {
+      console.error(
+        `Cloudflare purge failed for ${url}: ${res.status} ${await res.text()}`
+      );
+      return;
+    }
+    console.log(`Purged Cloudflare cache for ${url}`);
+  } catch (err) {
+    console.error(`Cloudflare purge error for ${url}: ${err}`);
+  }
+}
+
 async function renderUser(
   context: BrowserContext,
   user: TargetUser
@@ -76,6 +105,8 @@ async function renderUser(
     .set({ site_rendered_at: new Date() })
     .where("id", "=", user.id)
     .executeTakeFirst();
+
+  await purgeCloudflareCache(getRenderedSiteUrl(user.login_name));
 }
 
 async function main() {
