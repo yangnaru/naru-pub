@@ -41,7 +41,19 @@ export default function Editor({
   const diffEditorRef = useRef<any>(null);
 
   useEffect(() => {
+    // Monaco's _doFindMatchesMultiline doesn't catch invalid regex errors (monaco-editor bug).
+    // Suppress them here so they don't surface as unhandled errors.
+    const handleError = (event: ErrorEvent) => {
+      if (
+        event.message.startsWith("Invalid regular expression:") &&
+        event.error?.stack?.includes("monaco-editor")
+      ) {
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("error", handleError);
     return () => {
+      window.removeEventListener("error", handleError);
       diffEditorRef.current?.dispose();
       diffEditorRef.current = null;
     };
