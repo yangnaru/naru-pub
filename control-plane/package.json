@@ -89,15 +89,7 @@
     "tsx": "^4.14.0",
     "typescript": "^5"
   },
-  "overrides": {
-    "@types/react": "19.2.9",
-    "@types/react-dom": "19.2.3"
-  },
   "pnpm": {
-    "overrides": {
-      "@types/react": "19.2.14",
-      "@types/react-dom": "19.2.3"
-    },
     "onlyBuiltDependencies": ["@sentry/cli", "esbuild", "sharp", "unrs-resolver"]
   }
 }

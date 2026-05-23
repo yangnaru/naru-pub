@@ -36,7 +36,7 @@ RUN npm install --global corepack@latest && \
     corepack use pnpm@latest-10
 
 # Copy dependency files first for better caching
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies (this layer will be cached unless package files change)
 RUN pnpm install --frozen-lockfile
