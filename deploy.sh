@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export PATH="$HOME/.orbstack/bin:$PATH"
+
 cd "$(dirname "$0")"
 
 echo "Pulling latest changes..."
