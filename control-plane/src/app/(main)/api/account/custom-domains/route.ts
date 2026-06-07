@@ -93,6 +93,22 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const ownedCount = await db
+      .selectFrom("custom_domains")
+      .select(({ fn }) => fn.countAll().as("count"))
+      .where("user_id", "=", user.id)
+      .executeTakeFirst();
+
+    if (ownedCount && Number(ownedCount.count) >= 1) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "커스텀 도메인은 계정당 하나만 등록할 수 있습니다.",
+        },
+        { status: 409 }
+      );
+    }
+
     const cloudflareHostname = await createCloudflareCustomHostname(
       normalizedHostname
     );

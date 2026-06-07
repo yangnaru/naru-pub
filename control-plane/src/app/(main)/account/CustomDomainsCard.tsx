@@ -158,25 +158,32 @@ export default function CustomDomainsCard({
               </p>
             </div>
 
-            <form
-              onSubmit={submitDomain}
-              className="flex flex-col sm:flex-row gap-2"
-            >
-              <Input
-                value={hostname}
-                onChange={(event) => setHostname(event.target.value)}
-                placeholder="example.com"
-                disabled={pendingId !== null}
-              />
-              <Button
-                type="submit"
-                disabled={pendingId !== null || hostname.trim() === ""}
-                className="flex items-center gap-2"
+            {domains.length === 0 ? (
+              <form
+                onSubmit={submitDomain}
+                className="flex flex-col sm:flex-row gap-2"
               >
-                <Plus size={16} />
-                추가
-              </Button>
-            </form>
+                <Input
+                  value={hostname}
+                  onChange={(event) => setHostname(event.target.value)}
+                  placeholder="example.com"
+                  disabled={pendingId !== null}
+                />
+                <Button
+                  type="submit"
+                  disabled={pendingId !== null || hostname.trim() === ""}
+                  className="flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  추가
+                </Button>
+              </form>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                커스텀 도메인은 계정당 하나만 등록할 수 있습니다. 다른 도메인을
+                사용하려면 기존 도메인을 삭제해주세요.
+              </p>
+            )}
 
             <div className="space-y-3">
               {domains.length === 0 ? (
