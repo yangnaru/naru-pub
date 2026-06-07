@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { lucia, validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
+import { ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import {
-  ListObjectsV2Command,
-  DeleteObjectsCommand,
-} from "@aws-sdk/client-s3";
-import { assertJsonContentType, getUserHomeDirectory, s3Client } from "@/lib/utils";
+  assertJsonContentType,
+  getUserHomeDirectory,
+  s3Client,
+} from "@/lib/utils";
 import { dispatchActorDelete } from "@/lib/federation";
+import { deleteCustomDomainsForUser } from "@/lib/customDomains";
 import { verify } from "@node-rs/argon2";
 
 export async function POST(request: NextRequest) {
@@ -17,7 +19,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { success: false, message: "Invalid content type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -26,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { success: false, message: "삭제 토큰이 필요합니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,8 +41,11 @@ export async function POST(request: NextRequest) {
 
     if (!deletionToken) {
       return NextResponse.json(
-        { success: false, message: "유효하지 않거나 만료된 계정 삭제 토큰입니다." },
-        { status: 400 }
+        {
+          success: false,
+          message: "유효하지 않거나 만료된 계정 삭제 토큰입니다.",
+        },
+        { status: 400 },
       );
     }
 
@@ -48,14 +53,14 @@ export async function POST(request: NextRequest) {
     if (!user || user.id !== deletionToken.user_id) {
       return NextResponse.json(
         { success: false, message: "계정 삭제 권한이 없습니다." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (!password) {
       return NextResponse.json(
         { success: false, message: "비밀번호를 입력해주세요." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -68,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (!databaseUser) {
       return NextResponse.json(
         { success: false, message: "사용자가 존재하지 않습니다." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -76,7 +81,7 @@ export async function POST(request: NextRequest) {
     if (!passwordVerified) {
       return NextResponse.json(
         { success: false, message: "비밀번호가 일치하지 않습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -111,7 +116,7 @@ export async function POST(request: NextRequest) {
             Delete: {
               Objects: batch.map((obj) => ({ Key: obj.Key! })),
             },
-          })
+          }),
         );
       }
     }
@@ -124,6 +129,8 @@ export async function POST(request: NextRequest) {
       console.error("Failed to federate account deletion:", err);
     }
 
+    await deleteCustomDomainsForUser(user.id);
+
     await db.transaction().execute(async (trx) => {
       // Delete the account deletion token
       await trx
@@ -132,10 +139,7 @@ export async function POST(request: NextRequest) {
         .execute();
 
       // Delete user account (this will cascade to all related tables)
-      await trx
-        .deleteFrom("users")
-        .where("id", "=", user.id)
-        .execute();
+      await trx.deleteFrom("users").where("id", "=", user.id).execute();
     });
 
     // Invalidate session
@@ -147,7 +151,7 @@ export async function POST(request: NextRequest) {
     (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,
-      sessionCookie.attributes
+      sessionCookie.attributes,
     );
 
     return NextResponse.json({
@@ -158,7 +162,7 @@ export async function POST(request: NextRequest) {
     console.error("Account deletion error:", error);
     return NextResponse.json(
       { success: false, message: "계정 삭제 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

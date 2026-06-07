@@ -1,3 +1,5 @@
+import { db } from "@/lib/database";
+
 const HOSTNAME_PATTERN =
   /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])$/;
 
@@ -8,7 +10,10 @@ type CloudflareApiResponse<T> = {
 };
 
 export class CloudflareApiError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
     super(message);
     this.name = "CloudflareApiError";
   }
@@ -111,7 +116,7 @@ function getCloudflareApiToken() {
 
 async function cloudflareRequest<T>(
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ): Promise<T> {
   const response = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
     ...init,
@@ -126,7 +131,10 @@ async function cloudflareRequest<T>(
 
   if (!response.ok || !data.success) {
     const message =
-      data.errors?.map((error) => error.message).filter(Boolean).join(", ") ||
+      data.errors
+        ?.map((error) => error.message)
+        .filter(Boolean)
+        .join(", ") ||
       `Cloudflare API request failed with status ${response.status}.`;
     throw new CloudflareApiError(message, response.status);
   }
@@ -143,10 +151,8 @@ export function toCustomDomainRow(hostname: CloudflareCustomHostname) {
     cloudflare_hostname_id: hostname.id,
     cloudflare_status: hostname.status,
     ssl_status: hostname.ssl?.status ?? null,
-    ownership_verification_name:
-      hostname.ownership_verification?.name ?? null,
-    ownership_verification_type:
-      hostname.ownership_verification?.type ?? null,
+    ownership_verification_name: hostname.ownership_verification?.name ?? null,
+    ownership_verification_type: hostname.ownership_verification?.type ?? null,
     ownership_verification_value:
       hostname.ownership_verification?.value ?? null,
     // jsonb columns: serialize to JSON text. node-postgres would otherwise
@@ -177,7 +183,7 @@ export async function createCloudflareCustomHostname(hostname: string) {
           type: "dv",
         },
       }),
-    }
+    },
   );
 }
 
@@ -185,7 +191,7 @@ export async function getCloudflareCustomHostname(customHostnameId: string) {
   const zoneId = getCloudflareZoneId();
 
   return cloudflareRequest<CloudflareCustomHostname>(
-    `/zones/${zoneId}/custom_hostnames/${customHostnameId}`
+    `/zones/${zoneId}/custom_hostnames/${customHostnameId}`,
   );
 }
 
@@ -194,6 +200,39 @@ export async function deleteCloudflareCustomHostname(customHostnameId: string) {
 
   return cloudflareRequest<unknown>(
     `/zones/${zoneId}/custom_hostnames/${customHostnameId}`,
-    { method: "DELETE" }
+    { method: "DELETE" },
   );
+}
+
+export async function deleteCloudflareCustomHostnameIfExists(
+  customHostnameId: string,
+) {
+  try {
+    await deleteCloudflareCustomHostname(customHostnameId);
+  } catch (error) {
+    if (error instanceof CloudflareApiError && error.status === 404) {
+      console.warn(
+        "Cloudflare custom hostname was already deleted:",
+        customHostnameId,
+      );
+      return;
+    }
+    throw error;
+  }
+}
+
+export async function deleteCustomDomainsForUser(userId: number) {
+  const domains = await db
+    .selectFrom("custom_domains")
+    .select(["id", "hostname", "cloudflare_hostname_id"])
+    .where("user_id", "=", userId)
+    .execute();
+
+  for (const domain of domains) {
+    await deleteCloudflareCustomHostnameIfExists(domain.cloudflare_hostname_id);
+    await db.deleteFrom("custom_domains").where("id", "=", domain.id).execute();
+    console.log(
+      `Deleted custom domain ${domain.hostname} for user ${userId} from Cloudflare`,
+    );
+  }
 }

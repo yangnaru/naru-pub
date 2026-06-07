@@ -1,9 +1,33 @@
 import { db } from "@/lib/database";
-import {
-  CloudflareApiError,
-  deleteCloudflareCustomHostname,
-} from "@/lib/customDomains";
+import { deleteCloudflareCustomHostnameIfExists } from "@/lib/customDomains";
 import { addPaymentGrace } from "@/lib/subscriptions";
+
+const ABANDONED_PENDING_DOMAIN_DAYS = 14;
+
+type DomainToDelete = {
+  id: number;
+  hostname: string;
+  cloudflare_hostname_id: string;
+  user_id: number;
+};
+
+async function deleteDomain(domain: DomainToDelete, reason: string) {
+  try {
+    await deleteCloudflareCustomHostnameIfExists(domain.cloudflare_hostname_id);
+  } catch (error) {
+    console.error(
+      `[cleanup-expired-custom-domains] ${domain.hostname}: Cloudflare delete failed:`,
+      error,
+    );
+    return;
+  }
+
+  await db.deleteFrom("custom_domains").where("id", "=", domain.id).execute();
+
+  console.log(
+    `[cleanup-expired-custom-domains] ${domain.hostname}: removed for user ${domain.user_id} (${reason})`,
+  );
+}
 
 async function main() {
   const now = new Date();
@@ -31,27 +55,32 @@ async function main() {
   );
 
   for (const domain of reclaimableDomains) {
-    try {
-      await deleteCloudflareCustomHostname(domain.cloudflare_hostname_id);
-    } catch (error) {
-      if (error instanceof CloudflareApiError && error.status === 404) {
-        console.warn(
-          `[cleanup-expired-custom-domains] ${domain.hostname}: Cloudflare hostname already deleted`,
-        );
-      } else {
-        console.error(
-          `[cleanup-expired-custom-domains] ${domain.hostname}: Cloudflare delete failed:`,
-          error,
-        );
-        continue;
-      }
-    }
+    await deleteDomain(domain, "supporter access expired");
+  }
 
-    await db.deleteFrom("custom_domains").where("id", "=", domain.id).execute();
+  const abandonedCutoff = new Date(
+    now.getTime() - ABANDONED_PENDING_DOMAIN_DAYS * 24 * 60 * 60 * 1000,
+  );
+  const abandonedPendingDomains = await db
+    .selectFrom("custom_domains")
+    .select(["id", "hostname", "cloudflare_hostname_id", "user_id"])
+    .where("created_at", "<=", abandonedCutoff)
+    .where((eb) =>
+      eb.or([
+        eb("verified_at", "is", null),
+        eb("cloudflare_status", "!=", "active"),
+        eb("ssl_status", "is", null),
+        eb("ssl_status", "!=", "active"),
+      ]),
+    )
+    .execute();
 
-    console.log(
-      `[cleanup-expired-custom-domains] ${domain.hostname}: removed for user ${domain.user_id}`,
-    );
+  console.log(
+    `[cleanup-expired-custom-domains] ${abandonedPendingDomains.length} abandoned pending domain(s) older than ${ABANDONED_PENDING_DOMAIN_DAYS} days`,
+  );
+
+  for (const domain of abandonedPendingDomains) {
+    await deleteDomain(domain, "abandoned pending verification");
   }
 }
 

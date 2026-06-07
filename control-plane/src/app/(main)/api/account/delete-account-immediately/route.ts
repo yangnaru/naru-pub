@@ -2,12 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { lucia, validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
-import {
-  ListObjectsV2Command,
-  DeleteObjectsCommand,
-} from "@aws-sdk/client-s3";
+import { ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getUserHomeDirectory, s3Client } from "@/lib/utils";
 import { dispatchActorDelete } from "@/lib/federation";
+import { deleteCustomDomainsForUser } from "@/lib/customDomains";
 import { verify } from "@node-rs/argon2";
 
 export async function POST(request: NextRequest) {
@@ -16,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -24,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!password) {
       return NextResponse.json(
         { success: false, message: "비밀번호를 입력해주세요." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!databaseUser) {
       return NextResponse.json(
         { success: false, message: "사용자가 존재하지 않습니다." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -45,15 +43,18 @@ export async function POST(request: NextRequest) {
     if (!passwordVerified) {
       return NextResponse.json(
         { success: false, message: "비밀번호가 일치하지 않습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Only allow immediate deletion for users without verified email
     if (user.email && user.emailVerifiedAt) {
       return NextResponse.json(
-        { success: false, message: "이메일이 인증된 계정은 이메일 확인을 통해 삭제해야 합니다." },
-        { status: 400 }
+        {
+          success: false,
+          message: "이메일이 인증된 계정은 이메일 확인을 통해 삭제해야 합니다.",
+        },
+        { status: 400 },
       );
     }
 
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
             Delete: {
               Objects: batch.map((obj) => ({ Key: obj.Key! })),
             },
-          })
+          }),
         );
       }
     }
@@ -100,6 +101,8 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       console.error("Failed to federate account deletion:", err);
     }
+
+    await deleteCustomDomainsForUser(user.id);
 
     // Delete user account (this will cascade to all related tables)
     await db.deleteFrom("users").where("id", "=", user.id).execute();
@@ -113,7 +116,7 @@ export async function POST(request: NextRequest) {
     (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,
-      sessionCookie.attributes
+      sessionCookie.attributes,
     );
 
     return NextResponse.json({
@@ -124,7 +127,7 @@ export async function POST(request: NextRequest) {
     console.error("Immediate account deletion error:", error);
     return NextResponse.json(
       { success: false, message: "계정 삭제 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
