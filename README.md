@@ -128,6 +128,23 @@ export R2_PUBLIC_DOMAIN=r2.naru.pub
 
 유료 기능 활성화는 `users.custom_domains_enabled = true`로 제어됩니다. 사용자가 계정 페이지에서 도메인을 등록하면 control-plane이 Cloudflare Custom Hostname을 생성하고, 사용자는 Cloudflare가 반환한 소유권/인증서 검증 레코드를 DNS에 추가합니다. 프록시는 `cloudflare_status = 'active'`, `ssl_status = 'active'`, `verified_at IS NOT NULL`인 커스텀 도메인만 서빙합니다.
 
+#### ⚠️ Tunnel catch-all 라우트 (필수)
+
+Cloudflare for SaaS는 커스텀 도메인 요청을 fallback origin으로 보내면서 `Host` 헤더를 원래 커스텀 도메인(예: `limeburst.net`)으로 유지합니다. 이 호스트명은 Tunnel의 어떤 public hostname 규칙과도 일치하지 않으므로, **Tunnel ingress의 마지막 catch-all 규칙이 `http_status:404`가 아니라 프록시(`http://localhost:40001`)를 가리켜야 합니다.** 그렇지 않으면 인증서가 정상 발급되고 프록시 코드가 올바르더라도 모든 커스텀 도메인이 엣지에서 404를 반환합니다.
+
+이 catch-all 규칙은 **Zero Trust 웹 콘솔에서는 설정할 수 없습니다.** Public Hostnames 탭은 자신이 소유한 zone의 `hostname → service` 매핑만 추가할 수 있고, 호스트명 없는 catch-all 항목은 항상 `http_status:404`로 고정되어 편집/삭제가 불가능합니다. 따라서 API로 설정해야 합니다(또는 로컬 `config.yml`의 `ingress` catch-all 사용):
+
+```bash
+# 현재 설정 조회 후 마지막 catch-all 항목만 프록시로 변경하여 PUT
+# 계정 → Cloudflare Tunnel → Edit 권한이 있는 토큰 필요
+curl https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/cfd_tunnel/$TUNNEL_ID/configurations \
+  -H "Authorization: Bearer $TOKEN"
+# config.ingress 배열의 마지막 항목을 {"service": "http://localhost:40001"} 로 바꾼 뒤
+# 같은 엔드포인트에 PUT {"config": {...}}
+```
+
+여러 앱이 같은 Tunnel을 공유하므로 편집 시 기존 ingress 규칙을 모두 보존해야 합니다. 알 수 없는 호스트는 프록시가 그대로 404를 반환하므로 다른 앱에 영향이 없습니다.
+
 ### 5. 개발 서버 실행
 
 **Control Plane:**
