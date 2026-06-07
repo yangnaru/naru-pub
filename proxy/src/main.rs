@@ -379,6 +379,7 @@ async fn handle_request(
     }
 
     // Get the object from S3
+    let key_for_log = key.clone();
     match state.s3_client
         .get_object()
         .bucket(&state.bucket_name)
@@ -410,7 +411,10 @@ async fn handle_request(
                 .unwrap())
         }
         Err(err) => {
-            eprintln!("Error fetching from S3: {}", err);
+            eprintln!(
+                "Error fetching from S3: host={:?} key={:?} err={:?}",
+                host, key_for_log, err
+            );
             Ok(Response::builder()
                 .status(404)
                 .body(Full::new(Bytes::from("Not Found")))
