@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { assertJsonContentType } from "@/lib/utils";
+import { sendSupportThankYouEmail } from "@/lib/email";
 import {
   BillingInterval,
   chargeBillingKey,
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
     // The customerKey must belong to this user.
     const userRow = await db
       .selectFrom("users")
-      .select("toss_customer_key")
+      .select(["email", "email_verified_at", "login_name", "toss_customer_key"])
       .where("id", "=", user.id)
       .executeTakeFirst();
     if (
@@ -210,7 +211,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await applySuccessfulCharge({
+    const period = await applySuccessfulCharge({
       subscriptionId: sub.id,
       userId: user.id,
       interval,
@@ -219,6 +220,20 @@ export async function POST(request: NextRequest) {
       payment,
       paymentId: attempt.id,
     });
+
+    if (userRow.email && userRow.email_verified_at) {
+      try {
+        await sendSupportThankYouEmail({
+          email: userRow.email,
+          loginName: userRow.login_name,
+          kind: "recurring",
+          amount: sub.amount,
+          supporterUntil: period.periodEnd,
+        });
+      } catch (error) {
+        console.error("Support thank-you email error:", error);
+      }
+    }
 
     return NextResponse.json({
       success: true,

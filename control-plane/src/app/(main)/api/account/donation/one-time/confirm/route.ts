@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { assertJsonContentType } from "@/lib/utils";
+import { sendSupportThankYouEmail } from "@/lib/email";
 import { confirmPayment, ONE_TIME_YEAR_AMOUNT, TossApiError } from "@/lib/toss";
 import { applyOneTimePayment } from "@/lib/subscriptions";
 
@@ -113,13 +114,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await applyOneTimePayment({
+    const period = await applyOneTimePayment({
       userId: user.id,
       amount: ONE_TIME_YEAR_AMOUNT,
       interval: "year",
       payment,
       paymentId: pendingPayment.id,
     });
+
+    if (user.email && user.emailVerifiedAt) {
+      try {
+        await sendSupportThankYouEmail({
+          email: user.email,
+          loginName: user.loginName,
+          kind: "one_time",
+          amount: ONE_TIME_YEAR_AMOUNT,
+          supporterUntil: period.periodEnd,
+        });
+      } catch (error) {
+        console.error("Support thank-you email error:", error);
+      }
+    }
 
     return NextResponse.json({
       success: true,

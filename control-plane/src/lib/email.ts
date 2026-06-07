@@ -328,3 +328,61 @@ export async function sendSubscriptionPaymentGraceEmail(opts: {
   }
   return receipt;
 }
+
+export async function sendSupportThankYouEmail(opts: {
+  email: string;
+  loginName: string;
+  kind: "recurring" | "one_time";
+  amount: number;
+  supporterUntil: Date;
+}) {
+  const accountUrl = `${process.env.BASE_URL}/account`;
+  const supporterUntilLabel = formatKoreanDateTime(opts.supporterUntil);
+  const amountLabel = formatKrw(opts.amount);
+  const kindLabel = opts.kind === "recurring" ? "정기 후원" : "한 번만 후원";
+
+  const message = createMessage({
+    from: process.env.FROM_EMAIL || "noreply@naru.pub",
+    to: opts.email,
+    subject: "나루를 후원해 주셔서 감사합니다",
+    content: {
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>나루를 후원해 주셔서 감사합니다</h2>
+          <p>${opts.loginName}님, ${kindLabel}으로 나루를 후원해 주셔서 진심으로 감사합니다.</p>
+          <p>여러분의 후원은 한국어 인디웹을 더 오래, 더 안정적으로 이어 가는 데 큰 힘이 됩니다.</p>
+          <p><strong>후원 금액:</strong> ${amountLabel}</p>
+          <p><strong>후원자 기능 이용 기한:</strong> ${supporterUntilLabel}</p>
+          <p>후원자 기능과 결제 정보는 계정 페이지에서 확인하실 수 있습니다.</p>
+          <p>
+            <a href="${accountUrl}" style="background-color: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              계정에서 확인하기
+            </a>
+          </p>
+        </div>
+      `,
+      text: `
+        나루를 후원해 주셔서 감사합니다
+
+        ${opts.loginName}님, ${kindLabel}으로 나루를 후원해 주셔서 진심으로 감사합니다.
+
+        여러분의 후원은 한국어 인디웹을 더 오래, 더 안정적으로 이어 가는 데 큰 힘이 됩니다.
+
+        후원 금액: ${amountLabel}
+        후원자 기능 이용 기한: ${supporterUntilLabel}
+
+        후원자 기능과 결제 정보는 계정 페이지에서 확인하실 수 있습니다.
+        ${accountUrl}
+      `,
+    },
+    tags: ["billing", "support-thank-you"],
+  });
+
+  const receipt = await transport.send(message);
+  if (!receipt.successful) {
+    throw new Error(
+      `Failed to send support thank you email: ${receipt.errorMessages?.join(", ")}`,
+    );
+  }
+  return receipt;
+}
