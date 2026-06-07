@@ -50,7 +50,7 @@ async function selectTargets(
 
 async function purgeCloudflareCache(url: string): Promise<void> {
   const zoneId = process.env.CLOUDFLARE_ZONE_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const apiToken = process.env.CLOUDFLARE_USER_API_TOKEN;
   if (!zoneId || !apiToken) return;
 
   try {
