@@ -73,6 +73,23 @@ export interface EditDailyStats {
   edit_count: Generated<number>;
 }
 
+export interface CustomDomains {
+  cloudflare_hostname_id: string;
+  cloudflare_status: string;
+  id: Generated<number>;
+  user_id: number;
+  hostname: string;
+  ownership_verification_name: string | null;
+  ownership_verification_type: string | null;
+  ownership_verification_value: string | null;
+  ssl_status: string | null;
+  ssl_validation_records: unknown | null;
+  verification_errors: unknown | null;
+  verified_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface Sessions {
   expires_at: Timestamp;
   id: string;
@@ -81,6 +98,7 @@ export interface Sessions {
 
 export interface Users {
   created_at: Generated<Timestamp>;
+  custom_domains_enabled: Generated<boolean>;
   discoverable: Generated<boolean>;
   email: string | null;
   email_verified_at: Timestamp | null;
@@ -134,6 +152,7 @@ export interface Activities {
 export interface DB {
   account_deletion_tokens: AccountDeletionTokens;
   activities: Activities;
+  custom_domains: CustomDomains;
   edit_daily_stats: EditDailyStats;
   email_verification_tokens: EmailVerificationTokens;
   followers: Followers;

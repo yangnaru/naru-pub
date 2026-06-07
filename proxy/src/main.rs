@@ -23,6 +23,8 @@ struct Config {
     secret_access_key: String,
     port: u16,
     database_url: String,
+    platform_domain: String,
+    r2_public_domain: String,
 }
 
 // Shared state for the application
@@ -30,6 +32,14 @@ struct AppState {
     s3_client: S3Client,
     bucket_name: String,
     db_pool: PgPool,
+    platform_domain: String,
+    r2_public_domain: String,
+}
+
+#[derive(Clone, Debug)]
+struct SiteOwner {
+    user_id: i32,
+    login_name: String,
 }
 
 #[tokio::main]
@@ -45,6 +55,15 @@ async fn main() -> Result<()> {
             .parse()
             .expect("PORT must be a valid number"),
         database_url: std::env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
+        platform_domain: std::env::var("PLATFORM_DOMAIN")
+            .or_else(|_| std::env::var("NEXT_PUBLIC_DOMAIN"))
+            .unwrap_or_else(|_| "naru.pub".to_string())
+            .trim_end_matches('.')
+            .to_lowercase(),
+        r2_public_domain: std::env::var("R2_PUBLIC_DOMAIN")
+            .unwrap_or_else(|_| "r2.naru.pub".to_string())
+            .trim_end_matches('.')
+            .to_lowercase(),
     };
 
     // Initialize R2 client
@@ -76,6 +95,8 @@ async fn main() -> Result<()> {
         s3_client,
         bucket_name: config.bucket_name,
         db_pool,
+        platform_domain: config.platform_domain,
+        r2_public_domain: config.r2_public_domain,
     });
 
     // Create a TCP listener
@@ -123,6 +144,70 @@ fn get_client_ip(req: &Request<hyper::body::Incoming>, socket_ip: IpAddr) -> IpA
         .unwrap_or(socket_ip)
 }
 
+fn normalize_host(host: &str) -> String {
+    host.split(':')
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches('.')
+        .to_lowercase()
+}
+
+async fn resolve_site_owner(
+    db_pool: &PgPool,
+    host: &str,
+    platform_domain: &str,
+) -> Option<SiteOwner> {
+    let host = normalize_host(host);
+    if host.is_empty() || host == platform_domain {
+        return None;
+    }
+
+    if let Some(login_name) = host.strip_suffix(&format!(".{}", platform_domain)) {
+        if login_name.is_empty() || login_name.contains('.') {
+            return None;
+        }
+
+        let user_result: Result<Option<(i32, String)>, _> = sqlx::query_as(
+            "SELECT id, login_name FROM users WHERE login_name = $1"
+        )
+        .bind(login_name)
+        .fetch_optional(db_pool)
+        .await;
+
+        return match user_result {
+            Ok(Some((user_id, login_name))) => Some(SiteOwner { user_id, login_name }),
+            Ok(None) => None,
+            Err(err) => {
+                eprintln!("Error resolving platform subdomain: {}", err);
+                None
+            }
+        };
+    }
+
+    let domain_result: Result<Option<(i32, String)>, _> = sqlx::query_as(
+        "SELECT users.id, users.login_name
+         FROM custom_domains
+         INNER JOIN users ON users.id = custom_domains.user_id
+         WHERE custom_domains.hostname = $1
+           AND custom_domains.verified_at IS NOT NULL
+           AND custom_domains.cloudflare_status = 'active'
+           AND custom_domains.ssl_status = 'active'
+           AND users.custom_domains_enabled = TRUE"
+    )
+    .bind(&host)
+    .fetch_optional(db_pool)
+    .await;
+
+    match domain_result {
+        Ok(Some((user_id, login_name))) => Some(SiteOwner { user_id, login_name }),
+        Ok(None) => None,
+        Err(err) => {
+            eprintln!("Error resolving custom domain: {}", err);
+            None
+        }
+    }
+}
+
 /// Resolve a raw URL path to a file path, appending index.html for directories
 fn resolve_path(raw_path: &str) -> String {
     // Check if the last path segment has an extension (e.g., "file.html" but not ".hidden" or "about")
@@ -144,69 +229,59 @@ fn resolve_path(raw_path: &str) -> String {
 }
 
 // Record a pageview in the database (fire-and-forget)
-fn record_pageview(db_pool: PgPool, subdomain: String, path: String, client_ip: IpAddr, referrer: Option<String>, user_agent: Option<String>) {
+fn record_pageview(db_pool: PgPool, user_id: i32, path: String, client_ip: IpAddr, referrer: Option<String>, user_agent: Option<String>) {
     tokio::spawn(async move {
-        // Look up user_id from login_name (subdomain)
-        let user_result: Result<Option<(i32,)>, _> = sqlx::query_as(
-            "SELECT id FROM users WHERE login_name = $1"
+        // Convert IpAddr to IpNetwork for PostgreSQL inet type
+        let ip_network = IpNetwork::from(client_ip);
+
+        // Check if this IP has already been seen today for this user
+        let is_new_visitor: bool = sqlx::query_scalar(
+            "SELECT NOT EXISTS (
+                SELECT 1 FROM pageviews
+                WHERE user_id = $1
+                AND ip = $2
+                AND timestamp >= CURRENT_DATE
+            )"
         )
-        .bind(&subdomain)
-        .fetch_optional(&db_pool)
+        .bind(user_id)
+        .bind(ip_network)
+        .fetch_one(&db_pool)
+        .await
+        .unwrap_or(false);
+
+        // Insert pageview record
+        let insert_result = sqlx::query(
+            "INSERT INTO pageviews (user_id, path, ip, referrer, user_agent) VALUES ($1, $2, $3, $4, $5)"
+        )
+        .bind(user_id)
+        .bind(&path)
+        .bind(ip_network)
+        .bind(&referrer)
+        .bind(&user_agent)
+        .execute(&db_pool)
         .await;
 
-        if let Ok(Some((user_id,))) = user_result {
-            // Convert IpAddr to IpNetwork for PostgreSQL inet type
-            let ip_network = IpNetwork::from(client_ip);
+        if let Err(e) = insert_result {
+            eprintln!("Error recording pageview: {}", e);
+            return;
+        }
 
-            // Check if this IP has already been seen today for this user
-            let is_new_visitor: bool = sqlx::query_scalar(
-                "SELECT NOT EXISTS (
-                    SELECT 1 FROM pageviews
-                    WHERE user_id = $1
-                    AND ip = $2
-                    AND timestamp >= CURRENT_DATE
-                )"
-            )
-            .bind(user_id)
-            .bind(ip_network)
-            .fetch_one(&db_pool)
-            .await
-            .unwrap_or(false);
+        // Update daily stats (upsert)
+        let unique_increment = if is_new_visitor { 1 } else { 0 };
+        let stats_result = sqlx::query(
+            "INSERT INTO pageview_daily_stats (user_id, date, views, unique_visitors)
+            VALUES ($1, CURRENT_DATE, 1, $2)
+            ON CONFLICT (user_id, date) DO UPDATE SET
+                views = pageview_daily_stats.views + 1,
+                unique_visitors = pageview_daily_stats.unique_visitors + $2"
+        )
+        .bind(user_id)
+        .bind(unique_increment)
+        .execute(&db_pool)
+        .await;
 
-            // Insert pageview record
-            let insert_result = sqlx::query(
-                "INSERT INTO pageviews (user_id, path, ip, referrer, user_agent) VALUES ($1, $2, $3, $4, $5)"
-            )
-            .bind(user_id)
-            .bind(&path)
-            .bind(ip_network)
-            .bind(&referrer)
-            .bind(&user_agent)
-            .execute(&db_pool)
-            .await;
-
-            if let Err(e) = insert_result {
-                eprintln!("Error recording pageview: {}", e);
-                return;
-            }
-
-            // Update daily stats (upsert)
-            let unique_increment = if is_new_visitor { 1 } else { 0 };
-            let stats_result = sqlx::query(
-                "INSERT INTO pageview_daily_stats (user_id, date, views, unique_visitors)
-                VALUES ($1, CURRENT_DATE, 1, $2)
-                ON CONFLICT (user_id, date) DO UPDATE SET
-                    views = pageview_daily_stats.views + 1,
-                    unique_visitors = pageview_daily_stats.unique_visitors + $2"
-            )
-            .bind(user_id)
-            .bind(unique_increment)
-            .execute(&db_pool)
-            .await;
-
-            if let Err(e) = stats_result {
-                eprintln!("Error updating daily stats: {}", e);
-            }
+        if let Err(e) = stats_result {
+            eprintln!("Error updating daily stats: {}", e);
         }
     });
 }
@@ -228,13 +303,19 @@ async fn handle_request(
         .unwrap_or_default()
         .to_string();
 
-    // More robust subdomain extraction
-    let subdomain = host
-        .split('.')
-        .next()
-        .filter(|&s| !s.is_empty())
-        .unwrap_or_default()
-        .to_string();
+    let site_owner = resolve_site_owner(
+        &state.db_pool,
+        &host,
+        &state.platform_domain,
+    )
+    .await;
+
+    let Some(site_owner) = site_owner else {
+        return Ok(Response::builder()
+            .status(404)
+            .body(Full::new(Bytes::from("Not Found")))
+            .unwrap());
+    };
 
     // Extract the Referer header
     let referrer = req
@@ -268,11 +349,7 @@ async fn handle_request(
     };
     let pageview_path = if pageview_path.is_empty() { "/".to_string() } else { pageview_path };
 
-    let key = if subdomain.is_empty() {
-        path.to_string()
-    } else {
-        format!("{}/{}", subdomain, path)
-    };
+    let key = format!("{}/{}", site_owner.login_name, path);
 
     // Determine the file extension
     let extension = path.split('.').last().unwrap_or_default();
@@ -280,7 +357,12 @@ async fn handle_request(
     // Check if the extension is html, htm, or js, or json
     if extension != "html" && extension != "htm" && extension != "js" && extension != "json" {
         // Redirect to the specified URL
-        let redirect_url = format!("https://r2.naru.pub/{}/{}", subdomain, path);
+        let redirect_url = format!(
+            "https://{}/{}/{}",
+            state.r2_public_domain,
+            site_owner.login_name,
+            path
+        );
         return Ok(Response::builder()
             .status(302) // HTTP status code for redirection
             .header("Location", redirect_url)
@@ -305,7 +387,7 @@ async fn handle_request(
             if extension == "html" || extension == "htm" {
                 record_pageview(
                     state.db_pool.clone(),
-                    subdomain,
+                    site_owner.user_id,
                     pageview_path,
                     client_ip,
                     referrer,

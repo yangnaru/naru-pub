@@ -12,6 +12,7 @@
 - **다양한 파일 형식 지원**: HTML, CSS, JavaScript, JSON, Markdown 등
 - **사용자 인증**: Lucia Auth를 통한 안전한 사용자 인증 시스템
 - **통계 대시보드**: 서비스 사용 현황 및 지표 모니터링
+- **유료 커스텀 도메인**: 인증된 사용자 도메인을 Cloudflare Tunnel 프록시로 라우팅
 
 ## 🏗️ 아키텍처
 
@@ -31,7 +32,7 @@
 - **기술 스택**: Rust, Tokio, Hyper
 - **주요 기능**:
   - Cloudflare R2 스토리지 프록시
-  - 서브도메인 기반 라우팅
+  - 서브도메인 및 커스텀 도메인 기반 라우팅
   - 정적 파일 서빙
 
 ## 🛠️ 개발 환경 설정
@@ -79,6 +80,10 @@ AWS_REGION=auto
 
 # 기타
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_DOMAIN=naru.pub
+CUSTOM_DOMAIN_CNAME_TARGET=custom-domains.naru.pub
+CLOUDFLARE_ZONE_ID=your-cloudflare-zone-id
+CLOUDFLARE_CUSTOM_HOSTNAMES_API_TOKEN=your-cloudflare-api-token
 ```
 
 ### 3. 데이터베이스 설정
@@ -105,7 +110,23 @@ export R2_ACCOUNT_ID=your-cloudflare-account-id
 export AWS_ACCESS_KEY_ID=your-access-key
 export AWS_SECRET_ACCESS_KEY=your-secret-key
 export PORT=5000
+export PLATFORM_DOMAIN=naru.pub
+export R2_PUBLIC_DOMAIN=r2.naru.pub
 ```
+
+### 커스텀 도메인과 Cloudflare Tunnel
+
+커스텀 도메인은 Cloudflare Tunnel public hostname만으로는 처리할 수 없습니다. 제3자 도메인은 우리 Cloudflare 계정의 zone이 아니므로, Cloudflare for SaaS의 Custom Hostnames가 TLS와 호스트 수락을 담당해야 합니다. Tunnel은 fallback origin으로 들어온 요청을 프록시까지 전달하고, 프록시는 `Host` 헤더를 보고 Cloudflare에서 활성화된 `custom_domains` 레코드를 사용자 홈 디렉터리로 매핑합니다.
+
+운영 시 필요한 설정:
+
+- Cloudflare for SaaS fallback origin: Tunnel public hostname으로 연결되는 프록시 호스트입니다. 예: `proxy-fallback.naru.pub`
+- `CUSTOM_DOMAIN_CNAME_TARGET`: 사용자가 DNS에 설정할 CNAME/ALIAS 대상입니다. Cloudflare for SaaS CNAME target으로 설정해야 합니다. 예: `custom-domains.naru.pub`
+- `CLOUDFLARE_CUSTOM_HOSTNAMES_API_TOKEN`: Custom Hostnames를 생성/조회/삭제할 API 토큰입니다. Cloudflare의 `SSL and Certificates Write` 권한이 필요합니다.
+- `PLATFORM_DOMAIN`: 프록시가 기본 서브도메인 라우팅에 사용할 플랫폼 도메인입니다. 예: `naru.pub`
+- `R2_PUBLIC_DOMAIN`: HTML/JS/JSON 외 정적 파일 리다이렉트에 사용할 R2 공개 도메인입니다. 예: `r2.naru.pub`
+
+유료 기능 활성화는 `users.custom_domains_enabled = true`로 제어됩니다. 사용자가 계정 페이지에서 도메인을 등록하면 control-plane이 Cloudflare Custom Hostname을 생성하고, 사용자는 Cloudflare가 반환한 소유권/인증서 검증 레코드를 DNS에 추가합니다. 프록시는 `cloudflare_status = 'active'`, `ssl_status = 'active'`, `verified_at IS NOT NULL`인 커스텀 도메인만 서빙합니다.
 
 ### 5. 개발 서버 실행
 

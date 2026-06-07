@@ -8,7 +8,9 @@ import { DiscoverabilityForm } from "./DiscoverabilityForm";
 import ChangePasswordForm from "./ChangePasswordForm";
 import EmailManagement from "./EmailManagement";
 import FediverseCard from "./FediverseCard";
+import CustomDomainsCard from "./CustomDomainsCard";
 import { db } from "@/lib/database";
+import { getCustomDomainTarget } from "@/lib/customDomains";
 import { Settings, User } from "lucide-react";
 
 export default async function AccountPage() {
@@ -48,6 +50,40 @@ export default async function AccountPage() {
     };
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
+  const customDomainRows = await db
+    .selectFrom("custom_domains")
+    .select([
+      "id",
+      "hostname",
+      "cloudflare_status",
+      "ssl_status",
+      "ownership_verification_name",
+      "ownership_verification_type",
+      "ownership_verification_value",
+      "ssl_validation_records",
+      "verification_errors",
+      "verified_at",
+    ])
+    .where("user_id", "=", user.id)
+    .orderBy("id", "desc")
+    .execute();
+  const entitlement = await db
+    .selectFrom("users")
+    .select("custom_domains_enabled")
+    .where("id", "=", user.id)
+    .executeTakeFirst();
+  const customDomains = customDomainRows.map((domain) => ({
+    id: domain.id,
+    hostname: domain.hostname,
+    cloudflareStatus: domain.cloudflare_status,
+    sslStatus: domain.ssl_status,
+    ownershipVerificationName: domain.ownership_verification_name,
+    ownershipVerificationType: domain.ownership_verification_type,
+    ownershipVerificationValue: domain.ownership_verification_value,
+    sslValidationRecords: domain.ssl_validation_records,
+    verificationErrors: domain.verification_errors,
+    verifiedAt: domain.verified_at?.toISOString() ?? null,
+  }));
 
   return (
     <div className="bg-background min-h-screen">
@@ -81,6 +117,11 @@ export default async function AccountPage() {
           loginName={user.loginName}
           domain={fediverseDomain}
           followers={followers}
+        />
+        <CustomDomainsCard
+          enabled={entitlement?.custom_domains_enabled ?? false}
+          domains={customDomains}
+          target={getCustomDomainTarget()}
         />
         <DiscoverabilityForm discoverable={user.discoverable} />
         <ChangePasswordForm />
