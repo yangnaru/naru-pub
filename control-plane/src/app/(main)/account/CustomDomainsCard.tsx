@@ -149,13 +149,15 @@ export default function CustomDomainsCard({
           <>
             <div className="bg-muted border border-border rounded p-3 text-sm text-muted-foreground space-y-2">
               <p>
-                도메인의 CNAME 또는 ALIAS/ANAME 대상을{" "}
-                <strong className="text-foreground">{target}</strong>로
-                설정하면 Cloudflare for SaaS가 나루 Tunnel 프록시로 연결합니다.
+                아래에 도메인을 추가하면 Cloudflare for SaaS가 나루 프록시로
+                연결합니다.
               </p>
               <p>
-                아래 Cloudflare 인증 레코드를 추가한 뒤 상태 확인 버튼을
-                눌러주세요.
+                도메인을 추가하면 항목별로 필요한 DNS 레코드가 표시됩니다.
+                CNAME(또는 ALIAS/ANAME) 대상을{" "}
+                <strong className="text-foreground">{target}</strong>로 설정하고,
+                함께 안내되는 소유권·SSL 인증 레코드를 DNS에 등록한 뒤 상태 확인
+                버튼을 눌러주세요.
               </p>
             </div>
 
