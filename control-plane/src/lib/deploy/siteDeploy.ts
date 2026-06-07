@@ -7,7 +7,7 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import * as Sentry from "@sentry/nextjs";
 import { db, recordSiteEdit } from "@/lib/database";
 import { extractHtmlTitle } from "@/lib/html";
@@ -269,6 +269,19 @@ async function readObjectText(key: string) {
   return response.Body?.transformToString() ?? "";
 }
 
+async function sha256Object(key: string) {
+  const response = await s3Client.send(
+    new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Key: key,
+    }),
+  );
+  const bytes = await response.Body?.transformToByteArray();
+  return createHash("sha256")
+    .update(Buffer.from(bytes ?? []))
+    .digest("hex");
+}
+
 function assertGitHubClaimsAllowed(
   claims: GitHubActionsClaims,
   target: {
@@ -373,15 +386,11 @@ export async function createGitHubDeploymentPlan(params: {
   const uploads = await Promise.all(
     manifest.files.map(async (file) => {
       const key = `${uploadPrefix}/${file.path}`;
-      const contentType = contentTypeFor(file);
-      const metadata = { sha256: file.sha256 };
       const url = await getSignedUrl(
         s3Client as any,
         new PutObjectCommand({
           Bucket: process.env.S3_BUCKET_NAME!,
           Key: key,
-          ContentType: contentType,
-          Metadata: metadata,
         }) as any,
         { expiresIn: UPLOAD_URL_TTL_SECONDS },
       );
@@ -390,10 +399,7 @@ export async function createGitHubDeploymentPlan(params: {
         path: file.path,
         method: "PUT",
         url,
-        headers: {
-          "Content-Type": contentType,
-          "x-amz-meta-sha256": file.sha256,
-        },
+        headers: {},
       };
     }),
   );
@@ -474,9 +480,9 @@ export async function finalizeGitHubDeployment(params: {
           `Uploaded size does not match manifest for ${file.path}`,
         );
       }
-      if (head.Metadata?.sha256 !== file.sha256) {
+      if ((await sha256Object(stagingKey)) !== file.sha256) {
         throw new Error(
-          `Uploaded checksum metadata is missing for ${file.path}`,
+          `Uploaded checksum does not match manifest for ${file.path}`,
         );
       }
     }
