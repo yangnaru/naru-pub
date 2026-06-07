@@ -103,12 +103,12 @@ function getCloudflareZoneId() {
 
 function getCloudflareApiToken() {
   const token =
-    process.env.CLOUDFLARE_CUSTOM_HOSTNAMES_API_TOKEN ??
+    process.env.CLOUDFLARE_USER_API_TOKEN ??
     process.env.CLOUDFLARE_API_TOKEN ??
-    process.env.CLOUDFLARE_USER_API_TOKEN;
+    process.env.CLOUDFLARE_CUSTOM_HOSTNAMES_API_TOKEN;
 
   if (!token) {
-    throw new Error("CLOUDFLARE_API_TOKEN is not configured.");
+    throw new Error("CLOUDFLARE_USER_API_TOKEN is not configured.");
   }
 
   return token;

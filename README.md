@@ -83,7 +83,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_DOMAIN=naru.pub
 CUSTOM_DOMAIN_CNAME_TARGET=custom-domains.naru.pub
 CLOUDFLARE_ZONE_ID=your-cloudflare-zone-id
-CLOUDFLARE_CUSTOM_HOSTNAMES_API_TOKEN=your-cloudflare-api-token
+CLOUDFLARE_USER_API_TOKEN=your-cloudflare-api-token
 ```
 
 ### 3. 데이터베이스 설정
@@ -122,7 +122,7 @@ export R2_PUBLIC_DOMAIN=r2.naru.pub
 
 - Cloudflare for SaaS fallback origin: Tunnel public hostname으로 연결되는 프록시 호스트입니다. 예: `proxy-fallback.naru.pub`
 - `CUSTOM_DOMAIN_CNAME_TARGET`: 사용자가 DNS에 설정할 CNAME/ALIAS 대상입니다. Cloudflare for SaaS CNAME target으로 설정해야 합니다. 예: `custom-domains.naru.pub`
-- `CLOUDFLARE_CUSTOM_HOSTNAMES_API_TOKEN`: Custom Hostnames를 생성/조회/삭제할 API 토큰입니다. Cloudflare의 `SSL and Certificates Write` 권한이 필요합니다.
+- `CLOUDFLARE_USER_API_TOKEN`: Custom Hostnames를 생성/조회/삭제할 API 토큰입니다. Cloudflare의 `SSL and Certificates Write` 권한이 필요합니다.
 - `PLATFORM_DOMAIN`: 프록시가 기본 서브도메인 라우팅에 사용할 플랫폼 도메인입니다. 예: `naru.pub`
 - `R2_PUBLIC_DOMAIN`: HTML/JS/JSON 외 정적 파일 리다이렉트에 사용할 R2 공개 도메인입니다. 예: `r2.naru.pub`
 
