@@ -8,11 +8,7 @@ import { DiscoverabilityForm } from "./DiscoverabilityForm";
 import ChangePasswordForm from "./ChangePasswordForm";
 import EmailManagement from "./EmailManagement";
 import FediverseCard from "./FediverseCard";
-import CustomDomainsCard from "./CustomDomainsCard";
-import GitHubDeployTargetsCard from "./GitHubDeployTargetsCard";
 import { db } from "@/lib/database";
-import { getCustomDomainTarget } from "@/lib/customDomains";
-import { userHasFeature } from "@/lib/entitlements";
 import { Settings, User } from "lucide-react";
 
 export default async function AccountPage() {
@@ -52,67 +48,6 @@ export default async function AccountPage() {
     };
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
-  const customDomainsEnabled = await userHasFeature(user.id, "custom_domains");
-  const githubDeploysEnabled = await userHasFeature(user.id, "github_deploys");
-  const customDomainRows = customDomainsEnabled
-    ? await db
-        .selectFrom("custom_domains")
-        .select([
-          "id",
-          "hostname",
-          "cloudflare_status",
-          "ssl_status",
-          "ownership_verification_name",
-          "ownership_verification_type",
-          "ownership_verification_value",
-          "ssl_validation_records",
-          "verification_errors",
-          "verified_at",
-        ])
-        .where("user_id", "=", user.id)
-        .orderBy("id", "desc")
-        .execute()
-    : [];
-  const customDomains = customDomainRows.map((domain) => ({
-    id: domain.id,
-    hostname: domain.hostname,
-    cloudflareStatus: domain.cloudflare_status,
-    sslStatus: domain.ssl_status,
-    ownershipVerificationName: domain.ownership_verification_name,
-    ownershipVerificationType: domain.ownership_verification_type,
-    ownershipVerificationValue: domain.ownership_verification_value,
-    sslValidationRecords: domain.ssl_validation_records,
-    verificationErrors: domain.verification_errors,
-    verifiedAt: domain.verified_at?.toISOString() ?? null,
-  }));
-  const githubDeployTargetRows = githubDeploysEnabled
-    ? await db
-        .selectFrom("github_deploy_targets")
-        .select([
-          "id",
-          "github_repository",
-          "github_ref",
-          "target_prefix",
-          "delete_removed_files",
-          "enabled",
-          "last_github_sha",
-          "last_deployed_at",
-        ])
-        .where("user_id", "=", user.id)
-        .where("enabled", "=", true)
-        .orderBy("created_at", "desc")
-        .execute()
-    : [];
-  const githubDeployTargets = githubDeployTargetRows.map((target) => ({
-    id: target.id,
-    githubRepository: target.github_repository,
-    githubRef: target.github_ref,
-    targetPrefix: target.target_prefix,
-    deleteRemovedFiles: target.delete_removed_files,
-    enabled: target.enabled,
-    lastGithubSha: target.last_github_sha,
-    lastDeployedAt: target.last_deployed_at?.toISOString() ?? null,
-  }));
 
   return (
     <div className="bg-background min-h-screen">
@@ -147,19 +82,6 @@ export default async function AccountPage() {
           domain={fediverseDomain}
           followers={followers}
         />
-        {githubDeploysEnabled && (
-          <GitHubDeployTargetsCard
-            loginName={user.loginName}
-            targets={githubDeployTargets}
-          />
-        )}
-        {customDomainsEnabled && (
-          <CustomDomainsCard
-            enabled={customDomainsEnabled}
-            domains={customDomains}
-            target={getCustomDomainTarget()}
-          />
-        )}
         <DiscoverabilityForm discoverable={user.discoverable} />
         <ChangePasswordForm />
 

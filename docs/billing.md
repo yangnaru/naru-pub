@@ -4,6 +4,8 @@
 
 기능 묶음은 `lib/entitlements.ts`의 `PLAN_FEATURES`에 정의됩니다. 지금은 `supporter → [custom_domains, github_deploys, analytics]`입니다. 새 플랜은 키를 추가해 확장합니다.
 
+후원자 전용 설정은 `/supporters`에서 관리합니다. 결제/후원 흐름은 `/support`에 남겨둡니다.
+
 결제는 **Toss Payments 자동결제(빌링)** 입니다. 월 1,000원 / 연 10,000원.
 
 - **구독 시작**: `subscription/prepare`가 플랜을 `incomplete` 구독으로 기록하고 `customerKey`를 반환 → 프런트가 `requestBillingAuth`로 카드 등록 → `/account/subscription/callback`이 `subscription/confirm` 호출 → 빌링키 발급 후 첫 결제, `subscriptions`를 `active`로, `supporter_until`을 채웁니다. 금액은 항상 서버(`lib/toss.ts`의 `PLAN_AMOUNTS`)에서 결정합니다.
