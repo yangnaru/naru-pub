@@ -151,8 +151,15 @@ export function toCustomDomainRow(hostname: CloudflareCustomHostname) {
       hostname.ownership_verification?.type ?? null,
     ownership_verification_value:
       hostname.ownership_verification?.value ?? null,
-    ssl_validation_records: hostname.ssl?.validation_records ?? null,
-    verification_errors: hostname.verification_errors ?? null,
+    // jsonb columns: serialize to JSON text. node-postgres would otherwise
+    // encode a JS array as a Postgres array literal ({...}), which is invalid
+    // JSON and fails the jsonb cast.
+    ssl_validation_records: hostname.ssl?.validation_records
+      ? JSON.stringify(hostname.ssl.validation_records)
+      : null,
+    verification_errors: hostname.verification_errors
+      ? JSON.stringify(hostname.verification_errors)
+      : null,
     verified_at: isCloudflareHostnameActive(hostname) ? new Date() : null,
     updated_at: new Date(),
   };
