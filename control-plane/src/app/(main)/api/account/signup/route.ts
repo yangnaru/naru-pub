@@ -3,7 +3,11 @@ import { cookies } from "next/headers";
 import { lucia } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { hash } from "@node-rs/argon2";
-import { DEFAULT_INDEX_HTML } from "@/lib/const";
+import {
+  DEFAULT_INDEX_HTML,
+  isReservedLoginName,
+  LOGIN_NAME_REGEX,
+} from "@/lib/const";
 import {
   PutObjectCommand,
   HeadObjectCommand,
@@ -64,16 +68,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (
+      typeof login_name !== "string" ||
+      !LOGIN_NAME_REGEX.test(login_name) ||
+      isReservedLoginName(login_name)
+    ) {
+      return NextResponse.json(
+        { success: false, message: "사용할 수 없는 아이디입니다." },
+        { status: 400 }
+      );
+    }
+
+    const normalizedLoginName = login_name.toLowerCase();
     const password_hash = await hash(password);
 
-    await prepareUserHomeDirectory(login_name);
+    await prepareUserHomeDirectory(normalizedLoginName);
 
     let user;
     try {
       user = await db
         .insertInto("users")
         .values({
-          login_name: login_name.toLowerCase(),
+          login_name: normalizedLoginName,
           password_hash,
           home_directory_size_bytes: 0,
           home_directory_size_bytes_updated_at: null,

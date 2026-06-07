@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { LOGIN_NAME_REGEX } from "@/lib/const";
+import { isReservedLoginName, LOGIN_NAME_REGEX } from "@/lib/const";
 
 const formSchema = z
   .object({
@@ -33,6 +33,9 @@ const formSchema = z
       })
       .refine((value) => !value.startsWith("-") && !value.endsWith("-"), {
         message: "아이디는 하이픈으로 시작하거나 끝날 수 없습니다.",
+      })
+      .refine((value) => !isReservedLoginName(value), {
+        message: "사용할 수 없는 아이디입니다.",
       }),
     password: z.string().min(8, {
       message: "비밀번호는 8자 이상이어야 합니다.",

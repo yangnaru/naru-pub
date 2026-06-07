@@ -1,4 +1,9 @@
 export const LOGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+export const RESERVED_LOGIN_NAMES = new Set(["proxy"]);
+
+export function isReservedLoginName(loginName: string) {
+  return RESERVED_LOGIN_NAMES.has(loginName.toLowerCase());
+}
 
 export const EDITABLE_FILE_EXTENSION_MAP: Record<string, string | null> = {
   html: "html",
