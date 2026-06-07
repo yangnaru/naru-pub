@@ -1,4 +1,5 @@
 import { db } from "@/lib/database";
+import { addPaymentGrace } from "@/lib/subscriptions";
 
 // Features that a paid (supporter) plan can unlock. Add new features here as
 // they become gated. `analytics` is currently open to everyone; when that
@@ -16,12 +17,12 @@ export type UserEntitlement = {
   comp: boolean;
   plan: string | null;
   supporterUntil: Date | null;
+  graceEndsAt: Date | null;
   inPaymentGrace: boolean;
 };
 
 // Resolves a user's current entitlement. A user is a supporter if they have a
-// permanent comp, a paid-through date in the future, or an active subscription
-// still inside the payment retry grace window.
+// permanent comp or a paid-through date that has not passed the grace window.
 export async function getUserEntitlement(
   userId: number,
 ): Promise<UserEntitlement> {
@@ -32,7 +33,6 @@ export async function getUserEntitlement(
       "users.supporter_comp as comp",
       "users.supporter_until as supporterUntil",
       "subscriptions.plan as plan",
-      "subscriptions.status as subscriptionStatus",
     ])
     .where("users.id", "=", userId)
     .executeTakeFirst();
@@ -43,6 +43,7 @@ export async function getUserEntitlement(
       comp: false,
       plan: null,
       supporterUntil: null,
+      graceEndsAt: null,
       inPaymentGrace: false,
     };
   }
@@ -51,13 +52,22 @@ export async function getUserEntitlement(
   const supporterUntil = row.supporterUntil
     ? new Date(row.supporterUntil)
     : null;
+  const graceEndsAt = supporterUntil ? addPaymentGrace(supporterUntil) : null;
   const paid = supporterUntil != null && supporterUntil.getTime() > Date.now();
-  const inPaymentGrace = !paid && row.subscriptionStatus === "active";
+  const inPaymentGrace =
+    !paid && graceEndsAt != null && graceEndsAt.getTime() > Date.now();
   const isSupporter = comp || paid || inPaymentGrace;
   // Comp users have no subscription row, so default them to the supporter plan.
   const plan = row.plan ?? (comp ? "supporter" : null);
 
-  return { isSupporter, comp, plan, supporterUntil, inPaymentGrace };
+  return {
+    isSupporter,
+    comp,
+    plan,
+    supporterUntil,
+    graceEndsAt,
+    inPaymentGrace,
+  };
 }
 
 export async function userHasFeature(

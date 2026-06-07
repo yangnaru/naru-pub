@@ -4,6 +4,13 @@ import { addInterval, BillingInterval, TossPaymentResult } from "@/lib/toss";
 // Subscription renewals run daily. This value is the payment grace window before
 // a subscription becomes past_due and related paid-only resources are reclaimed.
 export const PAYMENT_GRACE_DAYS = 4;
+export const MAX_PAYMENT_RETRY_ATTEMPTS = 4;
+
+export function addPaymentGrace(until: Date): Date {
+  const graceEndsAt = new Date(until);
+  graceEndsAt.setDate(graceEndsAt.getDate() + PAYMENT_GRACE_DAYS);
+  return graceEndsAt;
+}
 
 // Applies a one-time payment: records the ledger row and extends supporter_until,
 // stacking on top of any remaining time (so paying again before expiry adds on

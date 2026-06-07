@@ -5,13 +5,17 @@ import {
   newOrderId,
   PLAN_ORDER_NAMES,
 } from "@/lib/toss";
-import { applySuccessfulCharge, PAYMENT_GRACE_DAYS } from "@/lib/subscriptions";
+import {
+  addPaymentGrace,
+  applySuccessfulCharge,
+  MAX_PAYMENT_RETRY_ATTEMPTS,
+} from "@/lib/subscriptions";
 
 // Renews active subscriptions whose next_billing_at has passed. On success the
 // period extends contiguously and supporter_until advances. On failure the
 // attempt is retried on subsequent runs (next_billing_at stays in the past)
-// until the payment grace window ends, after which the subscription is marked
-// past_due and grace-based access ends.
+// until the retry limit or payment grace window ends, after which the
+// subscription is marked past_due and grace-based access ends.
 
 async function main() {
   const now = new Date();
@@ -67,7 +71,13 @@ async function main() {
       console.log(`[charge-subscriptions] user ${sub.user_id}: renewed`);
     } catch (err) {
       const failures = sub.failed_charge_count + 1;
-      const nextStatus = failures >= PAYMENT_GRACE_DAYS ? "past_due" : "active";
+      const graceEndsAt = sub.current_period_end
+        ? addPaymentGrace(new Date(sub.current_period_end))
+        : now;
+      const nextStatus =
+        failures >= MAX_PAYMENT_RETRY_ATTEMPTS || graceEndsAt <= now
+          ? "past_due"
+          : "active";
       await db.transaction().execute(async (trx) => {
         await trx
           .insertInto("payments")
@@ -93,7 +103,7 @@ async function main() {
           .execute();
       });
       console.error(
-        `[charge-subscriptions] user ${sub.user_id}: charge failed (${failures}/${PAYMENT_GRACE_DAYS}) -> ${nextStatus}: ${err}`,
+        `[charge-subscriptions] user ${sub.user_id}: charge failed (${failures}/${MAX_PAYMENT_RETRY_ATTEMPTS}) -> ${nextStatus}: ${err}`,
       );
     }
   }

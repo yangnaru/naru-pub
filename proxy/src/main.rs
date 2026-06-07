@@ -25,6 +25,7 @@ struct Config {
     database_url: String,
     platform_domain: String,
     r2_public_domain: String,
+    payment_grace_days: i64,
 }
 
 // Shared state for the application
@@ -34,6 +35,7 @@ struct AppState {
     db_pool: PgPool,
     platform_domain: String,
     r2_public_domain: String,
+    payment_grace_days: i64,
 }
 
 #[derive(Clone, Debug)]
@@ -64,6 +66,10 @@ async fn main() -> Result<()> {
             .unwrap_or_else(|_| "r2.naru.pub".to_string())
             .trim_end_matches('.')
             .to_lowercase(),
+        payment_grace_days: std::env::var("PAYMENT_GRACE_DAYS")
+            .unwrap_or_else(|_| "4".to_string())
+            .parse()
+            .expect("PAYMENT_GRACE_DAYS must be a valid number"),
     };
 
     // Initialize R2 client
@@ -97,6 +103,7 @@ async fn main() -> Result<()> {
         db_pool,
         platform_domain: config.platform_domain,
         r2_public_domain: config.r2_public_domain,
+        payment_grace_days: config.payment_grace_days,
     });
 
     // Create a TCP listener
@@ -156,6 +163,7 @@ async fn resolve_site_owner(
     db_pool: &PgPool,
     host: &str,
     platform_domain: &str,
+    payment_grace_days: i64,
 ) -> Option<SiteOwner> {
     let host = normalize_host(host);
     if host.is_empty() || host == platform_domain {
@@ -195,14 +203,11 @@ async fn resolve_site_owner(
            AND (
              users.supporter_comp = TRUE
              OR users.supporter_until > now()
-             OR EXISTS (
-               SELECT 1 FROM subscriptions
-               WHERE subscriptions.user_id = users.id
-                 AND subscriptions.status = 'active'
-             )
+             OR users.supporter_until + ($2::int * INTERVAL '1 day') > now()
            )"
     )
     .bind(&host)
+    .bind(payment_grace_days as i32)
     .fetch_optional(db_pool)
     .await;
 
@@ -315,6 +320,7 @@ async fn handle_request(
         &state.db_pool,
         &host,
         &state.platform_domain,
+        state.payment_grace_days,
     )
     .await;
 
