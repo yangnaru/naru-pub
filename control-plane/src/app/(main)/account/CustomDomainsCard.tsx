@@ -2,7 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Globe2, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Globe2, Link2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -243,11 +243,35 @@ export default function CustomDomainsCard({
                       </div>
 
                       <div className="grid gap-2 text-sm">
-                        <div className="bg-background border border-border rounded p-2">
-                          <span className="text-muted-foreground">
-                            연결 대상
-                          </span>
-                          <p className="font-mono break-all">{target}</p>
+                        <div className="bg-secondary border-2 border-primary rounded p-3 space-y-2">
+                          <div className="flex items-center gap-2 font-bold text-foreground">
+                            <Link2 size={16} />
+                            1단계: DNS 연결 (필수)
+                          </div>
+                          <p className="text-muted-foreground">
+                            도메인 등록기관(DNS) 설정에서{" "}
+                            <strong className="text-foreground break-all">
+                              {domain.hostname}
+                            </strong>
+                            을(를){" "}
+                            <strong className="text-foreground break-all">
+                              {target}
+                            </strong>
+                            (으)로 향하는 레코드를 추가해주세요. 루트 도메인은
+                            CNAME을 쓸 수 없으니 ALIAS 또는 ANAME을 사용하세요.
+                          </p>
+                          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 bg-background border border-border rounded p-2">
+                            <span className="text-muted-foreground">종류</span>
+                            <span className="font-mono break-all">
+                              CNAME (루트 도메인은 ALIAS/ANAME)
+                            </span>
+                            <span className="text-muted-foreground">이름</span>
+                            <span className="font-mono break-all">
+                              {domain.hostname}
+                            </span>
+                            <span className="text-muted-foreground">대상</span>
+                            <span className="font-mono break-all">{target}</span>
+                          </div>
                         </div>
                         {domain.ownershipVerificationName &&
                           domain.ownershipVerificationValue && (
