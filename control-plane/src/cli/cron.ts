@@ -8,6 +8,8 @@ const EXPORT_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const EXPORT_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 const SITE_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const SITE_UPDATE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const CUSTOM_DOMAIN_INTERVAL = 3 * 60 * 1000; // 3 minutes
+const CUSTOM_DOMAIN_TIMEOUT = 2 * 60 * 1000; // 2 minutes
 
 function runWithTimeout(
   script: string,
@@ -59,6 +61,10 @@ async function runSiteUpdateDispatcher() {
   await runWithTimeout("dispatch-site-updates.ts", SITE_UPDATE_TIMEOUT);
 }
 
+async function runCustomDomainRefresher() {
+  await runWithTimeout("refresh-custom-domains.ts", CUSTOM_DOMAIN_TIMEOUT);
+}
+
 function scheduleDaily(hour: number, minute: number, fn: () => Promise<void>) {
   const runIfTime = () => {
     const now = new Date();
@@ -91,6 +97,11 @@ async function main() {
   // Run site-update dispatcher every 5 minutes
   console.log("[cron] Scheduling site-update dispatcher every 5 minutes");
   setInterval(runSiteUpdateDispatcher, SITE_UPDATE_INTERVAL);
+
+  // Run custom-domain verification poller every 3 minutes
+  console.log("[cron] Scheduling custom-domain refresher every 3 minutes");
+  setInterval(runCustomDomainRefresher, CUSTOM_DOMAIN_INTERVAL);
+  setTimeout(runCustomDomainRefresher, 20 * 1000);
 
   // Run home directory updater daily at 22:00
   console.log("[cron] Scheduling home directory updater daily at 22:00");
