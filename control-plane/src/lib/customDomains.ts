@@ -158,10 +158,7 @@ export function toCustomDomainRow(hostname: CloudflareCustomHostname) {
   };
 }
 
-export async function createCloudflareCustomHostname(
-  hostname: string,
-  userId: number
-) {
+export async function createCloudflareCustomHostname(hostname: string) {
   const zoneId = getCloudflareZoneId();
 
   return cloudflareRequest<CloudflareCustomHostname>(
@@ -170,9 +167,6 @@ export async function createCloudflareCustomHostname(
       method: "POST",
       body: JSON.stringify({
         hostname,
-        custom_metadata: {
-          user_id: String(userId),
-        },
         ssl: {
           method: "txt",
           type: "dv",

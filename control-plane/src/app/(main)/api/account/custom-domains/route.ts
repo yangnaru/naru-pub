@@ -94,8 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     const cloudflareHostname = await createCloudflareCustomHostname(
-      normalizedHostname,
-      user.id
+      normalizedHostname
     );
 
     await db
