@@ -139,6 +139,8 @@ export async function applySuccessfulCharge(opts: {
         next_billing_at: periodEnd,
         failed_charge_count: 0,
         charging_started_at: null,
+        renewal_notice_sent_at: null,
+        payment_grace_notice_sent_at: null,
         updated_at: now,
       })
       .where("id", "=", opts.subscriptionId)

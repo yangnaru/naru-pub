@@ -1,4 +1,5 @@
 import { db } from "@/lib/database";
+import { sendSubscriptionPaymentGraceEmail } from "@/lib/email";
 import { sql } from "kysely";
 import {
   BillingInterval,
@@ -25,6 +26,7 @@ type DueSubscription = {
   toss_billing_key: string;
   toss_customer_key: string;
   current_period_end: Date | string | null;
+  payment_grace_notice_sent_at: Date | string | null;
   failed_charge_count: number;
 };
 
@@ -78,6 +80,7 @@ async function claimDueSubscriptions(now: Date) {
       toss_billing_key,
       toss_customer_key,
       current_period_end,
+      payment_grace_notice_sent_at,
       failed_charge_count
   `.execute(db);
 
@@ -152,6 +155,49 @@ async function markAttemptFailed(opts: {
       .where("id", "=", opts.sub.id)
       .execute();
   });
+}
+
+async function sendGraceNoticeIfNeeded(sub: DueSubscription) {
+  if (sub.failed_charge_count !== 0) return;
+  if (!sub.current_period_end) return;
+  if (sub.payment_grace_notice_sent_at) {
+    return;
+  }
+
+  const user = await db
+    .selectFrom("users")
+    .select(["email", "email_verified_at", "login_name"])
+    .where("id", "=", sub.user_id)
+    .executeTakeFirst();
+
+  if (!user?.email || !user.email_verified_at) return;
+
+  try {
+    await sendSubscriptionPaymentGraceEmail({
+      email: user.email,
+      loginName: user.login_name,
+      amount: sub.amount,
+      graceEndsAt: addPaymentGrace(new Date(sub.current_period_end)),
+    });
+
+    await db
+      .updateTable("subscriptions")
+      .set({
+        payment_grace_notice_sent_at: new Date(),
+        updated_at: new Date(),
+      })
+      .where("id", "=", sub.id)
+      .execute();
+
+    console.log(
+      `[charge-subscriptions] user ${sub.user_id}: payment grace notice sent`,
+    );
+  } catch (error) {
+    console.error(
+      `[charge-subscriptions] user ${sub.user_id}: failed to send payment grace notice:`,
+      error,
+    );
+  }
 }
 
 async function main() {
@@ -234,6 +280,7 @@ async function main() {
         nextStatus,
         error: err,
       });
+      await sendGraceNoticeIfNeeded(sub);
       console.error(
         `[charge-subscriptions] user ${sub.user_id}: charge failed (${failures}/${MAX_PAYMENT_RETRY_ATTEMPTS}) -> ${nextStatus}: ${err}`,
       );

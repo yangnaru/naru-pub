@@ -8,7 +8,7 @@ const transport = new ResendTransport({
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.BASE_URL}/verify-email?token=${token}`;
-  
+
   const message = createMessage({
     from: process.env.FROM_EMAIL || "noreply@naru.pub",
     to: email,
@@ -42,14 +42,16 @@ export async function sendVerificationEmail(email: string, token: string) {
 
   const receipt = await transport.send(message);
   if (!receipt.successful) {
-    throw new Error(`Failed to send verification email: ${receipt.errorMessages?.join(", ")}`);
+    throw new Error(
+      `Failed to send verification email: ${receipt.errorMessages?.join(", ")}`,
+    );
   }
   return receipt;
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${process.env.BASE_URL}/reset-password?token=${token}`;
-  
+
   const message = createMessage({
     from: process.env.FROM_EMAIL || "noreply@naru.pub",
     to: email,
@@ -83,7 +85,9 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 
   const receipt = await transport.send(message);
   if (!receipt.successful) {
-    throw new Error(`Failed to send password reset email: ${receipt.errorMessages?.join(", ")}`);
+    throw new Error(
+      `Failed to send password reset email: ${receipt.errorMessages?.join(", ")}`,
+    );
   }
   return receipt;
 }
@@ -98,7 +102,7 @@ export function generatePasswordResetToken(): string {
 
 export async function sendAccountDeletionEmail(email: string, token: string) {
   const confirmationUrl = `${process.env.BASE_URL}/confirm-account-deletion?token=${token}`;
-  
+
   const message = createMessage({
     from: process.env.FROM_EMAIL || "noreply@naru.pub",
     to: email,
@@ -143,7 +147,9 @@ export async function sendAccountDeletionEmail(email: string, token: string) {
 
   const receipt = await transport.send(message);
   if (!receipt.successful) {
-    throw new Error(`Failed to send account deletion email: ${receipt.errorMessages?.join(", ")}`);
+    throw new Error(
+      `Failed to send account deletion email: ${receipt.errorMessages?.join(", ")}`,
+    );
   }
   return receipt;
 }
@@ -155,7 +161,7 @@ export function generateAccountDeletionToken(): string {
 export async function sendExportReadyEmail(
   email: string,
   downloadUrl: string,
-  loginName: string
+  loginName: string,
 ) {
   const message = createMessage({
     from: process.env.FROM_EMAIL || "noreply@naru.pub",
@@ -190,7 +196,134 @@ export async function sendExportReadyEmail(
   const receipt = await transport.send(message);
   if (!receipt.successful) {
     throw new Error(
-      `Failed to send export ready email: ${receipt.errorMessages?.join(", ")}`
+      `Failed to send export ready email: ${receipt.errorMessages?.join(", ")}`,
+    );
+  }
+  return receipt;
+}
+
+function formatKoreanDateTime(date: Date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "Asia/Seoul",
+  }).format(date);
+}
+
+function formatKrw(amount: number) {
+  return new Intl.NumberFormat("ko-KR", {
+    style: "currency",
+    currency: "KRW",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export async function sendSubscriptionRenewalNoticeEmail(opts: {
+  email: string;
+  loginName: string;
+  amount: number;
+  nextBillingAt: Date;
+}) {
+  const accountUrl = `${process.env.BASE_URL}/account`;
+  const nextBillingLabel = formatKoreanDateTime(opts.nextBillingAt);
+  const amountLabel = formatKrw(opts.amount);
+
+  const message = createMessage({
+    from: process.env.FROM_EMAIL || "noreply@naru.pub",
+    to: opts.email,
+    subject: "나루 후원이 곧 갱신됩니다",
+    content: {
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>나루 후원 갱신 안내</h2>
+          <p>${opts.loginName}님, 나루 후원이 곧 자동 갱신됩니다.</p>
+          <p><strong>결제 예정일:</strong> ${nextBillingLabel}</p>
+          <p><strong>결제 예정 금액:</strong> ${amountLabel}</p>
+          <p>후원을 계속 유지하면 커스텀 도메인 같은 후원자 기능을 계속 이용하실 수 있습니다.</p>
+          <p>
+            <a href="${accountUrl}" style="background-color: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              계정에서 후원 관리
+            </a>
+          </p>
+          <p>원치 않으시면 결제 예정일 전에 계정 페이지에서 후원을 취소할 수 있습니다.</p>
+        </div>
+      `,
+      text: `
+        나루 후원 갱신 안내
+
+        ${opts.loginName}님, 나루 후원이 곧 자동 갱신됩니다.
+
+        결제 예정일: ${nextBillingLabel}
+        결제 예정 금액: ${amountLabel}
+
+        후원을 계속 유지하면 커스텀 도메인 같은 후원자 기능을 계속 이용하실 수 있습니다.
+        원치 않으시면 결제 예정일 전에 계정 페이지에서 후원을 취소할 수 있습니다.
+
+        후원 관리: ${accountUrl}
+      `,
+    },
+    tags: ["billing", "subscription-renewal"],
+  });
+
+  const receipt = await transport.send(message);
+  if (!receipt.successful) {
+    throw new Error(
+      `Failed to send subscription renewal notice email: ${receipt.errorMessages?.join(", ")}`,
+    );
+  }
+  return receipt;
+}
+
+export async function sendSubscriptionPaymentGraceEmail(opts: {
+  email: string;
+  loginName: string;
+  amount: number;
+  graceEndsAt: Date;
+}) {
+  const accountUrl = `${process.env.BASE_URL}/account`;
+  const graceEndsLabel = formatKoreanDateTime(opts.graceEndsAt);
+  const amountLabel = formatKrw(opts.amount);
+
+  const message = createMessage({
+    from: process.env.FROM_EMAIL || "noreply@naru.pub",
+    to: opts.email,
+    subject: "나루 후원 결제에 실패했습니다",
+    content: {
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>나루 후원 결제 실패 안내</h2>
+          <p>${opts.loginName}님, 나루 후원 갱신 결제를 처리하지 못했습니다.</p>
+          <p><strong>결제 금액:</strong> ${amountLabel}</p>
+          <p><strong>후원자 기능 유지 기한:</strong> ${graceEndsLabel}</p>
+          <p>유예 기간 동안 커스텀 도메인 같은 후원자 기능은 계속 유지됩니다. 기한 전까지 결제 수단을 다시 등록하거나 결제를 완료하지 못하면 후원자 기능이 중단되고 커스텀 도메인이 해제될 수 있습니다.</p>
+          <p>
+            <a href="${accountUrl}" style="background-color: #d97706; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              결제 수단 다시 등록
+            </a>
+          </p>
+        </div>
+      `,
+      text: `
+        나루 후원 결제 실패 안내
+
+        ${opts.loginName}님, 나루 후원 갱신 결제를 처리하지 못했습니다.
+
+        결제 금액: ${amountLabel}
+        후원자 기능 유지 기한: ${graceEndsLabel}
+
+        유예 기간 동안 커스텀 도메인 같은 후원자 기능은 계속 유지됩니다.
+        기한 전까지 결제 수단을 다시 등록하거나 결제를 완료하지 못하면 후원자 기능이 중단되고 커스텀 도메인이 해제될 수 있습니다.
+
+        결제 수단 다시 등록: ${accountUrl}
+      `,
+    },
+    tags: ["billing", "payment-grace"],
+  });
+
+  const receipt = await transport.send(message);
+  if (!receipt.successful) {
+    throw new Error(
+      `Failed to send subscription payment grace email: ${receipt.errorMessages?.join(", ")}`,
     );
   }
   return receipt;

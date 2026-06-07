@@ -128,6 +128,8 @@ export interface Subscriptions {
   current_period_start: Timestamp | null;
   current_period_end: Timestamp | null;
   next_billing_at: Timestamp | null;
+  renewal_notice_sent_at: Timestamp | null;
+  payment_grace_notice_sent_at: Timestamp | null;
   failed_charge_count: Generated<number>;
   charging_started_at: Timestamp | null;
   canceled_at: Timestamp | null;

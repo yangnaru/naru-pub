@@ -11,6 +11,7 @@ const SITE_UPDATE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const CUSTOM_DOMAIN_INTERVAL = 3 * 60 * 1000; // 3 minutes
 const CUSTOM_DOMAIN_TIMEOUT = 2 * 60 * 1000; // 2 minutes
 const SUBSCRIPTION_CHARGE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const BILLING_NOTIFICATION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const EXPIRED_CUSTOM_DOMAIN_CLEANUP_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 function runWithTimeout(
@@ -73,6 +74,13 @@ async function runSubscriptionCharger() {
   await runWithTimeout("charge-subscriptions.ts", SUBSCRIPTION_CHARGE_TIMEOUT);
 }
 
+async function runBillingNotifications() {
+  await runWithTimeout(
+    "send-billing-notifications.ts",
+    BILLING_NOTIFICATION_TIMEOUT,
+  );
+}
+
 async function runExpiredCustomDomainCleanup() {
   await runWithTimeout(
     "cleanup-expired-custom-domains.ts",
@@ -125,6 +133,10 @@ async function main() {
   // Run subscription renewal charger daily at 04:00
   console.log("[cron] Scheduling subscription charger daily at 04:00");
   scheduleDaily(4, 0, runSubscriptionCharger);
+
+  // Send renewal reminder emails daily at 09:00
+  console.log("[cron] Scheduling billing notifications daily at 09:00");
+  scheduleDaily(9, 0, runBillingNotifications);
 
   // Run expired custom-domain cleanup daily at 04:30
   console.log("[cron] Scheduling expired custom-domain cleanup daily at 04:30");
