@@ -134,6 +134,7 @@ export default async function AccountPage() {
           followers={followers}
         />
         <SupportCard
+          clientKey={process.env.TOSS_CLIENT_KEY ?? ""}
           comp={entitlement.comp}
           supporterUntil={
             entitlement.supporterUntil

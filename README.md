@@ -153,6 +153,21 @@ curl https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/cfd_tunnel/$TUNNE
 - 생성된 지 14일이 지난 도메인은 자동 폴링 대상에서 빠지며, 필요하면 수동 버튼으로 갱신할 수 있습니다(방치/오설정 도메인에 대한 무한 폴링 방지).
 - Cloudflare 상태 조회는 무료 API 호출이며 과금되지 않습니다. SaaS 비용은 폴링 빈도와 무관하게 활성 custom hostname 개수에만 부과됩니다.
 
+### 후원(결제)과 엔티틀먼트
+
+후원자 전용 기능(현재 커스텀 도메인)은 **시간 기반 엔티틀먼트**로 제어됩니다. 영구 무료 제공 계정은 `users.supporter_comp`, 결제로 얻은 접근 권한은 `users.supporter_until`(유효 기간 끝나는 시각)로 나타냅니다. 접근 권한 = `supporter_comp OR supporter_until > now()`이며, 기간이 지나면 별도 회수 작업 없이 자동으로 잠깁니다(프록시 쿼리와 `lib/entitlements.ts`가 동일하게 검사).
+
+기능 묶음은 `lib/entitlements.ts`의 `PLAN_FEATURES`에 정의됩니다. 지금은 `supporter → [custom_domains]`이며, 예를 들어 애널리틱스를 후원자 전용으로 바꾸려면 이 배열에 `"analytics"`만 추가하면 됩니다. 새 플랜은 키를 추가해 확장합니다.
+
+결제는 **Toss Payments 자동결제(빌링)** 입니다. 월 1,000원 / 연 10,000원.
+
+- **구독 시작**: `subscription/prepare`가 플랜을 `incomplete` 구독으로 기록하고 `customerKey`를 반환 → 프런트가 `requestBillingAuth`로 카드 등록 → `/account/subscription/callback`이 `subscription/confirm` 호출 → 빌링키 발급 후 첫 결제, `subscriptions`를 `active`로, `supporter_until`을 채웁니다. 금액은 항상 서버(`lib/toss.ts`의 `PLAN_AMOUNTS`)에서 결정합니다.
+- **자동 갱신**: cron의 `charge-subscriptions.ts`(매일 04:00)가 `next_billing_at`이 지난 활성 구독을 빌링키로 청구해 기간을 연장합니다. 실패 시 `MAX_FAILURES`까지 재시도 후 `past_due`로 전환되며, 접근은 이미 `current_period_end`(유예 경계)에서 만료됩니다.
+- **취소**: `subscription/cancel`은 `status='canceled'`로 두고 `supporter_until`은 유지 → 결제한 기간 동안은 계속 이용 가능.
+- **웹훅**: `api/webhooks/toss`는 결제 원장 상태만 동기화하며 엔티틀먼트를 부여하지 않으므로(접근 부여는 항상 Toss를 직접 호출하는 confirm/cron만 수행) 별도 인증이 필요 없습니다.
+
+환경 변수: `TOSS_CLIENT_KEY`(서버에서 읽어 클라이언트로 전달, 공개값), `TOSS_SECRET_KEY`. 개발/테스트에는 Toss 테스트 키를 사용하세요.
+
 ### 5. 개발 서버 실행
 
 **Control Plane:**

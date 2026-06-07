@@ -17,10 +17,12 @@ type SubscriptionInfo = {
 };
 
 export default function SupportCard({
+  clientKey,
   comp,
   supporterUntil,
   subscription,
 }: {
+  clientKey: string;
   comp: boolean;
   supporterUntil: string | null;
   subscription: SubscriptionInfo | null;
@@ -57,7 +59,6 @@ export default function SupportCard({
         return;
       }
 
-      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!clientKey) {
         toast.error("결제 설정이 올바르지 않습니다.");
         setPending(false);
