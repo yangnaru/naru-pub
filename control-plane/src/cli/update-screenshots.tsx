@@ -142,7 +142,9 @@ async function main() {
 
   let browser: Browser | null = null;
   try {
-    browser = await chromium.launch();
+    browser = await chromium.launch({
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+    });
     const context = await browser.newContext({ deviceScaleFactor: 2 });
 
     let cursor = 0;

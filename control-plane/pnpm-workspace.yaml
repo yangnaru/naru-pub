@@ -3,3 +3,8 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+onlyBuiltDependencies:
+  - "@sentry/cli"
+  - esbuild
+  - sharp
+  - unrs-resolver

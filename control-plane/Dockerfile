@@ -1,10 +1,14 @@
 FROM node:24-slim
 
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+
 # Install system dependencies for Playwright in single layer
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ca-certificates \
+    chromium \
     fonts-liberation \
     fonts-noto-cjk \
     fonts-noto-color-emoji \
@@ -31,18 +35,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Setup pnpm in single layer
-RUN npm install --global corepack@latest && \
-    corepack enable pnpm && \
-    corepack use pnpm@latest-10
+RUN npm install --global pnpm@10.28.0
 
 # Copy dependency files first for better caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies (this layer will be cached unless package files change)
 RUN pnpm install --frozen-lockfile
-
-# Download headless Chromium in separate layer for better caching
-RUN npx playwright install chromium
 
 # Set build arguments and environment early
 ARG NEXT_PUBLIC_DOMAIN=naru.pub

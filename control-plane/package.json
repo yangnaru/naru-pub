@@ -88,8 +88,5 @@
     "ts-jest": "^29.4.0",
     "tsx": "^4.14.0",
     "typescript": "^5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": ["@sentry/cli", "esbuild", "sharp", "unrs-resolver"]
   }
 }
