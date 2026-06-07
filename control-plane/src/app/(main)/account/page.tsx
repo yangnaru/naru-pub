@@ -11,7 +11,8 @@ import FediverseCard from "./FediverseCard";
 import CustomDomainsCard from "./CustomDomainsCard";
 import { db } from "@/lib/database";
 import { getCustomDomainTarget } from "@/lib/customDomains";
-import { userHasFeature } from "@/lib/entitlements";
+import { getUserEntitlement, userHasFeature } from "@/lib/entitlements";
+import SupportCard from "./SupportCard";
 import { Settings, User } from "lucide-react";
 
 export default async function AccountPage() {
@@ -51,7 +52,22 @@ export default async function AccountPage() {
     };
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
+  const entitlement = await getUserEntitlement(user.id);
   const customDomainsEnabled = await userHasFeature(user.id, "custom_domains");
+  const subscriptionRow = await db
+    .selectFrom("subscriptions")
+    .select(["status", "billing_interval", "next_billing_at"])
+    .where("user_id", "=", user.id)
+    .executeTakeFirst();
+  const subscription = subscriptionRow
+    ? {
+        status: subscriptionRow.status,
+        billingInterval: subscriptionRow.billing_interval,
+        nextBillingAt: subscriptionRow.next_billing_at
+          ? new Date(subscriptionRow.next_billing_at).toISOString()
+          : null,
+      }
+    : null;
   const customDomainRows = customDomainsEnabled
     ? await db
         .selectFrom("custom_domains")
@@ -116,6 +132,15 @@ export default async function AccountPage() {
           loginName={user.loginName}
           domain={fediverseDomain}
           followers={followers}
+        />
+        <SupportCard
+          comp={entitlement.comp}
+          supporterUntil={
+            entitlement.supporterUntil
+              ? entitlement.supporterUntil.toISOString()
+              : null
+          }
+          subscription={subscription}
         />
         {customDomainsEnabled && (
           <CustomDomainsCard
