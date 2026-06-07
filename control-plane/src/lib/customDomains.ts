@@ -90,9 +90,7 @@ export function normalizeHostname(input: string) {
 }
 
 function getCloudflareZoneId() {
-  const zoneId =
-    process.env.CLOUDFLARE_CUSTOM_HOSTNAMES_ZONE_ID ??
-    process.env.CLOUDFLARE_ZONE_ID;
+  const zoneId = process.env.CLOUDFLARE_ZONE_ID;
 
   if (!zoneId) {
     throw new Error("CLOUDFLARE_ZONE_ID is not configured.");
