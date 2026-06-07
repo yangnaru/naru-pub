@@ -36,5 +36,5 @@ outputs:
     description: Final Naru home directory size in bytes.
 
 runs:
-  using: node20
+  using: node24
   main: index.js
