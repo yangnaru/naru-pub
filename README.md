@@ -145,6 +145,14 @@ curl https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/cfd_tunnel/$TUNNE
 
 여러 앱이 같은 Tunnel을 공유하므로 편집 시 기존 ingress 규칙을 모두 보존해야 합니다. 알 수 없는 호스트는 프록시가 그대로 404를 반환하므로 다른 앱에 영향이 없습니다.
 
+#### 인증 상태 자동 폴링
+
+도메인 추가 직후에는 DNS 전파와 Cloudflare DCV가 끝나지 않아 `cloudflare_status`/`ssl_status`가 `pending`입니다. cron 컨테이너의 `refresh-custom-domains.ts`가 **3분마다** 아직 활성화되지 않은 커스텀 도메인을 Cloudflare에서 조회해 상태를 갱신하므로, 사용자가 계정 페이지로 돌아와 상태 확인 버튼을 누르지 않아도 검증이 끝나면 자동으로 서빙이 시작됩니다. 계정 페이지의 상태 확인 버튼은 즉시 확인용으로 남아 있습니다.
+
+- 이미 `active`인 도메인은 쿼리에서 제외되어 다시 폴링하지 않습니다.
+- 생성된 지 14일이 지난 도메인은 자동 폴링 대상에서 빠지며, 필요하면 수동 버튼으로 갱신할 수 있습니다(방치/오설정 도메인에 대한 무한 폴링 방지).
+- Cloudflare 상태 조회는 무료 API 호출이며 과금되지 않습니다. SaaS 비용은 폴링 빈도와 무관하게 활성 custom hostname 개수에만 부과됩니다.
+
 ### 5. 개발 서버 실행
 
 **Control Plane:**
