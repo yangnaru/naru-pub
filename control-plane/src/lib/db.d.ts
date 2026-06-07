@@ -51,6 +51,40 @@ export interface HomeDirectorySizeHistory {
   user_id: number | null;
 }
 
+export interface GithubDeployTargets {
+  id: Generated<number>;
+  user_id: number;
+  github_repository: string;
+  github_ref: string;
+  target_prefix: Generated<string>;
+  delete_removed_files: Generated<boolean>;
+  enabled: Generated<boolean>;
+  last_manifest: unknown | null;
+  last_github_sha: string | null;
+  last_deployed_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface GithubDeployments {
+  id: string;
+  target_id: number;
+  user_id: number;
+  status: Generated<string>;
+  github_repository: string;
+  github_ref: string;
+  github_sha: string;
+  target_prefix: string;
+  upload_prefix: string;
+  delete_removed_files: boolean;
+  manifest: unknown;
+  deleted_paths: unknown;
+  error_message: string | null;
+  expires_at: Timestamp;
+  created_at: Generated<Timestamp>;
+  finalized_at: Timestamp | null;
+}
+
 export interface Pageviews {
   id: Generated<number>;
   user_id: number;
@@ -196,6 +230,8 @@ export interface DB {
   edit_daily_stats: EditDailyStats;
   email_verification_tokens: EmailVerificationTokens;
   followers: Followers;
+  github_deploy_targets: GithubDeployTargets;
+  github_deployments: GithubDeployments;
   home_directory_exports: HomeDirectoryExports;
   home_directory_size_history: HomeDirectorySizeHistory;
   pageview_daily_stats: PageviewDailyStats;

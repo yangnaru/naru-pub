@@ -43,6 +43,7 @@
 - [개발 환경 설정](docs/development.md) — 설치, 환경 변수, 실행, 프로젝트 구조, 테스트, 스크립트
 - [커스텀 도메인](docs/custom-domains.md) — Cloudflare for SaaS + Tunnel, catch-all 라우트, 인증 자동 폴링
 - [후원과 결제](docs/billing.md) — 시간 기반 엔티틀먼트와 Toss Payments 자동결제
+- [GitHub CI Deploys](docs/github-ci.md) — GitHub Actions OIDC 기반 배포 연동
 - [기여하기](docs/contributing.md)
 
 ## 📄 라이선스

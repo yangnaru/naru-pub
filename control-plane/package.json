@@ -23,6 +23,7 @@
     "charge-subscriptions": "tsx src/cli/charge-subscriptions.ts",
     "send-billing-notifications": "tsx src/cli/send-billing-notifications.ts",
     "cleanup-expired-custom-domains": "tsx src/cli/cleanup-expired-custom-domains.ts",
+    "cleanup-expired-github-deployments": "tsx src/cli/cleanup-expired-github-deployments.ts",
     "cron": "tsx src/cli/cron.ts",
     "worker": "tsx src/cli/worker.ts"
   },

@@ -1,0 +1,40 @@
+name: Deploy to Naru
+description: Deploy a static site directory to Naru using GitHub Actions OIDC.
+author: naru-pub
+
+inputs:
+  site:
+    description: Naru login name for the site to deploy.
+    required: true
+  dir:
+    description: Directory containing the built static site.
+    required: true
+  target:
+    description: Target prefix inside the Naru site.
+    required: false
+    default: /
+  endpoint:
+    description: Naru control-plane endpoint.
+    required: false
+    default: https://naru.pub
+  audience:
+    description: GitHub OIDC audience. Defaults to the endpoint origin.
+    required: false
+  finalize:
+    description: Whether to finalize and publish after upload.
+    required: false
+    default: "true"
+
+outputs:
+  deployment-id:
+    description: Naru deployment id.
+  deployed-files:
+    description: Number of files deployed.
+  deleted-files:
+    description: Number of files deleted from the managed target.
+  directory-size:
+    description: Final Naru home directory size in bytes.
+
+runs:
+  using: node20
+  main: index.js
