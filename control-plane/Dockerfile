@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Setup pnpm in single layer
-RUN npm install --global pnpm@10.28.0
+RUN npm install --global pnpm@11.5.2
 
 # Copy dependency files first for better caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
