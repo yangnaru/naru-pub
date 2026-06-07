@@ -15,6 +15,10 @@ import { getUserEntitlement, userHasFeature } from "@/lib/entitlements";
 import SupportCard from "./SupportCard";
 import { Settings, User } from "lucide-react";
 
+// Limited rollout: only these users see the 나루 후원 (donation) section while
+// Toss Payments review is in progress.
+const SUPPORT_VISIBLE_USERS = new Set(["yang", "tosspayments"]);
+
 export default async function AccountPage() {
   const { user } = await validateRequest();
 
@@ -133,16 +137,18 @@ export default async function AccountPage() {
           domain={fediverseDomain}
           followers={followers}
         />
-        <SupportCard
-          clientKey={process.env.TOSS_CLIENT_KEY ?? ""}
-          comp={entitlement.comp}
-          supporterUntil={
-            entitlement.supporterUntil
-              ? entitlement.supporterUntil.toISOString()
-              : null
-          }
-          subscription={subscription}
-        />
+        {SUPPORT_VISIBLE_USERS.has(user.loginName) && (
+          <SupportCard
+            clientKey={process.env.TOSS_CLIENT_KEY ?? ""}
+            comp={entitlement.comp}
+            supporterUntil={
+              entitlement.supporterUntil
+                ? entitlement.supporterUntil.toISOString()
+                : null
+            }
+            subscription={subscription}
+          />
+        )}
         {customDomainsEnabled && (
           <CustomDomainsCard
             enabled={customDomainsEnabled}

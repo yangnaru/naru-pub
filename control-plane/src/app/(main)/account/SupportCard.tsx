@@ -173,7 +173,6 @@ export default function SupportCard({
               <Button
                 onClick={() => subscribe("year")}
                 disabled={pending}
-                variant="outline"
                 className="flex-1"
               >
                 연 10,000원 후원 (2개월 무료)
