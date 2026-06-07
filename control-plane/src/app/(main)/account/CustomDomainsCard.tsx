@@ -218,9 +218,20 @@ export default function CustomDomainsCard({
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-medium text-foreground break-all">
-                            {domain.hostname}
-                          </p>
+                          {isActive ? (
+                            <a
+                              href={`https://${domain.hostname}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-primary underline break-all hover:opacity-80"
+                            >
+                              {domain.hostname}
+                            </a>
+                          ) : (
+                            <p className="font-medium text-foreground break-all">
+                              {domain.hostname}
+                            </p>
+                          )}
                           {isActive ? (
                             <p className="text-sm font-medium text-green-600 dark:text-green-500 flex items-center gap-1">
                               <CheckCircle2 size={14} />
