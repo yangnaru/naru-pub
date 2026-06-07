@@ -8,6 +8,7 @@ import { getHomepageUrl } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/ModeToggle";
 import { SUPPORT_VISIBLE_USERS } from "@/lib/support";
+import { userHasFeature } from "@/lib/entitlements";
 
 export const metadata: Metadata = {
   title: "나루",
@@ -20,6 +21,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const { user } = await validateRequest();
+  const analyticsEnabled = user
+    ? await userHasFeature(user.id, "analytics")
+    : false;
 
   return (
     <html lang="ko" suppressHydrationWarning>
@@ -73,12 +77,14 @@ export default async function RootLayout({
                         >
                           파일
                         </Link>
-                        <Link
-                          href="/analytics"
-                          className="text-muted-foreground hover:text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                        >
-                          분석
-                        </Link>
+                        {analyticsEnabled && (
+                          <Link
+                            href="/analytics"
+                            className="text-muted-foreground hover:text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                          >
+                            분석
+                          </Link>
+                        )}
                         {SUPPORT_VISIBLE_USERS.has(user.loginName) && (
                           <Link
                             href="/support"

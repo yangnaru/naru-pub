@@ -1,8 +1,8 @@
 # 후원과 결제 (Toss Payments)
 
-후원자 전용 기능(현재 커스텀 도메인)은 **시간 기반 엔티틀먼트**로 제어됩니다. 영구 무료 제공 계정은 `users.supporter_comp`, 결제로 얻은 유료 기간은 `users.supporter_until`(유료 기간이 끝나는 시각)로 나타냅니다. 접근 권한 = `supporter_comp OR supporter_until + PAYMENT_GRACE_DAYS > now()`입니다. 즉 `supporter_until`은 유료 기간 경계로 남고, 결제 유예 기간 동안은 후원자 기능도 계속 열려 있습니다.
+후원자 전용 기능은 **시간 기반 엔티틀먼트**로 제어됩니다. 영구 무료 제공 계정은 `users.supporter_comp`, 결제로 얻은 유료 기간은 `users.supporter_until`(유료 기간이 끝나는 시각)로 나타냅니다. 접근 권한 = `supporter_comp OR supporter_until + PAYMENT_GRACE_DAYS > now()`입니다. 즉 `supporter_until`은 유료 기간 경계로 남고, 결제 유예 기간 동안은 후원자 기능도 계속 열려 있습니다.
 
-기능 묶음은 `lib/entitlements.ts`의 `PLAN_FEATURES`에 정의됩니다. 지금은 `supporter → [custom_domains]`이며, 예를 들어 애널리틱스를 후원자 전용으로 바꾸려면 이 배열에 `"analytics"`만 추가하면 됩니다. 새 플랜은 키를 추가해 확장합니다.
+기능 묶음은 `lib/entitlements.ts`의 `PLAN_FEATURES`에 정의됩니다. 지금은 `supporter → [custom_domains, github_deploys, analytics]`입니다. 새 플랜은 키를 추가해 확장합니다.
 
 결제는 **Toss Payments 자동결제(빌링)** 입니다. 월 1,000원 / 연 10,000원.
 

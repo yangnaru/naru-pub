@@ -8,6 +8,7 @@ import PageviewsChart from "./pageviews-chart";
 import TopPagesTable from "./top-pages-table";
 import TopReferrersTable from "./top-referrers-table";
 import UserAgentsTable from "./user-agents-table";
+import { userHasFeature } from "@/lib/entitlements";
 
 async function getDailyPageviews(userId: number) {
   const thirtyDaysAgo = new Date();
@@ -98,9 +99,20 @@ function parseBrowserName(ua: string): string {
   if (ua.includes("SamsungBrowser/")) return "Samsung Internet";
   if (ua.includes("Chrome/") && !ua.includes("Edg/") && !ua.includes("OPR/"))
     return "Chrome";
-  if (ua.includes("Safari/") && !ua.includes("Chrome/") && !ua.includes("Chromium/"))
+  if (
+    ua.includes("Safari/") &&
+    !ua.includes("Chrome/") &&
+    !ua.includes("Chromium/")
+  )
     return "Safari";
-  if (ua.includes("bot") || ua.includes("Bot") || ua.includes("crawl") || ua.includes("Crawl") || ua.includes("spider") || ua.includes("Spider"))
+  if (
+    ua.includes("bot") ||
+    ua.includes("Bot") ||
+    ua.includes("crawl") ||
+    ua.includes("Crawl") ||
+    ua.includes("spider") ||
+    ua.includes("Spider")
+  )
     return "Bot";
   if (ua.includes("curl/")) return "curl";
   return "(기타)";
@@ -124,7 +136,9 @@ async function getUserAgentBreakdown(userId: number) {
   // Aggregate by parsed browser name
   const browserMap = new Map<string, number>();
   for (const r of results) {
-    const browser = r.user_agent ? parseBrowserName(r.user_agent) : "(알 수 없음)";
+    const browser = r.user_agent
+      ? parseBrowserName(r.user_agent)
+      : "(알 수 없음)";
     browserMap.set(browser, (browserMap.get(browser) ?? 0) + Number(r.views));
   }
 
@@ -205,6 +219,10 @@ export default async function AnalyticsPage() {
 
   if (!user) {
     redirect("/login");
+  }
+
+  if (!(await userHasFeature(user.id, "analytics"))) {
+    redirect("/account");
   }
 
   const [dailyPageviews, topPages, topReferrers, userAgents, stats] =
