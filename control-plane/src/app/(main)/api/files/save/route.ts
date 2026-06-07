@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { validateRequest } from "@/lib/auth";
 import { assertJsonContentType, getUserHomeDirectory, s3Client } from "@/lib/utils";
-import { User } from "lucia";
+import { User } from "@/lib/auth";
 import * as Sentry from "@sentry/nextjs";
 import {
   EDITABLE_FILE_EXTENSIONS,

@@ -1,6 +1,6 @@
 import { createMessage } from "@upyo/core";
 import { ResendTransport } from "@upyo/resend";
-import { generateId } from "lucia";
+import { generateId } from "./auth";
 
 const transport = new ResendTransport({
   apiKey: process.env.RESEND_API_KEY!,

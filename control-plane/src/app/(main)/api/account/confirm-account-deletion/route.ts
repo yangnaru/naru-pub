@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { lucia, validateRequest } from "@/lib/auth";
+import { deleteSessionCookie, invalidateSession, validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import {
@@ -144,15 +143,10 @@ export async function POST(request: NextRequest) {
 
     // Invalidate session
     if (session) {
-      await lucia.invalidateSession(session.id);
+      await invalidateSession(session.id);
     }
 
-    const sessionCookie = lucia.createBlankSessionCookie();
-    (await cookies()).set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes,
-    );
+    await deleteSessionCookie();
 
     return NextResponse.json({
       success: true,

@@ -1,35 +1,153 @@
-import { Lucia, Session, User } from "lucia";
-import { adapter } from "./database";
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { randomBytes } from "crypto";
+import { db } from "./database";
 
-export const lucia = new Lucia(adapter, {
-  sessionCookie: {
-    // this sets cookies with super long expiration
-    // since Next.js doesn't allow Lucia to extend cookie expiration when rendering pages
-    expires: false,
-    attributes: {
-      // set to `true` when using HTTPS
-      secure: process.env.NODE_ENV === "production",
+// Lucia v3's default session cookie name. Kept identical so sessions issued
+// before this migration stay valid.
+const SESSION_COOKIE_NAME = "auth_session";
+// Sessions live for 30 days and are extended once they pass their halfway
+// point, matching Lucia's previous behavior.
+const SESSION_EXPIRES_IN_MS = 1000 * 60 * 60 * 24 * 30;
+// Lucia set cookies with `expires: false`, i.e. a very long lived cookie. The
+// session row in the database is the real source of truth for validity.
+const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 400;
+
+const ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+// Drop-in replacement for Lucia's `generateId`: a random lowercase
+// alphanumeric string of the given length.
+export function generateId(length: number): string {
+  const bytes = randomBytes(length);
+  let id = "";
+  for (let i = 0; i < length; i++) {
+    id += ID_ALPHABET[bytes[i] % ID_ALPHABET.length];
+  }
+  return id;
+}
+
+export interface User {
+  id: number;
+  loginName: string;
+  createdAt: Date;
+  email: string | null;
+  emailVerifiedAt: Date | null;
+  discoverable: boolean;
+}
+
+export interface Session {
+  id: string;
+  userId: number;
+  expiresAt: Date;
+  fresh: boolean;
+}
+
+export async function createSession(userId: number): Promise<Session> {
+  const id = generateId(40);
+  const expiresAt = new Date(Date.now() + SESSION_EXPIRES_IN_MS);
+  await db
+    .insertInto("sessions")
+    .values({ id, user_id: userId, expires_at: expiresAt })
+    .execute();
+  return { id, userId, expiresAt, fresh: true };
+}
+
+export async function validateSession(
+  sessionId: string
+): Promise<
+  { user: User; session: Session } | { user: null; session: null }
+> {
+  const row = await db
+    .selectFrom("sessions")
+    .innerJoin("users", "users.id", "sessions.user_id")
+    .select([
+      "sessions.id as session_id",
+      "sessions.expires_at as session_expires_at",
+      "users.id as user_id",
+      "users.login_name",
+      "users.created_at",
+      "users.email",
+      "users.email_verified_at",
+      "users.discoverable",
+    ])
+    .where("sessions.id", "=", sessionId)
+    .executeTakeFirst();
+
+  if (!row) {
+    return { user: null, session: null };
+  }
+
+  const expiresAt = new Date(row.session_expires_at);
+
+  // Expired session: clean it up and treat the request as unauthenticated.
+  if (Date.now() >= expiresAt.getTime()) {
+    await db.deleteFrom("sessions").where("id", "=", sessionId).execute();
+    return { user: null, session: null };
+  }
+
+  // Extend the session once it passes the halfway point of its lifetime.
+  let fresh = false;
+  let effectiveExpiresAt = expiresAt;
+  if (Date.now() >= expiresAt.getTime() - SESSION_EXPIRES_IN_MS / 2) {
+    effectiveExpiresAt = new Date(Date.now() + SESSION_EXPIRES_IN_MS);
+    await db
+      .updateTable("sessions")
+      .set({ expires_at: effectiveExpiresAt })
+      .where("id", "=", sessionId)
+      .execute();
+    fresh = true;
+  }
+
+  return {
+    session: {
+      id: row.session_id,
+      userId: row.user_id,
+      expiresAt: effectiveExpiresAt,
+      fresh,
     },
-  },
-  getUserAttributes: (attributes) => {
-    return {
-      // we don't need to expose the hashed password!
-      loginName: attributes.login_name,
-      createdAt: attributes.created_at,
-      email: attributes.email,
-      emailVerifiedAt: attributes.email_verified_at,
-      discoverable: attributes.discoverable,
-    };
-  },
-});
+    user: {
+      id: row.user_id,
+      loginName: row.login_name,
+      createdAt: new Date(row.created_at),
+      email: row.email,
+      emailVerifiedAt: row.email_verified_at
+        ? new Date(row.email_verified_at)
+        : null,
+      discoverable: row.discoverable,
+    },
+  };
+}
+
+export async function invalidateSession(sessionId: string): Promise<void> {
+  await db.deleteFrom("sessions").where("id", "=", sessionId).execute();
+}
+
+export async function setSessionCookie(session: Session): Promise<void> {
+  (await cookies()).set(SESSION_COOKIE_NAME, session.id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_COOKIE_MAX_AGE,
+  });
+}
+
+export async function deleteSessionCookie(): Promise<void> {
+  (await cookies()).set(SESSION_COOKIE_NAME, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+}
 
 export const validateRequest = cache(
   async (): Promise<
     { user: User; session: Session } | { user: null; session: null }
   > => {
-    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId =
+      (await cookies()).get(SESSION_COOKIE_NAME)?.value ?? null;
     if (!sessionId) {
       return {
         user: null,
@@ -37,41 +155,16 @@ export const validateRequest = cache(
       };
     }
 
-    const result = await lucia.validateSession(sessionId);
-    // next.js throws when you attempt to set cookie when rendering page
+    const result = await validateSession(sessionId);
+    // next.js throws when you attempt to set a cookie while rendering a page.
     try {
       if (result.session && result.session.fresh) {
-        const sessionCookie = lucia.createSessionCookie(result.session.id);
-        (await cookies()).set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes
-        );
+        await setSessionCookie(result.session);
       }
       if (!result.session) {
-        const sessionCookie = lucia.createBlankSessionCookie();
-        (await cookies()).set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes
-        );
+        await deleteSessionCookie();
       }
     } catch {}
     return result;
   }
 );
-
-// IMPORTANT!
-declare module "lucia" {
-  interface Register {
-    Lucia: typeof lucia;
-    UserId: number;
-    DatabaseUserAttributes: {
-      login_name: string;
-      email: string;
-      email_verified_at: Date | null;
-      created_at: Date;
-      discoverable: boolean;
-    };
-  }
-}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { lucia, validateRequest } from "@/lib/auth";
+import { deleteSessionCookie, invalidateSession, validateRequest } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,14 +11,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await lucia.invalidateSession(session.id);
-
-    const sessionCookie = lucia.createBlankSessionCookie();
-    (await cookies()).set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes
-    );
+    await invalidateSession(session.id);
+    await deleteSessionCookie();
 
     return NextResponse.json({
       success: true,

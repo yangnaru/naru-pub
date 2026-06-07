@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { lucia } from "@/lib/auth";
+import { createSession, setSessionCookie } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { hash } from "@node-rs/argon2";
 import {
@@ -106,14 +105,8 @@ export async function POST(request: NextRequest) {
       throw e;
     }
 
-    const session = await lucia.createSession(user[0].id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
-
-    (await cookies()).set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes
-    );
+    const session = await createSession(user[0].id);
+    await setSessionCookie(session);
 
     return NextResponse.json({
       success: true,

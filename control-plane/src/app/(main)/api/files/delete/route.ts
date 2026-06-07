@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { validateRequest } from "@/lib/auth";
 import { assertJsonContentType, getUserHomeDirectory, s3Client } from "@/lib/utils";
-import { User } from "lucia";
+import { User } from "@/lib/auth";
 import * as Sentry from "@sentry/nextjs";
 import { recordSiteEdit } from "@/lib/database";
 import { revalidatePath } from "next/cache";

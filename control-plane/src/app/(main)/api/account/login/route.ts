@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { lucia, validateRequest } from "@/lib/auth";
+import { createSession, setSessionCookie, validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { verify } from "@node-rs/argon2";
 import { assertJsonContentType } from "@/lib/utils";
@@ -52,14 +51,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const session = await lucia.createSession(existingUser.id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
-
-    (await cookies()).set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes
-    );
+    const session = await createSession(existingUser.id);
+    await setSessionCookie(session);
 
     return NextResponse.json({
       success: true,
