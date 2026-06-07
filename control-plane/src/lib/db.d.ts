@@ -1,8 +1,9 @@
 import type { ColumnType } from "kysely";
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -128,6 +129,7 @@ export interface Subscriptions {
   current_period_end: Timestamp | null;
   next_billing_at: Timestamp | null;
   failed_charge_count: Generated<number>;
+  charging_started_at: Timestamp | null;
   canceled_at: Timestamp | null;
   created_at: Generated<Timestamp>;
   updated_at: Generated<Timestamp>;
@@ -135,6 +137,7 @@ export interface Subscriptions {
 
 export interface Payments {
   id: Generated<number>;
+  attempt_key: string | null;
   user_id: number;
   subscription_id: number | null;
   toss_payment_key: string | null;

@@ -1,9 +1,12 @@
 import { db } from "@/lib/database";
+import { sql } from "kysely";
 import {
   BillingInterval,
   chargeBillingKey,
+  getPaymentByOrderId,
   newOrderId,
   PLAN_ORDER_NAMES,
+  TossApiError,
 } from "@/lib/toss";
 import {
   addPaymentGrace,
@@ -11,45 +14,190 @@ import {
   MAX_PAYMENT_RETRY_ATTEMPTS,
 } from "@/lib/subscriptions";
 
+const CHARGE_LEASE_MINUTES = 30;
+const BATCH_SIZE = 50;
+
+type DueSubscription = {
+  id: number;
+  user_id: number;
+  billing_interval: string;
+  amount: number;
+  toss_billing_key: string;
+  toss_customer_key: string;
+  current_period_end: Date | string | null;
+  failed_charge_count: number;
+};
+
+type PaymentAttempt = {
+  id: number;
+  order_id: string;
+  status: string;
+};
+
 // Renews active subscriptions whose next_billing_at has passed. On success the
 // period extends contiguously and supporter_until advances. On failure the
 // attempt is retried on subsequent runs (next_billing_at stays in the past)
 // until the retry limit or payment grace window ends, after which the
 // subscription is marked past_due and grace-based access ends.
 
+function renewalAttemptKey(sub: DueSubscription) {
+  const periodEnd = sub.current_period_end
+    ? new Date(sub.current_period_end).toISOString()
+    : "none";
+  const attemptNumber = sub.failed_charge_count + 1;
+  return `subscription:${sub.id}:${periodEnd}:${attemptNumber}`;
+}
+
+async function claimDueSubscriptions(now: Date) {
+  const staleLeaseBefore = new Date(
+    now.getTime() - CHARGE_LEASE_MINUTES * 60 * 1000,
+  );
+
+  const result = await sql<DueSubscription>`
+    UPDATE subscriptions
+    SET charging_started_at = ${now}, updated_at = ${now}
+    WHERE id IN (
+      SELECT id
+      FROM subscriptions
+      WHERE status = 'active'
+        AND toss_billing_key IS NOT NULL
+        AND next_billing_at <= ${now}
+        AND (
+          charging_started_at IS NULL
+          OR charging_started_at < ${staleLeaseBefore}
+        )
+      ORDER BY next_billing_at ASC, id ASC
+      FOR UPDATE SKIP LOCKED
+      LIMIT ${BATCH_SIZE}
+    )
+    RETURNING
+      id,
+      user_id,
+      billing_interval,
+      amount,
+      toss_billing_key,
+      toss_customer_key,
+      current_period_end,
+      failed_charge_count
+  `.execute(db);
+
+  return result.rows;
+}
+
+async function getOrCreatePaymentAttempt(sub: DueSubscription) {
+  const attemptKey = renewalAttemptKey(sub);
+  const existing = await db
+    .selectFrom("payments")
+    .select(["id", "order_id", "status"])
+    .where("attempt_key", "=", attemptKey)
+    .executeTakeFirst();
+
+  if (existing) return existing;
+
+  try {
+    return await db
+      .insertInto("payments")
+      .values({
+        attempt_key: attemptKey,
+        user_id: sub.user_id,
+        subscription_id: sub.id,
+        order_id: newOrderId(),
+        amount: sub.amount,
+        status: "pending",
+      })
+      .returning(["id", "order_id", "status"])
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    const concurrent = await db
+      .selectFrom("payments")
+      .select(["id", "order_id", "status"])
+      .where("attempt_key", "=", attemptKey)
+      .executeTakeFirst();
+    if (concurrent) return concurrent;
+    throw error;
+  }
+}
+
+async function markAttemptFailed(opts: {
+  attempt: PaymentAttempt;
+  sub: DueSubscription;
+  failures: number;
+  nextStatus: string;
+  error: unknown;
+}) {
+  const now = new Date();
+  await db.transaction().execute(async (trx) => {
+    await trx
+      .updateTable("payments")
+      .set({
+        status: "failed",
+        raw: JSON.stringify({
+          error:
+            opts.error instanceof Error
+              ? opts.error.message
+              : String(opts.error),
+        }),
+      })
+      .where("id", "=", opts.attempt.id)
+      .execute();
+
+    await trx
+      .updateTable("subscriptions")
+      .set({
+        failed_charge_count: opts.failures,
+        status: opts.nextStatus,
+        charging_started_at: null,
+        updated_at: now,
+      })
+      .where("id", "=", opts.sub.id)
+      .execute();
+  });
+}
+
 async function main() {
   const now = new Date();
 
-  const due = await db
-    .selectFrom("subscriptions")
-    .select([
-      "id",
-      "user_id",
-      "billing_interval",
-      "amount",
-      "toss_billing_key",
-      "toss_customer_key",
-      "current_period_end",
-      "failed_charge_count",
-    ])
-    .where("status", "=", "active")
-    .where("toss_billing_key", "is not", null)
-    .where("next_billing_at", "<=", now)
-    .execute();
+  const due = await claimDueSubscriptions(now);
 
   console.log(`[charge-subscriptions] ${due.length} subscription(s) due`);
 
   for (const sub of due) {
     const interval = sub.billing_interval as BillingInterval;
-    const orderId = newOrderId();
+    const attempt = await getOrCreatePaymentAttempt(sub);
+
+    if (attempt.status === "done") {
+      await db
+        .updateTable("subscriptions")
+        .set({ charging_started_at: null, updated_at: new Date() })
+        .where("id", "=", sub.id)
+        .execute();
+      console.log(
+        `[charge-subscriptions] user ${sub.user_id}: attempt already done (${attempt.order_id})`,
+      );
+      continue;
+    }
+
     try {
-      const payment = await chargeBillingKey({
-        billingKey: sub.toss_billing_key!,
+      let payment = null;
+      try {
+        const existingPayment = await getPaymentByOrderId(attempt.order_id);
+        if (existingPayment.status === "DONE") {
+          payment = existingPayment;
+        }
+      } catch (error) {
+        if (!(error instanceof TossApiError && error.status === 404)) {
+          throw error;
+        }
+      }
+
+      payment ??= await chargeBillingKey({
+        billingKey: sub.toss_billing_key,
         customerKey: sub.toss_customer_key,
         amount: sub.amount,
-        orderId,
+        orderId: attempt.order_id,
         orderName: PLAN_ORDER_NAMES[interval],
       });
+
       if (payment.status !== "DONE") {
         throw new Error(`unexpected payment status: ${payment.status}`);
       }
@@ -67,6 +215,7 @@ async function main() {
         amount: sub.amount,
         from: base,
         payment,
+        paymentId: attempt.id,
       });
       console.log(`[charge-subscriptions] user ${sub.user_id}: renewed`);
     } catch (err) {
@@ -78,29 +227,12 @@ async function main() {
         failures >= MAX_PAYMENT_RETRY_ATTEMPTS || graceEndsAt <= now
           ? "past_due"
           : "active";
-      await db.transaction().execute(async (trx) => {
-        await trx
-          .insertInto("payments")
-          .values({
-            user_id: sub.user_id,
-            subscription_id: sub.id,
-            order_id: orderId,
-            amount: sub.amount,
-            status: "failed",
-            raw: JSON.stringify({
-              error: err instanceof Error ? err.message : String(err),
-            }),
-          })
-          .execute();
-        await trx
-          .updateTable("subscriptions")
-          .set({
-            failed_charge_count: failures,
-            status: nextStatus,
-            updated_at: new Date(),
-          })
-          .where("id", "=", sub.id)
-          .execute();
+      await markAttemptFailed({
+        attempt,
+        sub,
+        failures,
+        nextStatus,
+        error: err,
       });
       console.error(
         `[charge-subscriptions] user ${sub.user_id}: charge failed (${failures}/${MAX_PAYMENT_RETRY_ATTEMPTS}) -> ${nextStatus}: ${err}`,

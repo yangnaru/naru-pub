@@ -72,27 +72,45 @@ export async function applySuccessfulCharge(opts: {
   amount: number;
   from: Date; // base for the new period (now for first charge, current_period_end for renewals)
   payment: TossPaymentResult;
+  paymentId?: number;
 }): Promise<{ periodStart: Date; periodEnd: Date }> {
   const periodStart = opts.from;
   const periodEnd = addInterval(periodStart, opts.interval);
   const now = new Date();
 
   await db.transaction().execute(async (trx) => {
-    await trx
-      .insertInto("payments")
-      .values({
-        user_id: opts.userId,
-        subscription_id: opts.subscriptionId,
-        toss_payment_key: opts.payment.paymentKey,
-        order_id: opts.payment.orderId,
-        amount: opts.amount,
-        status: "done",
-        paid_at: now,
-        period_start: periodStart,
-        period_end: periodEnd,
-        raw: JSON.stringify(opts.payment),
-      })
-      .execute();
+    if (opts.paymentId) {
+      await trx
+        .updateTable("payments")
+        .set({
+          toss_payment_key: opts.payment.paymentKey,
+          order_id: opts.payment.orderId,
+          amount: opts.amount,
+          status: "done",
+          paid_at: now,
+          period_start: periodStart,
+          period_end: periodEnd,
+          raw: JSON.stringify(opts.payment),
+        })
+        .where("id", "=", opts.paymentId)
+        .execute();
+    } else {
+      await trx
+        .insertInto("payments")
+        .values({
+          user_id: opts.userId,
+          subscription_id: opts.subscriptionId,
+          toss_payment_key: opts.payment.paymentKey,
+          order_id: opts.payment.orderId,
+          amount: opts.amount,
+          status: "done",
+          paid_at: now,
+          period_start: periodStart,
+          period_end: periodEnd,
+          raw: JSON.stringify(opts.payment),
+        })
+        .execute();
+    }
 
     await trx
       .updateTable("subscriptions")
@@ -102,6 +120,7 @@ export async function applySuccessfulCharge(opts: {
         current_period_end: periodEnd,
         next_billing_at: periodEnd,
         failed_charge_count: 0,
+        charging_started_at: null,
         updated_at: now,
       })
       .where("id", "=", opts.subscriptionId)

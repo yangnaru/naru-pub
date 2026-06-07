@@ -28,7 +28,7 @@ export class TossApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly code?: string
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "TossApiError";
@@ -44,14 +44,17 @@ function authHeader(): string {
   return "Basic " + Buffer.from(`${secret}:`).toString("base64");
 }
 
-async function tossRequest<T>(path: string, body: unknown): Promise<T> {
+async function tossRequest<T>(
+  path: string,
+  init: { method?: "GET" | "POST"; body?: unknown } = {},
+): Promise<T> {
   const res = await fetch(`${TOSS_API}${path}`, {
-    method: "POST",
+    method: init.method ?? "POST",
     headers: {
       Authorization: authHeader(),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: init.body == null ? undefined : JSON.stringify(init.body),
   });
 
   const data = (await res.json()) as Record<string, unknown>;
@@ -59,7 +62,7 @@ async function tossRequest<T>(path: string, body: unknown): Promise<T> {
     throw new TossApiError(
       (data?.message as string) ?? `Toss API request failed (${res.status})`,
       res.status,
-      data?.code as string | undefined
+      data?.code as string | undefined,
     );
   }
   return data as T;
@@ -72,10 +75,9 @@ export type TossBillingKeyResult = {
 
 // Exchanges the authKey from requestBillingAuth for a reusable billing key.
 export function issueBillingKey(authKey: string, customerKey: string) {
-  return tossRequest<TossBillingKeyResult>(
-    "/v1/billing/authorizations/issue",
-    { authKey, customerKey }
-  );
+  return tossRequest<TossBillingKeyResult>("/v1/billing/authorizations/issue", {
+    body: { authKey, customerKey },
+  });
 }
 
 export type TossPaymentResult = {
@@ -96,7 +98,7 @@ export function chargeBillingKey(params: {
   orderName: string;
 }) {
   const { billingKey, ...body } = params;
-  return tossRequest<TossPaymentResult>(`/v1/billing/${billingKey}`, body);
+  return tossRequest<TossPaymentResult>(`/v1/billing/${billingKey}`, { body });
 }
 
 // Finalizes a one-time payment (non-billing). Toss validates that paymentKey,
@@ -106,7 +108,16 @@ export function confirmPayment(params: {
   orderId: string;
   amount: number;
 }) {
-  return tossRequest<TossPaymentResult>("/v1/payments/confirm", params);
+  return tossRequest<TossPaymentResult>("/v1/payments/confirm", {
+    body: params,
+  });
+}
+
+export function getPaymentByOrderId(orderId: string) {
+  return tossRequest<TossPaymentResult>(
+    `/v1/payments/orders/${encodeURIComponent(orderId)}`,
+    { method: "GET" },
+  );
 }
 
 export function addInterval(from: Date, interval: BillingInterval): Date {
