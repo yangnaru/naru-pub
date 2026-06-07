@@ -2,7 +2,14 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Globe2, Link2, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Globe2,
+  Link2,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -198,23 +205,37 @@ export default function CustomDomainsCard({
                   const verificationErrors = getVerificationErrors(
                     domain.verificationErrors
                   );
+                  const isActive =
+                    domain.cloudflareStatus === "active" &&
+                    domain.sslStatus === "active";
 
                   return (
                     <div
                       key={domain.id}
-                      className="border border-border rounded p-3 space-y-3"
+                      className={`rounded p-3 space-y-3 ${
+                        isActive
+                          ? "border-2 border-green-500 bg-green-500/5"
+                          : "border border-border"
+                      }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium text-foreground break-all">
                             {domain.hostname}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            호스트: {domain.cloudflareStatus}
-                            {domain.sslStatus
-                              ? ` / SSL: ${domain.sslStatus}`
-                              : ""}
-                          </p>
+                          {isActive ? (
+                            <p className="text-sm font-medium text-green-600 dark:text-green-500 flex items-center gap-1">
+                              <CheckCircle2 size={14} />
+                              연결 완료
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              호스트: {domain.cloudflareStatus}
+                              {domain.sslStatus
+                                ? ` / SSL: ${domain.sslStatus}`
+                                : ""}
+                            </p>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -242,6 +263,7 @@ export default function CustomDomainsCard({
                         </div>
                       </div>
 
+                      {!isActive && (
                       <div className="grid gap-2 text-sm">
                         <div className="bg-secondary border-2 border-primary rounded p-3 space-y-2">
                           <div className="flex items-center gap-2 font-bold text-foreground">
@@ -340,6 +362,7 @@ export default function CustomDomainsCard({
                           </div>
                         )}
                       </div>
+                      )}
                     </div>
                   );
                 })
