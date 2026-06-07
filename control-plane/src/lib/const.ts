@@ -1,5 +1,5 @@
 export const LOGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-export const RESERVED_LOGIN_NAMES = new Set(["proxy"]);
+export const RESERVED_LOGIN_NAMES = new Set(["proxy", "custom-domains"]);
 
 export function isReservedLoginName(loginName: string) {
   return RESERVED_LOGIN_NAMES.has(loginName.toLowerCase());
