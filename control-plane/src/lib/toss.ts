@@ -15,6 +15,11 @@ export const PLAN_ORDER_NAMES: Record<BillingInterval, string> = {
   year: "나루 후원 (연간)",
 };
 
+// One-time donation: pay once for 1 year (no auto-renewal). Priced above the
+// recurring annual plan since there's no retention commitment.
+export const ONE_TIME_YEAR_AMOUNT = 12000;
+export const ONE_TIME_YEAR_ORDER_NAME = "나루 후원 (1년, 한 번만 결제)";
+
 export function isBillingInterval(value: unknown): value is BillingInterval {
   return value === "month" || value === "year";
 }
@@ -92,6 +97,16 @@ export function chargeBillingKey(params: {
 }) {
   const { billingKey, ...body } = params;
   return tossRequest<TossPaymentResult>(`/v1/billing/${billingKey}`, body);
+}
+
+// Finalizes a one-time payment (non-billing). Toss validates that paymentKey,
+// orderId and amount match what was requested in requestPayment.
+export function confirmPayment(params: {
+  paymentKey: string;
+  orderId: string;
+  amount: number;
+}) {
+  return tossRequest<TossPaymentResult>("/v1/payments/confirm", params);
 }
 
 export function addInterval(from: Date, interval: BillingInterval): Date {

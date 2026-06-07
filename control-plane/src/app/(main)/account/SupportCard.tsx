@@ -79,6 +79,42 @@ export default function SupportCard({
     }
   }
 
+  async function donateOnce() {
+    setPending(true);
+    try {
+      const res = await fetch("/api/account/donation/one-time/prepare", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.message ?? "후원을 시작할 수 없습니다.");
+        setPending(false);
+        return;
+      }
+
+      if (!clientKey) {
+        toast.error("결제 설정이 올바르지 않습니다.");
+        setPending(false);
+        return;
+      }
+
+      const tossPayments = await loadTossPayments(clientKey);
+      const payment = tossPayments.payment({ customerKey: data.customerKey });
+      await payment.requestPayment({
+        method: "CARD",
+        amount: { currency: "KRW", value: data.amount },
+        orderId: data.orderId,
+        orderName: data.orderName,
+        successUrl: `${window.location.origin}/account/donation/callback`,
+        failUrl: `${window.location.origin}/account?support=canceled`,
+      });
+      // requestPayment redirects the browser; control resumes on the callback page.
+    } catch {
+      toast.error("결제 창을 여는 중 오류가 발생했습니다.");
+      setPending(false);
+    }
+  }
+
   async function cancel() {
     if (!confirm("후원을 취소하시겠어요? 남은 기간 동안은 계속 이용하실 수 있습니다.")) {
       return;
@@ -160,20 +196,32 @@ export default function SupportCard({
                 후원자 기능을 이용하실 수 있습니다.
               </div>
             )}
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">정기 후원</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={() => subscribe("month")}
+                  disabled={pending}
+                  className="flex-1"
+                >
+                  월 1,000원 후원
+                </Button>
+                <Button
+                  onClick={() => subscribe("year")}
+                  disabled={pending}
+                  className="flex-1"
+                >
+                  연 10,000원 후원 (2개월 무료)
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground pt-1">한 번만 후원</p>
               <Button
-                onClick={() => subscribe("month")}
+                onClick={donateOnce}
                 disabled={pending}
-                className="flex-1"
+                variant="outline"
+                className="w-full"
               >
-                월 1,000원 후원
-              </Button>
-              <Button
-                onClick={() => subscribe("year")}
-                disabled={pending}
-                className="flex-1"
-              >
-                연 10,000원 후원 (2개월 무료)
+                1년 12,000원 (한 번만 결제, 자동 갱신 없음)
               </Button>
             </div>
           </div>
