@@ -98,7 +98,6 @@ export interface Sessions {
 
 export interface Users {
   created_at: Generated<Timestamp>;
-  custom_domains_enabled: Generated<boolean>;
   discoverable: Generated<boolean>;
   email: string | null;
   email_verified_at: Timestamp | null;
@@ -111,6 +110,42 @@ export interface Users {
   site_rendered_at: Timestamp | null;
   site_title: string | null;
   site_updated_at: Timestamp | null;
+  supporter_comp: Generated<boolean>;
+  supporter_until: Timestamp | null;
+  toss_customer_key: string | null;
+}
+
+export interface Subscriptions {
+  id: Generated<number>;
+  user_id: number;
+  plan: Generated<string>;
+  billing_interval: string;
+  amount: number;
+  status: string;
+  toss_customer_key: string;
+  toss_billing_key: string | null;
+  current_period_start: Timestamp | null;
+  current_period_end: Timestamp | null;
+  next_billing_at: Timestamp | null;
+  failed_charge_count: Generated<number>;
+  canceled_at: Timestamp | null;
+  created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface Payments {
+  id: Generated<number>;
+  user_id: number;
+  subscription_id: number | null;
+  toss_payment_key: string | null;
+  order_id: string;
+  amount: number;
+  status: string;
+  paid_at: Timestamp | null;
+  period_start: Timestamp | null;
+  period_end: Timestamp | null;
+  raw: unknown | null;
+  created_at: Generated<Timestamp>;
 }
 
 export interface UserKeys {
@@ -161,8 +196,10 @@ export interface DB {
   pageview_daily_stats: PageviewDailyStats;
   pageviews: Pageviews;
   password_reset_tokens: PasswordResetTokens;
+  payments: Payments;
   remote_actors: RemoteActors;
   sessions: Sessions;
+  subscriptions: Subscriptions;
   user_keys: UserKeys;
   users: Users;
 }

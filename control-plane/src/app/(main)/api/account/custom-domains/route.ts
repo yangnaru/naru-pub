@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
 import { assertJsonContentType } from "@/lib/utils";
+import { userHasFeature } from "@/lib/entitlements";
 import {
   CloudflareApiError,
   createCloudflareCustomHostname,
@@ -10,14 +11,6 @@ import {
   normalizeHostname,
   toCustomDomainRow,
 } from "@/lib/customDomains";
-
-async function getCurrentUserEntitlement(userId: number) {
-  return db
-    .selectFrom("users")
-    .select("custom_domains_enabled")
-    .where("id", "=", userId)
-    .executeTakeFirst();
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,12 +31,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const entitlement = await getCurrentUserEntitlement(user.id);
-    if (!entitlement?.custom_domains_enabled) {
+    if (!(await userHasFeature(user.id, "custom_domains"))) {
       return NextResponse.json(
         {
           success: false,
-          message: "커스텀 도메인은 유료 기능입니다.",
+          message: "커스텀 도메인은 후원자 전용 기능입니다.",
         },
         { status: 403 }
       );
@@ -154,10 +146,9 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const entitlement = await getCurrentUserEntitlement(user.id);
-    if (!entitlement?.custom_domains_enabled) {
+    if (!(await userHasFeature(user.id, "custom_domains"))) {
       return NextResponse.json(
-        { success: false, message: "커스텀 도메인은 유료 기능입니다." },
+        { success: false, message: "커스텀 도메인은 후원자 전용 기능입니다." },
         { status: 403 }
       );
     }

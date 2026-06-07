@@ -11,6 +11,7 @@ import FediverseCard from "./FediverseCard";
 import CustomDomainsCard from "./CustomDomainsCard";
 import { db } from "@/lib/database";
 import { getCustomDomainTarget } from "@/lib/customDomains";
+import { userHasFeature } from "@/lib/entitlements";
 import { Settings, User } from "lucide-react";
 
 export default async function AccountPage() {
@@ -50,12 +51,7 @@ export default async function AccountPage() {
     };
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
-  const entitlement = await db
-    .selectFrom("users")
-    .select("custom_domains_enabled")
-    .where("id", "=", user.id)
-    .executeTakeFirst();
-  const customDomainsEnabled = entitlement?.custom_domains_enabled ?? false;
+  const customDomainsEnabled = await userHasFeature(user.id, "custom_domains");
   const customDomainRows = customDomainsEnabled
     ? await db
         .selectFrom("custom_domains")
