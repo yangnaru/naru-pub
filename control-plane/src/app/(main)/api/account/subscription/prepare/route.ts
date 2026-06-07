@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { success: false, message: "Invalid content type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (!isBillingInterval(interval)) {
       return NextResponse.json(
         { success: false, message: "유효하지 않은 후원 주기입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,19 +40,22 @@ export async function POST(request: NextRequest) {
       .where("user_id", "=", user.id)
       .executeTakeFirst();
 
-    if (existing?.status === "active") {
-      return NextResponse.json(
-        { success: false, message: "이미 후원 중입니다." },
-        { status: 409 }
-      );
-    }
-
     // Ensure a stable per-user customerKey.
     const userRow = await db
       .selectFrom("users")
-      .select("toss_customer_key")
+      .select(["supporter_until", "toss_customer_key"])
       .where("id", "=", user.id)
       .executeTakeFirst();
+
+    const paidThrough =
+      userRow?.supporter_until &&
+      new Date(userRow.supporter_until) > new Date();
+    if (existing?.status === "active" && paidThrough) {
+      return NextResponse.json(
+        { success: false, message: "이미 후원 중입니다." },
+        { status: 409 },
+      );
+    }
     let customerKey = userRow?.toss_customer_key ?? null;
     if (!customerKey) {
       customerKey = randomUUID();
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
     console.error("Subscription prepare error:", error);
     return NextResponse.json(
       { success: false, message: "후원 준비 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
