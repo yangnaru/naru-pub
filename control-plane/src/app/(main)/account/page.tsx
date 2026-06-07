@@ -1,6 +1,8 @@
 import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import LogoutButton from "./LogoutButton";
 import DeleteAccountButton from "./DeleteAccountButton";
 import DownloadDirectoryButton from "./DownloadDirectoryButton";
@@ -13,7 +15,7 @@ import { db } from "@/lib/database";
 import { getCustomDomainTarget } from "@/lib/customDomains";
 import { getUserEntitlement, userHasFeature } from "@/lib/entitlements";
 import SupportCard from "./SupportCard";
-import { Settings, User } from "lucide-react";
+import { ReceiptText, Settings, User } from "lucide-react";
 
 // Limited rollout: only these users see the 나루 후원 (donation) section while
 // Toss Payments review is in progress.
@@ -138,16 +140,26 @@ export default async function AccountPage() {
           followers={followers}
         />
         {SUPPORT_VISIBLE_USERS.has(user.loginName) && (
-          <SupportCard
-            clientKey={process.env.TOSS_CLIENT_KEY ?? ""}
-            comp={entitlement.comp}
-            supporterUntil={
-              entitlement.supporterUntil
-                ? entitlement.supporterUntil.toISOString()
-                : null
-            }
-            subscription={subscription}
-          />
+          <div className="space-y-3">
+            <SupportCard
+              clientKey={process.env.TOSS_CLIENT_KEY ?? ""}
+              comp={entitlement.comp}
+              supporterUntil={
+                entitlement.supporterUntil
+                  ? entitlement.supporterUntil.toISOString()
+                  : null
+              }
+              subscription={subscription}
+            />
+            <div className="flex justify-end">
+              <Button asChild variant="outline">
+                <Link href="/account/payments">
+                  <ReceiptText size={16} />
+                  결제 내역 보기
+                </Link>
+              </Button>
+            </div>
+          </div>
         )}
         {customDomainsEnabled && (
           <CustomDomainsCard
@@ -167,7 +179,9 @@ export default async function AccountPage() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex flex-row gap-4 flex-wrap">
-              <DownloadDirectoryButton hasVerifiedEmail={!!user.email && !!user.emailVerifiedAt} />
+              <DownloadDirectoryButton
+                hasVerifiedEmail={!!user.email && !!user.emailVerifiedAt}
+              />
               <LogoutButton />
               <DeleteAccountButton />
             </div>
