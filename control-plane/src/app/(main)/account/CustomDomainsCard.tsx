@@ -155,13 +155,11 @@ export default function CustomDomainsCard({
         ) : (
           <>
             <div className="bg-muted border border-border rounded p-3 text-sm text-muted-foreground space-y-2">
-              <p>아래에 도메인을 추가하면 나루 프록시로 연결됩니다.</p>
+              <p>가지고 있는 도메인을 나루로 연결할 수 있습니다.</p>
               <p>
-                도메인을 추가하면 항목별로 필요한 DNS 레코드가 표시됩니다.
-                CNAME(또는 ALIAS/ANAME) 대상을{" "}
-                <strong className="text-foreground">{target}</strong>로 설정하고,
-                함께 안내되는 소유권·SSL 인증 레코드를 DNS에 등록한 뒤 상태 확인
-                버튼을 눌러주세요.
+                도메인을 추가하면 연결에 필요한 DNS 레코드가 항목별로
+                안내됩니다. 안내대로 레코드를 등록한 뒤 상태 확인 버튼을
+                눌러주세요.
               </p>
             </div>
 
