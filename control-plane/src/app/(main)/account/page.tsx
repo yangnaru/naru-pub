@@ -1,8 +1,6 @@
 import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import LogoutButton from "./LogoutButton";
 import DeleteAccountButton from "./DeleteAccountButton";
 import DownloadDirectoryButton from "./DownloadDirectoryButton";
@@ -13,13 +11,8 @@ import FediverseCard from "./FediverseCard";
 import CustomDomainsCard from "./CustomDomainsCard";
 import { db } from "@/lib/database";
 import { getCustomDomainTarget } from "@/lib/customDomains";
-import { getUserEntitlement, userHasFeature } from "@/lib/entitlements";
-import SupportCard from "./SupportCard";
-import { ReceiptText, Settings, User } from "lucide-react";
-
-// Limited rollout: only these users see the 나루 후원 (donation) section while
-// Toss Payments review is in progress.
-const SUPPORT_VISIBLE_USERS = new Set(["yang", "tosspayments"]);
+import { userHasFeature } from "@/lib/entitlements";
+import { Settings, User } from "lucide-react";
 
 export default async function AccountPage() {
   const { user } = await validateRequest();
@@ -58,22 +51,7 @@ export default async function AccountPage() {
     };
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
-  const entitlement = await getUserEntitlement(user.id);
   const customDomainsEnabled = await userHasFeature(user.id, "custom_domains");
-  const subscriptionRow = await db
-    .selectFrom("subscriptions")
-    .select(["status", "billing_interval", "next_billing_at"])
-    .where("user_id", "=", user.id)
-    .executeTakeFirst();
-  const subscription = subscriptionRow
-    ? {
-        status: subscriptionRow.status,
-        billingInterval: subscriptionRow.billing_interval,
-        nextBillingAt: subscriptionRow.next_billing_at
-          ? new Date(subscriptionRow.next_billing_at).toISOString()
-          : null,
-      }
-    : null;
   const customDomainRows = customDomainsEnabled
     ? await db
         .selectFrom("custom_domains")
@@ -139,28 +117,6 @@ export default async function AccountPage() {
           domain={fediverseDomain}
           followers={followers}
         />
-        {SUPPORT_VISIBLE_USERS.has(user.loginName) && (
-          <div className="space-y-3">
-            <SupportCard
-              clientKey={process.env.TOSS_CLIENT_KEY ?? ""}
-              comp={entitlement.comp}
-              supporterUntil={
-                entitlement.supporterUntil
-                  ? entitlement.supporterUntil.toISOString()
-                  : null
-              }
-              subscription={subscription}
-            />
-            <div className="flex justify-end">
-              <Button asChild variant="outline">
-                <Link href="/account/payments">
-                  <ReceiptText size={16} />
-                  결제 내역 보기
-                </Link>
-              </Button>
-            </div>
-          </div>
-        )}
         {customDomainsEnabled && (
           <CustomDomainsCard
             enabled={customDomainsEnabled}
