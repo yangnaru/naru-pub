@@ -42,6 +42,7 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@sentry/nextjs": "^10.36.0",
     "@smithy/node-http-handler": "^4.5.1",
+    "@tosspayments/tosspayments-sdk": "^2.7.0",
     "@upyo/core": "^0.4.0",
     "@upyo/resend": "^0.4.0",
     "@zip.js/zip.js": "^2.8.2",
