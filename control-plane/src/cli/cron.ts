@@ -10,6 +10,7 @@ const SITE_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const SITE_UPDATE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const CUSTOM_DOMAIN_INTERVAL = 3 * 60 * 1000; // 3 minutes
 const CUSTOM_DOMAIN_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+const SUBSCRIPTION_CHARGE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
 function runWithTimeout(
   script: string,
@@ -65,6 +66,10 @@ async function runCustomDomainRefresher() {
   await runWithTimeout("refresh-custom-domains.ts", CUSTOM_DOMAIN_TIMEOUT);
 }
 
+async function runSubscriptionCharger() {
+  await runWithTimeout("charge-subscriptions.ts", SUBSCRIPTION_CHARGE_TIMEOUT);
+}
+
 function scheduleDaily(hour: number, minute: number, fn: () => Promise<void>) {
   const runIfTime = () => {
     const now = new Date();
@@ -106,6 +111,10 @@ async function main() {
   // Run home directory updater daily at 22:00
   console.log("[cron] Scheduling home directory updater daily at 22:00");
   scheduleDaily(22, 0, runHomeDirectoryUpdater);
+
+  // Run subscription renewal charger daily at 04:00
+  console.log("[cron] Scheduling subscription charger daily at 04:00");
+  scheduleDaily(4, 0, runSubscriptionCharger);
 
   // Keep process alive
   process.on("SIGTERM", () => {

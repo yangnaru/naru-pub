@@ -20,6 +20,7 @@
     "backfill-site-titles": "tsx src/cli/backfill-site-titles.ts",
     "update-home-directory-sizes": "tsx src/cli/update-home-directory-sizes.ts",
     "fix-multiple-slashes": "tsx src/cli/fix-multiple-slashes.ts",
+    "charge-subscriptions": "tsx src/cli/charge-subscriptions.ts",
     "cron": "tsx src/cli/cron.ts",
     "worker": "tsx src/cli/worker.ts"
   },
