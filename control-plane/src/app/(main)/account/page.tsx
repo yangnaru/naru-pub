@@ -9,6 +9,7 @@ import ChangePasswordForm from "./ChangePasswordForm";
 import EmailManagement from "./EmailManagement";
 import FediverseCard from "./FediverseCard";
 import CustomDomainsCard from "./CustomDomainsCard";
+import GitHubDeployTargetsCard from "./GitHubDeployTargetsCard";
 import { db } from "@/lib/database";
 import { getCustomDomainTarget } from "@/lib/customDomains";
 import { userHasFeature } from "@/lib/entitlements";
@@ -83,6 +84,32 @@ export default async function AccountPage() {
     verificationErrors: domain.verification_errors,
     verifiedAt: domain.verified_at?.toISOString() ?? null,
   }));
+  const githubDeployTargetRows = await db
+    .selectFrom("github_deploy_targets")
+    .select([
+      "id",
+      "github_repository",
+      "github_ref",
+      "target_prefix",
+      "delete_removed_files",
+      "enabled",
+      "last_github_sha",
+      "last_deployed_at",
+    ])
+    .where("user_id", "=", user.id)
+    .where("enabled", "=", true)
+    .orderBy("created_at", "desc")
+    .execute();
+  const githubDeployTargets = githubDeployTargetRows.map((target) => ({
+    id: target.id,
+    githubRepository: target.github_repository,
+    githubRef: target.github_ref,
+    targetPrefix: target.target_prefix,
+    deleteRemovedFiles: target.delete_removed_files,
+    enabled: target.enabled,
+    lastGithubSha: target.last_github_sha,
+    lastDeployedAt: target.last_deployed_at?.toISOString() ?? null,
+  }));
 
   return (
     <div className="bg-background min-h-screen">
@@ -116,6 +143,10 @@ export default async function AccountPage() {
           loginName={user.loginName}
           domain={fediverseDomain}
           followers={followers}
+        />
+        <GitHubDeployTargetsCard
+          loginName={user.loginName}
+          targets={githubDeployTargets}
         />
         {customDomainsEnabled && (
           <CustomDomainsCard
