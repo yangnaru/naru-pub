@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateRequest } from "@/lib/auth";
 import { db } from "@/lib/database";
+import { userHasFeature } from "@/lib/entitlements";
 import { assertJsonContentType } from "@/lib/utils";
 import { upsertGitHubDeployTarget } from "@/lib/deploy/siteDeploy";
 
@@ -50,6 +51,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
         { status: 401 },
+      );
+    }
+
+    if (!(await userHasFeature(user.id, "github_deploys"))) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "GitHub 배포는 후원자 전용 기능입니다.",
+        },
+        { status: 403 },
       );
     }
 

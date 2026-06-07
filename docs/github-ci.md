@@ -4,6 +4,8 @@ Naru supports GitHub Actions deploys through GitHub Actions OIDC. Users register
 an allowed repository/ref in Naru, then a workflow uploads a generated static
 site into a private staging prefix and finalizes the deployment.
 
+GitHub CI deploys are available to supporter accounts.
+
 Recommended official Action repository name: `naru-pub/deploy-action`.
 If Naru expects to publish multiple official actions, `naru-pub/actions` with
 the deploy action at `naru-pub/actions/deploy@v1` is also a good shape.

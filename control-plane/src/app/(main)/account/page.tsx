@@ -53,6 +53,7 @@ export default async function AccountPage() {
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
   const customDomainsEnabled = await userHasFeature(user.id, "custom_domains");
+  const githubDeploysEnabled = await userHasFeature(user.id, "github_deploys");
   const customDomainRows = customDomainsEnabled
     ? await db
         .selectFrom("custom_domains")
@@ -84,22 +85,24 @@ export default async function AccountPage() {
     verificationErrors: domain.verification_errors,
     verifiedAt: domain.verified_at?.toISOString() ?? null,
   }));
-  const githubDeployTargetRows = await db
-    .selectFrom("github_deploy_targets")
-    .select([
-      "id",
-      "github_repository",
-      "github_ref",
-      "target_prefix",
-      "delete_removed_files",
-      "enabled",
-      "last_github_sha",
-      "last_deployed_at",
-    ])
-    .where("user_id", "=", user.id)
-    .where("enabled", "=", true)
-    .orderBy("created_at", "desc")
-    .execute();
+  const githubDeployTargetRows = githubDeploysEnabled
+    ? await db
+        .selectFrom("github_deploy_targets")
+        .select([
+          "id",
+          "github_repository",
+          "github_ref",
+          "target_prefix",
+          "delete_removed_files",
+          "enabled",
+          "last_github_sha",
+          "last_deployed_at",
+        ])
+        .where("user_id", "=", user.id)
+        .where("enabled", "=", true)
+        .orderBy("created_at", "desc")
+        .execute()
+    : [];
   const githubDeployTargets = githubDeployTargetRows.map((target) => ({
     id: target.id,
     githubRepository: target.github_repository,
@@ -144,10 +147,12 @@ export default async function AccountPage() {
           domain={fediverseDomain}
           followers={followers}
         />
-        <GitHubDeployTargetsCard
-          loginName={user.loginName}
-          targets={githubDeployTargets}
-        />
+        {githubDeploysEnabled && (
+          <GitHubDeployTargetsCard
+            loginName={user.loginName}
+            targets={githubDeployTargets}
+          />
+        )}
         {customDomainsEnabled && (
           <CustomDomainsCard
             enabled={customDomainsEnabled}

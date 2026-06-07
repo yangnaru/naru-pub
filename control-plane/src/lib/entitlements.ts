@@ -4,10 +4,10 @@ import { addPaymentGrace } from "@/lib/subscriptions";
 // Features that a paid (supporter) plan can unlock. Add new features here as
 // they become gated. `analytics` is currently open to everyone; when that
 // changes, add it to the supporter plan below — no other change needed.
-export type Feature = "custom_domains" | "analytics";
+export type Feature = "custom_domains" | "github_deploys" | "analytics";
 
 export const PLAN_FEATURES: Record<string, Feature[]> = {
-  supporter: ["custom_domains"],
+  supporter: ["custom_domains", "github_deploys"],
   // To gate analytics later: supporter: ["custom_domains", "analytics"],
   // To add a richer tier later, add another plan key with its feature list.
 };

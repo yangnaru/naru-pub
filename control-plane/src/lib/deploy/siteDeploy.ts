@@ -10,6 +10,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createHash, randomBytes } from "crypto";
 import * as Sentry from "@sentry/nextjs";
 import { db, recordSiteEdit } from "@/lib/database";
+import { userHasFeature } from "@/lib/entitlements";
 import { extractHtmlTitle } from "@/lib/html";
 import {
   ALLOWED_FILE_EXTENSIONS,
@@ -341,6 +342,10 @@ export async function createGitHubDeploymentPlan(params: {
 
   if (!target) {
     throw new Error("No enabled GitHub deploy target matches this request");
+  }
+
+  if (!(await userHasFeature(target.user_id, "github_deploys"))) {
+    throw new Error("GitHub deploys are available to supporters only");
   }
 
   assertGitHubClaimsAllowed(params.claims, target);
