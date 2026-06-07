@@ -5,12 +5,66 @@ import { assertJsonContentType } from "@/lib/utils";
 import {
   BillingInterval,
   chargeBillingKey,
+  getPaymentByOrderId,
   issueBillingKey,
   newOrderId,
   PLAN_ORDER_NAMES,
   TossApiError,
 } from "@/lib/toss";
 import { applySuccessfulCharge } from "@/lib/subscriptions";
+
+async function getOrCreateInitialChargeAttempt(opts: {
+  subscriptionId: number;
+  userId: number;
+  amount: number;
+}) {
+  const prefix = `subscription_initial:${opts.subscriptionId}:`;
+
+  const pending = await db
+    .selectFrom("payments")
+    .select(["id", "order_id", "status"])
+    .where("subscription_id", "=", opts.subscriptionId)
+    .where("attempt_key", "like", `${prefix}%`)
+    .where("status", "=", "pending")
+    .orderBy("id", "desc")
+    .executeTakeFirst();
+
+  if (pending) return pending;
+
+  const countRow = await db
+    .selectFrom("payments")
+    .select(({ fn }) => fn.countAll().as("count"))
+    .where("subscription_id", "=", opts.subscriptionId)
+    .where("attempt_key", "like", `${prefix}%`)
+    .executeTakeFirst();
+  const attemptNumber = Number(countRow?.count ?? 0) + 1;
+
+  try {
+    return await db
+      .insertInto("payments")
+      .values({
+        attempt_key: `${prefix}${attemptNumber}`,
+        user_id: opts.userId,
+        subscription_id: opts.subscriptionId,
+        order_id: newOrderId(),
+        amount: opts.amount,
+        status: "pending",
+      })
+      .returning(["id", "order_id", "status"])
+      .executeTakeFirstOrThrow();
+  } catch (error) {
+    const concurrent = await db
+      .selectFrom("payments")
+      .select(["id", "order_id", "status"])
+      .where("subscription_id", "=", opts.subscriptionId)
+      .where("attempt_key", "like", `${prefix}%`)
+      .where("status", "=", "pending")
+      .orderBy("id", "desc")
+      .executeTakeFirst();
+    if (concurrent) return concurrent;
+    throw error;
+  }
+}
 
 // Step 2 of the subscribe flow: exchanges the authKey for a billing key and
 // charges the first period. Amount comes from the stored subscription (server
@@ -22,7 +76,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { success: false, message: "Invalid content type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -38,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (typeof authKey !== "string" || typeof customerKey !== "string") {
       return NextResponse.json(
         { success: false, message: "유효하지 않은 요청입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,62 +102,90 @@ export async function POST(request: NextRequest) {
       .select("toss_customer_key")
       .where("id", "=", user.id)
       .executeTakeFirst();
-    if (!userRow?.toss_customer_key || userRow.toss_customer_key !== customerKey) {
+    if (
+      !userRow?.toss_customer_key ||
+      userRow.toss_customer_key !== customerKey
+    ) {
       return NextResponse.json(
         { success: false, message: "유효하지 않은 요청입니다." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const sub = await db
       .selectFrom("subscriptions")
-      .select(["id", "billing_interval", "amount", "status"])
+      .select([
+        "id",
+        "billing_interval",
+        "amount",
+        "status",
+        "toss_billing_key",
+      ])
       .where("user_id", "=", user.id)
       .executeTakeFirst();
     if (!sub) {
       return NextResponse.json(
         { success: false, message: "후원 정보를 찾을 수 없습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (sub.status === "active") {
-      return NextResponse.json({ success: true, message: "이미 후원 중입니다." });
+      return NextResponse.json({
+        success: true,
+        message: "이미 후원 중입니다.",
+      });
     }
 
     const interval = sub.billing_interval as BillingInterval;
 
     // Issue a reusable billing key from the one-time authKey.
-    const { billingKey } = await issueBillingKey(authKey, customerKey);
-    await db
-      .updateTable("subscriptions")
-      .set({ toss_billing_key: billingKey, updated_at: new Date() })
-      .where("id", "=", sub.id)
-      .execute();
+    let billingKey = sub.toss_billing_key;
+    if (!billingKey) {
+      const issued = await issueBillingKey(authKey, customerKey);
+      billingKey = issued.billingKey;
+      await db
+        .updateTable("subscriptions")
+        .set({ toss_billing_key: billingKey, updated_at: new Date() })
+        .where("id", "=", sub.id)
+        .execute();
+    }
 
     // Charge the first period.
-    const orderId = newOrderId();
+    const attempt = await getOrCreateInitialChargeAttempt({
+      subscriptionId: sub.id,
+      userId: user.id,
+      amount: sub.amount,
+    });
     let payment;
     try {
-      payment = await chargeBillingKey({
+      try {
+        const existingPayment = await getPaymentByOrderId(attempt.order_id);
+        if (existingPayment.status === "DONE") {
+          payment = existingPayment;
+        }
+      } catch (err) {
+        if (!(err instanceof TossApiError && err.status === 404)) {
+          throw err;
+        }
+      }
+
+      payment ??= await chargeBillingKey({
         billingKey,
         customerKey,
         amount: sub.amount,
-        orderId,
+        orderId: attempt.order_id,
         orderName: PLAN_ORDER_NAMES[interval],
       });
     } catch (err) {
       await db
-        .insertInto("payments")
-        .values({
-          user_id: user.id,
-          subscription_id: sub.id,
-          order_id: orderId,
-          amount: sub.amount,
+        .updateTable("payments")
+        .set({
           status: "failed",
           raw: JSON.stringify({
             error: err instanceof Error ? err.message : String(err),
           }),
         })
+        .where("id", "=", attempt.id)
         .execute();
       const message =
         err instanceof TossApiError ? err.message : "결제에 실패했습니다.";
@@ -112,20 +194,19 @@ export async function POST(request: NextRequest) {
 
     if (payment.status !== "DONE") {
       await db
-        .insertInto("payments")
-        .values({
-          user_id: user.id,
-          subscription_id: sub.id,
+        .updateTable("payments")
+        .set({
           toss_payment_key: payment.paymentKey,
-          order_id: payment.orderId ?? orderId,
+          order_id: payment.orderId ?? attempt.order_id,
           amount: sub.amount,
           status: "failed",
           raw: JSON.stringify(payment),
         })
+        .where("id", "=", attempt.id)
         .execute();
       return NextResponse.json(
         { success: false, message: "결제가 완료되지 않았습니다." },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
@@ -136,6 +217,7 @@ export async function POST(request: NextRequest) {
       amount: sub.amount,
       from: new Date(),
       payment,
+      paymentId: attempt.id,
     });
 
     return NextResponse.json({
@@ -146,7 +228,7 @@ export async function POST(request: NextRequest) {
     console.error("Subscription confirm error:", error);
     return NextResponse.json(
       { success: false, message: "후원 처리 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
