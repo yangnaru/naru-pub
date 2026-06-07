@@ -11,10 +11,11 @@ const SITE_UPDATE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 const CUSTOM_DOMAIN_INTERVAL = 3 * 60 * 1000; // 3 minutes
 const CUSTOM_DOMAIN_TIMEOUT = 2 * 60 * 1000; // 2 minutes
 const SUBSCRIPTION_CHARGE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const EXPIRED_CUSTOM_DOMAIN_CLEANUP_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 function runWithTimeout(
   script: string,
-  timeout: number
+  timeout: number,
 ): Promise<{ success: boolean; code: number | null }> {
   return new Promise((resolve) => {
     const scriptPath = `src/cli/${script}`;
@@ -27,7 +28,9 @@ function runWithTimeout(
     });
 
     const timer = setTimeout(() => {
-      console.log(`[cron] ${script} timed out after ${timeout / 1000}s, killing`);
+      console.log(
+        `[cron] ${script} timed out after ${timeout / 1000}s, killing`,
+      );
       child.kill("SIGTERM");
       setTimeout(() => child.kill("SIGKILL"), 5000);
     }, timeout);
@@ -68,6 +71,13 @@ async function runCustomDomainRefresher() {
 
 async function runSubscriptionCharger() {
   await runWithTimeout("charge-subscriptions.ts", SUBSCRIPTION_CHARGE_TIMEOUT);
+}
+
+async function runExpiredCustomDomainCleanup() {
+  await runWithTimeout(
+    "cleanup-expired-custom-domains.ts",
+    EXPIRED_CUSTOM_DOMAIN_CLEANUP_TIMEOUT,
+  );
 }
 
 function scheduleDaily(hour: number, minute: number, fn: () => Promise<void>) {
@@ -115,6 +125,10 @@ async function main() {
   // Run subscription renewal charger daily at 04:00
   console.log("[cron] Scheduling subscription charger daily at 04:00");
   scheduleDaily(4, 0, runSubscriptionCharger);
+
+  // Run expired custom-domain cleanup daily at 04:30
+  console.log("[cron] Scheduling expired custom-domain cleanup daily at 04:30");
+  scheduleDaily(4, 30, runExpiredCustomDomainCleanup);
 
   // Keep process alive
   process.on("SIGTERM", () => {

@@ -192,7 +192,15 @@ async fn resolve_site_owner(
            AND custom_domains.verified_at IS NOT NULL
            AND custom_domains.cloudflare_status = 'active'
            AND custom_domains.ssl_status = 'active'
-           AND (users.supporter_comp = TRUE OR users.supporter_until > now())"
+           AND (
+             users.supporter_comp = TRUE
+             OR users.supporter_until > now()
+             OR EXISTS (
+               SELECT 1 FROM subscriptions
+               WHERE subscriptions.user_id = users.id
+                 AND subscriptions.status = 'active'
+             )
+           )"
     )
     .bind(&host)
     .fetch_optional(db_pool)

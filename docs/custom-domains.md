@@ -10,7 +10,7 @@
 - `PLATFORM_DOMAIN`: 프록시가 기본 서브도메인 라우팅에 사용할 플랫폼 도메인입니다. 예: `naru.pub`
 - `R2_PUBLIC_DOMAIN`: HTML/JS/JSON 외 정적 파일 리다이렉트에 사용할 R2 공개 도메인입니다. 예: `r2.naru.pub`
 
-후원자 전용 기능 활성화는 시간 기반 엔티틀먼트로 제어됩니다([후원과 결제](billing.md) 참고). 사용자가 계정 페이지에서 도메인을 등록하면 control-plane이 Cloudflare Custom Hostname을 생성하고, 사용자는 Cloudflare가 반환한 소유권/인증서 검증 레코드를 DNS에 추가합니다. 프록시는 `cloudflare_status = 'active'`, `ssl_status = 'active'`, `verified_at IS NOT NULL`이고 소유자가 후원자(`supporter_comp` 또는 `supporter_until > now()`)인 커스텀 도메인만 서빙합니다.
+후원자 전용 기능 활성화는 시간 기반 엔티틀먼트와 결제 재시도 상태로 제어됩니다([후원과 결제](billing.md) 참고). 사용자가 계정 페이지에서 도메인을 등록하면 control-plane이 Cloudflare Custom Hostname을 생성하고, 사용자는 Cloudflare가 반환한 소유권/인증서 검증 레코드를 DNS에 추가합니다. 프록시는 `cloudflare_status = 'active'`, `ssl_status = 'active'`, `verified_at IS NOT NULL`이고 소유자가 후원자(`supporter_comp`, `supporter_until > now()`, 또는 재시도 유예 중인 `active` 구독)인 커스텀 도메인만 서빙합니다.
 
 ## ⚠️ Tunnel catch-all 라우트 (필수)
 
@@ -36,3 +36,7 @@ curl https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/cfd_tunnel/$TUNNE
 - 이미 `active`인 도메인은 쿼리에서 제외되어 다시 폴링하지 않습니다.
 - 생성된 지 14일이 지난 도메인은 자동 폴링 대상에서 빠지며, 필요하면 수동 버튼으로 갱신할 수 있습니다(방치/오설정 도메인에 대한 무한 폴링 방지).
 - Cloudflare 상태 조회는 무료 API 호출이며 과금되지 않습니다. SaaS 비용은 폴링 빈도와 무관하게 활성 custom hostname 개수에만 부과됩니다.
+
+## 만료 후 회수
+
+후원 기간이 끝나고 자동결제 재시도도 한도에 도달해 구독이 더 이상 `active`가 아니면 cron 컨테이너의 `cleanup-expired-custom-domains.ts`가 Cloudflare for SaaS Custom Hostname을 삭제하고 `custom_domains` 행도 제거합니다. 영구 제공 계정(`supporter_comp`)은 이 회수 대상에서 제외됩니다.

@@ -1,6 +1,10 @@
 import { db } from "@/lib/database";
 import { addInterval, BillingInterval, TossPaymentResult } from "@/lib/toss";
 
+// Subscription renewals run daily. This value is the payment grace window before
+// a subscription becomes past_due and related paid-only resources are reclaimed.
+export const PAYMENT_GRACE_DAYS = 4;
+
 // Applies a one-time payment: records the ledger row and extends supporter_until,
 // stacking on top of any remaining time (so paying again before expiry adds on
 // rather than resetting). No subscription row — one-time donations don't renew.

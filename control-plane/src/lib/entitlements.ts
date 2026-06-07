@@ -16,13 +16,14 @@ export type UserEntitlement = {
   comp: boolean;
   plan: string | null;
   supporterUntil: Date | null;
+  inPaymentGrace: boolean;
 };
 
 // Resolves a user's current entitlement. A user is a supporter if they have a
-// permanent comp or a paid-through date in the future. Access expiry is implicit
-// (supporter_until in the past) — no revocation job required.
+// permanent comp, a paid-through date in the future, or an active subscription
+// still inside the payment retry grace window.
 export async function getUserEntitlement(
-  userId: number
+  userId: number,
 ): Promise<UserEntitlement> {
   const row = await db
     .selectFrom("users")
@@ -31,27 +32,37 @@ export async function getUserEntitlement(
       "users.supporter_comp as comp",
       "users.supporter_until as supporterUntil",
       "subscriptions.plan as plan",
+      "subscriptions.status as subscriptionStatus",
     ])
     .where("users.id", "=", userId)
     .executeTakeFirst();
 
   if (!row) {
-    return { isSupporter: false, comp: false, plan: null, supporterUntil: null };
+    return {
+      isSupporter: false,
+      comp: false,
+      plan: null,
+      supporterUntil: null,
+      inPaymentGrace: false,
+    };
   }
 
   const comp = !!row.comp;
-  const supporterUntil = row.supporterUntil ? new Date(row.supporterUntil) : null;
-  const active = supporterUntil != null && supporterUntil.getTime() > Date.now();
-  const isSupporter = comp || active;
+  const supporterUntil = row.supporterUntil
+    ? new Date(row.supporterUntil)
+    : null;
+  const paid = supporterUntil != null && supporterUntil.getTime() > Date.now();
+  const inPaymentGrace = !paid && row.subscriptionStatus === "active";
+  const isSupporter = comp || paid || inPaymentGrace;
   // Comp users have no subscription row, so default them to the supporter plan.
   const plan = row.plan ?? (comp ? "supporter" : null);
 
-  return { isSupporter, comp, plan, supporterUntil };
+  return { isSupporter, comp, plan, supporterUntil, inPaymentGrace };
 }
 
 export async function userHasFeature(
   userId: number,
-  feature: Feature
+  feature: Feature,
 ): Promise<boolean> {
   const ent = await getUserEntitlement(userId);
   if (!ent.isSupporter) return false;
