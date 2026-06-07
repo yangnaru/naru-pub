@@ -311,6 +311,13 @@ async fn handle_request(
     .await;
 
     let Some(site_owner) = site_owner else {
+        // TEMP DIAGNOSTIC: log host + headers on 404 to debug custom-domain routing
+        let hdrs: Vec<String> = req
+            .headers()
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v.to_str().unwrap_or("?")))
+            .collect();
+        eprintln!("404 host={:?} headers=[{}]", host, hdrs.join(", "));
         return Ok(Response::builder()
             .status(404)
             .body(Full::new(Bytes::from("Not Found")))
