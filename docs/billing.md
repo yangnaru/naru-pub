@@ -22,5 +22,6 @@
 
 - `TOSS_CLIENT_KEY`: 서버에서 읽어 클라이언트로 전달하는 공개 키.
 - `TOSS_SECRET_KEY`: 서버 전용 시크릿 키.
+- `TOSS_WEBHOOK_SECRET`: 설정하면 Toss 웹훅의 `x-toss-timestamp`/`x-toss-signature` HMAC 서명을 검증합니다.
 
 개발/테스트에는 Toss 테스트 키를 사용하세요.

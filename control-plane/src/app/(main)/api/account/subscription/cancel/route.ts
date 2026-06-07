@@ -11,7 +11,7 @@ export async function POST(_request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -24,7 +24,7 @@ export async function POST(_request: NextRequest) {
     if (!sub) {
       return NextResponse.json(
         { success: false, message: "후원 정보가 없습니다." },
-        { status: 404 }
+        { status: 404 },
       );
     }
     if (sub.status === "canceled") {
@@ -38,6 +38,7 @@ export async function POST(_request: NextRequest) {
       .updateTable("subscriptions")
       .set({
         status: "canceled",
+        toss_billing_key: null,
         canceled_at: new Date(),
         next_billing_at: null,
         updated_at: new Date(),
@@ -47,13 +48,14 @@ export async function POST(_request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "후원이 취소되었습니다. 남은 기간 동안은 계속 이용하실 수 있습니다.",
+      message:
+        "후원이 취소되었습니다. 남은 기간 동안은 계속 이용하실 수 있습니다.",
     });
   } catch (error) {
     console.error("Subscription cancel error:", error);
     return NextResponse.json(
       { success: false, message: "후원 취소 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
