@@ -50,28 +50,31 @@ export default async function AccountPage() {
     };
   });
   const fediverseDomain = process.env.NEXT_PUBLIC_DOMAIN ?? "naru.pub";
-  const customDomainRows = await db
-    .selectFrom("custom_domains")
-    .select([
-      "id",
-      "hostname",
-      "cloudflare_status",
-      "ssl_status",
-      "ownership_verification_name",
-      "ownership_verification_type",
-      "ownership_verification_value",
-      "ssl_validation_records",
-      "verification_errors",
-      "verified_at",
-    ])
-    .where("user_id", "=", user.id)
-    .orderBy("id", "desc")
-    .execute();
   const entitlement = await db
     .selectFrom("users")
     .select("custom_domains_enabled")
     .where("id", "=", user.id)
     .executeTakeFirst();
+  const customDomainsEnabled = entitlement?.custom_domains_enabled ?? false;
+  const customDomainRows = customDomainsEnabled
+    ? await db
+        .selectFrom("custom_domains")
+        .select([
+          "id",
+          "hostname",
+          "cloudflare_status",
+          "ssl_status",
+          "ownership_verification_name",
+          "ownership_verification_type",
+          "ownership_verification_value",
+          "ssl_validation_records",
+          "verification_errors",
+          "verified_at",
+        ])
+        .where("user_id", "=", user.id)
+        .orderBy("id", "desc")
+        .execute()
+    : [];
   const customDomains = customDomainRows.map((domain) => ({
     id: domain.id,
     hostname: domain.hostname,
@@ -118,11 +121,13 @@ export default async function AccountPage() {
           domain={fediverseDomain}
           followers={followers}
         />
-        <CustomDomainsCard
-          enabled={entitlement?.custom_domains_enabled ?? false}
-          domains={customDomains}
-          target={getCustomDomainTarget()}
-        />
+        {customDomainsEnabled && (
+          <CustomDomainsCard
+            enabled={customDomainsEnabled}
+            domains={customDomains}
+            target={getCustomDomainTarget()}
+          />
+        )}
         <DiscoverabilityForm discoverable={user.discoverable} />
         <ChangePasswordForm />
 
