@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { success: false, message: "Invalid content type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -35,7 +35,40 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { success: false, message: "유효하지 않은 요청입니다." },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const pendingPayment = await db
+      .selectFrom("payments")
+      .select(["id", "amount", "status"])
+      .where("order_id", "=", orderId)
+      .where("user_id", "=", user.id)
+      .where("subscription_id", "is", null)
+      .executeTakeFirst();
+
+    if (!pendingPayment) {
+      return NextResponse.json(
+        { success: false, message: "후원 주문을 찾을 수 없습니다." },
+        { status: 404 },
+      );
+    }
+
+    if (pendingPayment.status === "done") {
+      return NextResponse.json({
+        success: true,
+        message: "이미 처리된 후원입니다.",
+      });
+    }
+
+    if (
+      pendingPayment.status !== "pending" ||
+      pendingPayment.amount !== ONE_TIME_YEAR_AMOUNT ||
+      amount !== ONE_TIME_YEAR_AMOUNT
+    ) {
+      return NextResponse.json(
+        { success: false, message: "후원 주문 정보가 올바르지 않습니다." },
+        { status: 400 },
       );
     }
 
@@ -44,16 +77,14 @@ export async function POST(request: NextRequest) {
       payment = await confirmPayment({ paymentKey, orderId, amount });
     } catch (err) {
       await db
-        .insertInto("payments")
-        .values({
-          user_id: user.id,
-          order_id: orderId,
-          amount,
+        .updateTable("payments")
+        .set({
           status: "failed",
           raw: JSON.stringify({
             error: err instanceof Error ? err.message : String(err),
           }),
         })
+        .where("id", "=", pendingPayment.id)
         .execute();
       const message =
         err instanceof TossApiError ? err.message : "결제에 실패했습니다.";
@@ -61,21 +92,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Grant based on the amount Toss actually confirmed.
-    if (payment.status !== "DONE" || payment.totalAmount !== ONE_TIME_YEAR_AMOUNT) {
+    if (
+      payment.status !== "DONE" ||
+      payment.totalAmount !== ONE_TIME_YEAR_AMOUNT
+    ) {
       await db
-        .insertInto("payments")
-        .values({
-          user_id: user.id,
+        .updateTable("payments")
+        .set({
           toss_payment_key: payment.paymentKey,
           order_id: payment.orderId ?? orderId,
           amount: payment.totalAmount ?? amount,
           status: "failed",
           raw: JSON.stringify(payment),
         })
+        .where("id", "=", pendingPayment.id)
         .execute();
       return NextResponse.json(
         { success: false, message: "결제가 올바르게 완료되지 않았습니다." },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
@@ -84,17 +118,19 @@ export async function POST(request: NextRequest) {
       amount: ONE_TIME_YEAR_AMOUNT,
       interval: "year",
       payment,
+      paymentId: pendingPayment.id,
     });
 
     return NextResponse.json({
       success: true,
-      message: "후원해 주셔서 감사합니다! 1년간 후원자 기능을 이용하실 수 있습니다.",
+      message:
+        "후원해 주셔서 감사합니다! 1년간 후원자 기능을 이용하실 수 있습니다.",
     });
   } catch (error) {
     console.error("One-time confirm error:", error);
     return NextResponse.json(
       { success: false, message: "후원 처리 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

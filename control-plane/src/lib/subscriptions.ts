@@ -20,6 +20,7 @@ export async function applyOneTimePayment(opts: {
   amount: number;
   interval: BillingInterval;
   payment: TossPaymentResult;
+  paymentId?: number;
 }): Promise<{ periodStart: Date; periodEnd: Date }> {
   const now = new Date();
   const current = await db
@@ -35,21 +36,38 @@ export async function applyOneTimePayment(opts: {
   const periodEnd = addInterval(remaining, opts.interval);
 
   await db.transaction().execute(async (trx) => {
-    await trx
-      .insertInto("payments")
-      .values({
-        user_id: opts.userId,
-        subscription_id: null,
-        toss_payment_key: opts.payment.paymentKey,
-        order_id: opts.payment.orderId,
-        amount: opts.amount,
-        status: "done",
-        paid_at: now,
-        period_start: periodStart,
-        period_end: periodEnd,
-        raw: JSON.stringify(opts.payment),
-      })
-      .execute();
+    if (opts.paymentId) {
+      await trx
+        .updateTable("payments")
+        .set({
+          toss_payment_key: opts.payment.paymentKey,
+          order_id: opts.payment.orderId,
+          amount: opts.amount,
+          status: "done",
+          paid_at: now,
+          period_start: periodStart,
+          period_end: periodEnd,
+          raw: JSON.stringify(opts.payment),
+        })
+        .where("id", "=", opts.paymentId)
+        .execute();
+    } else {
+      await trx
+        .insertInto("payments")
+        .values({
+          user_id: opts.userId,
+          subscription_id: null,
+          toss_payment_key: opts.payment.paymentKey,
+          order_id: opts.payment.orderId,
+          amount: opts.amount,
+          status: "done",
+          paid_at: now,
+          period_start: periodStart,
+          period_end: periodEnd,
+          raw: JSON.stringify(opts.payment),
+        })
+        .execute();
+    }
 
     await trx
       .updateTable("users")

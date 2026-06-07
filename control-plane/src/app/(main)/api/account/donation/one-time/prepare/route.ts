@@ -16,7 +16,7 @@ export async function POST(_request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -36,10 +36,24 @@ export async function POST(_request: NextRequest) {
         .execute();
     }
 
+    const orderId = newOrderId();
+
+    await db
+      .insertInto("payments")
+      .values({
+        attempt_key: `one_time:${orderId}`,
+        user_id: user.id,
+        subscription_id: null,
+        order_id: orderId,
+        amount: ONE_TIME_YEAR_AMOUNT,
+        status: "pending",
+      })
+      .execute();
+
     return NextResponse.json({
       success: true,
       customerKey,
-      orderId: newOrderId(),
+      orderId,
       amount: ONE_TIME_YEAR_AMOUNT,
       orderName: ONE_TIME_YEAR_ORDER_NAME,
     });
@@ -47,7 +61,7 @@ export async function POST(_request: NextRequest) {
     console.error("One-time prepare error:", error);
     return NextResponse.json(
       { success: false, message: "후원 준비 중 오류가 발생했습니다." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
